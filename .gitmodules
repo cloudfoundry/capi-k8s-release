@@ -1,0 +1,3 @@
+[submodule "src/cloud_controller_ng"]
+	path = src/cloud_controller_ng
+	url = https://github.com/cloudfoundry/cloud_controller_ng
