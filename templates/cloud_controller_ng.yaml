@@ -116,7 +116,8 @@ data:
       ssl_verify_hostname: false
       read_timeout: 3600
       connection_validation_timeout: 3600
-      ca_cert_path: "/dev/null"
+      # TODO: secure db connection?
+      #ca_cert_path: "/dev/null"
 
     telemetry_log_path: "/dev/null"
     log_cache:
@@ -164,40 +165,37 @@ data:
     default_quota_definition: default
 
     resource_pool:
-      blobstore_type: webdav
-      webdav_config:
-        blobstore_timeout: 5
-        public_endpoint: https://blobstore.{{ .Values.system_domain }}
-        private_endpoint: https://TODO.TODO
-        username: TODO
-        password: TODO
-
-        ca_cert_path: /usr/share/ca-certificates/mozilla/Starfield_Class_2_CA.crt
-
+      resource_directory_key: cc-resources
+      blobstore_type: fog
+      fog_connection:
+        provider: AWS
+        endpoint: {{ .Values.blobstore.endpoint }}
+        aws_access_key_id: {{ .Values.blobstore.access_key_id }}
+        aws_secret_access_key: {{ .Values.blobstore.secret_access_key }}
+        aws_signature_version: '2'
+        region: "''"
+        path_style: true
       minimum_size: 65536
       maximum_size: 536870912
-      resource_directory_key: cc-resources
 
       cdn:
         uri:
         key_pair_id:
         private_key: ""
 
-      fog_connection: {}
       fog_aws_storage_options: {}
 
     packages:
-      blobstore_type: webdav
-      webdav_config:
-        blobstore_timeout: 5
-        public_endpoint: https://blobstore.{{ .Values.system_domain }}
-        private_endpoint: https://TODO.TODO
-        username: TODO
-        password: TODO
-
-        ca_cert_path: /usr/share/ca-certificates/mozilla/Starfield_Class_2_CA.crt
-
       app_package_directory_key: cc-packages
+      blobstore_type: fog
+      fog_connection:
+        provider: AWS
+        endpoint: {{ .Values.blobstore.endpoint }}
+        aws_access_key_id: {{ .Values.blobstore.access_key_id }}
+        aws_secret_access_key: {{ .Values.blobstore.secret_access_key }}
+        aws_signature_version: '2'
+        region: "''"
+        path_style: true
       max_valid_packages_stored: 5
       max_package_size: 1073741824
 
@@ -206,50 +204,45 @@ data:
         key_pair_id:
         private_key: ""
 
-      fog_connection: {}
       fog_aws_storage_options: {}
 
     droplets:
-      blobstore_type: webdav
-      webdav_config:
-        blobstore_timeout: 5
-        public_endpoint: https://blobstore.{{ .Values.system_domain }}
-        private_endpoint: https://TODO.TODO
-        username: TODO
-        password: TODO
-
-        ca_cert_path: /usr/share/ca-certificates/mozilla/Starfield_Class_2_CA.crt
-
       droplet_directory_key: cc-droplets
+      blobstore_type: fog
+      fog_connection:
+        provider: AWS
+        endpoint: {{ .Values.blobstore.endpoint }}
+        aws_access_key_id: {{ .Values.blobstore.access_key_id }}
+        aws_secret_access_key: {{ .Values.blobstore.secret_access_key }}
+        aws_signature_version: '2'
+        region: "''"
+        path_style: true
 
       cdn:
         uri:
         key_pair_id:
         private_key: ""
 
-      fog_connection: {}
       fog_aws_storage_options: {}
       max_staged_droplets_stored: 5
 
     buildpacks:
-      blobstore_type: webdav
-      webdav_config:
-        blobstore_timeout: 5
-        public_endpoint: https://blobstore.{{ .Values.system_domain }}
-        private_endpoint: https://TODO.TODO
-        username: TODO
-        password: TODO
-
-        ca_cert_path: /usr/share/ca-certificates/mozilla/Starfield_Class_2_CA.crt
-
       buildpack_directory_key: cc-buildpacks
+      blobstore_type: fog
+      fog_connection:
+        provider: AWS
+        endpoint: {{ .Values.blobstore.endpoint }}
+        aws_access_key_id: {{ .Values.blobstore.access_key_id }}
+        aws_secret_access_key: {{ .Values.blobstore.secret_access_key }}
+        aws_signature_version: '2'
+        region: "''"
+        path_style: true
 
       cdn:
         uri:
         key_pair_id:
         private_key: ""
 
-      fog_connection: {}
       fog_aws_storage_options: {}
 
     db_encryption_key: TODO
