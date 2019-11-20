@@ -10,7 +10,7 @@ data:
 
     external_port: 9022
     tls_port: 9023
-    internal_service_hostname: cloud_controller_ng.pas-system.svc.cluster.local
+    internal_service_hostname: cloud_controller_ng.{{ .Release.Namespace }}.svc.cluster.local
 
     pid_filename: /cloud_controller_ng/cloud_controller_ng.pid
     newrelic_enabled: false
