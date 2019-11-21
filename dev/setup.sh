@@ -18,14 +18,14 @@ DAEMON_JSON="$HOME/.docker/daemon.json"
 set +e
 read -r -d '' NEW_DAEMON_JSON <<EOF
 {
-  "insecure_registries": ["$(minikube ip):5000"]
+  "insecure-registries": ["$(minikube ip):5000"]
 }
 EOF
 set -e
 
 TEMPFILE="$(mktemp)"
 
-if ! jq -e '.insecure_registries' "${DAEMON_JSON}" > /dev/null 2>&1; then
+if ! jq -e '.insecure\-registries' "${DAEMON_JSON}" > /dev/null 2>&1; then
   cp "${DAEMON_JSON}" "${DAEMON_JSON}".bak
 
   # Combine "insecure_registries" key into daemon.json
