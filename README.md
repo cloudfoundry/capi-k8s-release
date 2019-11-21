@@ -8,7 +8,7 @@
    `~/.docker/daemon.json`):
 ```
 {
-  "insecure-registries" : ["minikubeIP:5000"]
+  "insecure_registries" : ["minikubeIP:5000"]
 }
 ```
 Then, restart Docker. (Docker Desktop icon > Restart)
