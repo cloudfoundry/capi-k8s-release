@@ -333,10 +333,13 @@ data:
       use_privileged_containers_for_staging: false
 
     opi:
-      url: "https://TODO.TODO"
+      url: "https://eirini.{{ .Release.Namespace }}.svc.cluster.local:8085"
       opi_staging: true
       enabled: true
       cc_uploader_url: "https://TODO.TODO"
+      ca_file: "/config/eirini/certs/tls.ca"
+      client_cert_file: "/config/eirini/certs/tls.crt"
+      client_key_file: "/config/eirini/certs/tls.key"
 
     perm:
       enabled: false
