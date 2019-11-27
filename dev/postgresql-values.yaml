@@ -1,9 +1,0 @@
-initdbScripts:
-  setup_db.sql: |
-    CREATE DATABASE cloud_controller;
-    CREATE ROLE cloud_controller LOGIN PASSWORD 'cloud_controller';
-  hello_world.sh: |
-    #!/bin/bash
-    echo "hello, world!"
-    psql -U postgres -f /docker-entrypoint-initdb.d/setup_db.sql
-    psql -U postgres -d cloud_controller -c "CREATE EXTENSION citext"

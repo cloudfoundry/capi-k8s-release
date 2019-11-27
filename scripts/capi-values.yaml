@@ -1,0 +1,15 @@
+image:
+  repository: localhost:5000/capi
+
+app_domains: []
+ccdb:
+  adapter: postgres
+  host: capi-database-postgresql.default.svc.cluster.local
+  port: 5432
+  user: cloud_controller
+  password: cloud_controller
+  database: cloud_controller
+blobstore:
+  endpoint: http://capi-blobstore-minio.default.svc.cluster.local:9000
+  access_key_id: AKIAIOSFODNN7EXAMPLE
+  secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY

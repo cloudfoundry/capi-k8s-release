@@ -23,12 +23,12 @@ the approach we use to install them.
 
 
 1. `minikube start` to make sure `minikube` is up and running
-1. `./dev/deploy.sh` to deploy the dependencies and CAPI
+1. `./scripts/deploy.sh` to deploy the dependencies and CAPI
 
 
 ### Rolling out changes to CAPI
 
-1. `./dev/build-and-rollout-capi.sh` will take the `cloud_controller_ng` code in
+1. `./scripts/build-and-rollout-capi.sh` will take the `cloud_controller_ng` code in
    the `src/cloud_controller_ng` submodule, build a docker image with it, and
    roll the new image out to the `minikube` cluster.
 
