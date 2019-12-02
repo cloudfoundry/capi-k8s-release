@@ -13,3 +13,8 @@ blobstore:
   endpoint: http://capi-blobstore-minio.default.svc.cluster.local:9000
   access_key_id: AKIAIOSFODNN7EXAMPLE
   secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+uaa:
+  clients:
+    cloud_controller_username_lookup:
+      secret: supers3cret
