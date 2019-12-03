@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}-{{ .Values.apiServer.name }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
@@ -31,7 +31,7 @@ spec:
           - name: cloud-controller-ng-yaml
             mountPath: /config
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Chart.Name  }}-{{ .Values.apiServer.name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           # ports:
