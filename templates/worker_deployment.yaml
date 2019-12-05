@@ -25,7 +25,7 @@ spec:
         - name: {{ .Chart.Name  }}-{{ .Values.worker.name }}
           workingDir: "/cloud_controller_ng"
           command: ["/usr/local/bin/bundle"]
-          args: ["exec", "rake", "jobs:generic[cc_global_worker.{{ .Values.worker.name }}]"]
+          args: ["exec", "rake", "jobs:generic"]
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
