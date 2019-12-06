@@ -22,5 +22,8 @@ uaa:
 worker:
   name: worker
 
+clock:
+  name: clock
+
 apiServer:
   name: api-server
