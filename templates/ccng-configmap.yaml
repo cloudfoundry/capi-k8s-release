@@ -359,11 +359,14 @@ data:
       cutoff_age_in_days: 31
     completed_tasks:
       cutoff_age_in_days: 31
+    service_usage_events:
+      cutoff_age_in_days: 31
     max_retained_deployments_per_app: 100
     max_retained_builds_per_app: 100
     max_retained_revisions_per_app: 100
     diego_sync:
       frequency_in_seconds: 30
-    pending_builds
-    pending_droplets
-    service_usage_events
+    pending_builds:
+      frequency_in_seconds: 300
+    pending_droplets:
+      frequency_in_seconds: 300
