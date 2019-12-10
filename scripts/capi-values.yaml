@@ -19,18 +19,12 @@ uaa:
     cloud_controller_username_lookup:
       secret: supers3cret
 
-worker:
-  name: worker
-
-clock:
-  name: clock
-
 apiServer:
   name: api-server
   opi:  # these certs were manually generated for dev purposes, they are not real eirini certs and don't have SANs.
     client_key: |
       -----BEGIN RSA PRIVATE KEY-----
-      MIIEfakeAAKCAQEA0a/I76aefa2mcgvG7YM2WDAopD7yLCoLTuAC/BsaaQQaOJ/G
+      MIIEpQIBAAKCAQEA0a/I76aefa2mcgvG7YM2WDAopD7yLCoLTuAC/BsaaQQaOJ/G
       VE7mxsrUJ6Xv0tQ7cxwKbit/LgqSTtXIVQXF24uS8eDbn8NeV/aDMXHmHNDgvM4V
       xfv9Cv4pd0JPZNaOf6mkqE7K3pAx9i9O5FkxD7RNMM5Sb593TpLam8midbSHuwjA
       i5PUFWigf9ZAgeSZu76Jb9XUAcm0/AGd39g4TA/KKMCz2Z1+LqzuHTKwknc1YYjF
@@ -58,7 +52,7 @@ apiServer:
       -----END RSA PRIVATE KEY-----
     client_cert: |
       -----BEGIN CERTIFICATE-----
-      MIICfakeAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
+      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
       MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
       ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
       KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL
@@ -75,7 +69,7 @@ apiServer:
       -----END CERTIFICATE-----
     ca: |
       -----BEGIN CERTIFICATE-----
-      MIICfakeAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
+      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
       MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
       ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
       KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL

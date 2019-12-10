@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-{{ .Values.worker.name }}
+  name: {{ .Chart.Name }}-worker
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
@@ -22,7 +22,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       containers:
-        - name: {{ .Chart.Name  }}-{{ .Values.worker.name }}
+        - name: {{ .Chart.Name  }}-worker
           workingDir: "/cloud_controller_ng"
           command: ["/usr/local/bin/bundle"]
           args: ["exec", "rake", "jobs:generic"]

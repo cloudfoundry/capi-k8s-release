@@ -1,12 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-{{ .Values.clock.name }}
+  name: {{ .Chart.Name }}-clock
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "capi-k8s-release.name" . }}
@@ -22,7 +26,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       containers:
-        - name: {{ .Chart.Name  }}-{{ .Values.clock.name }}
+        - name: {{ .Chart.Name  }}-clock
           workingDir: "/cloud_controller_ng"
           command: ["/usr/local/bin/bundle"]
           args: ["exec", "rake", "clock:start"]
