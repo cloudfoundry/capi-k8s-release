@@ -62,7 +62,7 @@ spec:
             mountPath: /config/eirini/certs
           {{- end }}
         - name: nginx
-          image: "nginx"
+          image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
           - containerPort: 80

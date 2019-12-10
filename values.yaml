@@ -9,6 +9,11 @@ image:
   tag: latest
   pullPolicy: Always
 
+nginx:
+  image:
+    repository: "nginx"
+    tag: latest
+
 imagePullSecrets:
 - name: image-registry-credentials
 nameOverride: ""
