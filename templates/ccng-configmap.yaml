@@ -337,9 +337,9 @@ data:
       opi_staging: true
       enabled: true
       cc_uploader_url: "https://TODO.TODO"
-      ca_file: "/config/eirini/certs/tls.ca"
-      client_cert_file: "/config/eirini/certs/tls.crt"
-      client_key_file: "/config/eirini/certs/tls.key"
+      ca_file: /config/opi/certs/opi.ca
+      client_cert_file: /config/opi/certs/opi.crt
+      client_key_file: /config/opi/certs/opi.key
 
     perm:
       enabled: false

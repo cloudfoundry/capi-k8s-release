@@ -33,8 +33,12 @@ spec:
           volumeMounts:
           - name: cloud-controller-ng-yaml
             mountPath: /config
+          - name: opi-secrets
+            mountPath: /config/opi/certs
       volumes:
       - name: cloud-controller-ng-yaml
         configMap:
           name: cloud-controller-ng-yaml
-
+      - name: opi-secrets
+        secret:
+          secretName: opi-secrets

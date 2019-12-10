@@ -3,6 +3,7 @@
 set -ex
 
 SCRIPT_DIR=$(dirname $0)
+REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 
@@ -12,7 +13,7 @@ helm upgrade --install capi-database stable/postgresql -f "${SCRIPT_DIR}/postgre
 helm upgrade --install capi-blobstore stable/minio
 
 # Build the capi image and push it to minkube
-docker build -f dockerfiles/cloud_controller_ng/Dockerfile -t capi -t $(minikube ip):5000/capi src/
+docker build -f "${REPO_BASE_DIR}/dockerfiles/cloud_controller_ng/Dockerfile" -t capi -t $(minikube ip):5000/capi "${REPO_BASE_DIR}/src/"
 docker push $(minikube ip):5000/capi
 
 #capi
