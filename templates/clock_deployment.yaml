@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-{{ .Values.worker.name }}
+  name: {{ .Chart.Name }}-{{ .Values.clock.name }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
@@ -22,10 +22,10 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       containers:
-        - name: {{ .Chart.Name  }}-{{ .Values.worker.name }}
+        - name: {{ .Chart.Name  }}-{{ .Values.clock.name }}
           workingDir: "/cloud_controller_ng"
           command: ["/usr/local/bin/bundle"]
-          args: ["exec", "rake", "jobs:generic"]
+          args: ["exec", "rake", "clock:start"]
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
@@ -33,8 +33,12 @@ spec:
           volumeMounts:
           - name: cloud-controller-ng-yaml
             mountPath: /config
+          - name: opi-secrets
+            mountPath: /config/opi/certs
       volumes:
       - name: cloud-controller-ng-yaml
         configMap:
           name: cloud-controller-ng-yaml
-
+      - name: opi-secrets
+        secret:
+          secretName: opi-secrets
