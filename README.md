@@ -3,7 +3,7 @@
 1. `minikube` (`brew install minikube`)
 1. `helm` (`brew install kubernetes-helm`) We require helm 3.0.0+ 
 1. `minikube addons enable registry`
-1. Add the `minikube`'s IP (`minikube ip`) to the list of insecure docker registries of your
+1. Add the `minikube`'s IP (`minikube ip:5000`) to the list of insecure docker registries of your
    local docker daemon (Either using the Docker Desktop or editing
    `~/.docker/daemon.json`):
 ```
