@@ -5,6 +5,9 @@ docker build -f dockerfiles/cloud_controller_ng/Dockerfile -t $(minikube ip):500
 docker push $(minikube ip):5000/capi
 
 # Restart the capi deployment with the new image and wait until the restart is complete
-kubectl rollout restart deployment/capi-api-server deployment/capi-worker
-kubectl rollout status deployment/capi-api-server -w
-kubectl rollout status deployment/capi-worker -w
+set -x
+CAPI_JOBS="deployment/capi-api-server deployment/capi-worker deployment/capi-clock deployment/capi-deployment-updater"
+kubectl rollout restart ${CAPI_JOBS}
+for job in ${CAPI_JOBS}; do
+  kubectl rollout status "${job}" -w
+done

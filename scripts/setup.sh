@@ -13,6 +13,7 @@ check_installed minikube
 check_installed helm
 
 minikube addons enable registry
+minikube addons enable helm-tiller
 
 DAEMON_JSON="$HOME/.docker/daemon.json"
 
@@ -27,7 +28,7 @@ set -e
 
 TEMPFILE="$(mktemp)"
 
-if ! jq -e '.["insecure-registries"]' "${DAEMON_JSON}" > /dev/null 2>&1; then
+if ! grep $(minikube ip) "${DAEMON_JSON}" > /dev/null 2>&1; then
   cp "${DAEMON_JSON}" "${DAEMON_JSON}".bak
 
   # Combine "insecure_registries" key into daemon.json
@@ -39,6 +40,6 @@ if ! jq -e '.["insecure-registries"]' "${DAEMON_JSON}" > /dev/null 2>&1; then
   echo "Please restart your Docker daemon"
   echo "If something has gone wrong, a backup file was created in $HOME/.docker/"
 else
-  echo "${DAEMON_JSON} already contains insecure_registries"
+  echo "${DAEMON_JSON} already contains the minkube registry"
   echo "You're good to go"
 fi

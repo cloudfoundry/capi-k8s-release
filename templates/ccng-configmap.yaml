@@ -76,7 +76,7 @@ data:
       diagnostics: /cloud_controller_ng/diagnostics/
 
     logging:
-      file: /cloud_controller_ng/cloud_controller_ng.log
+      file: /dev/stdout
       syslog: vcap.cloud_controller_ng
       level: "debug"
       max_retries: 1
@@ -372,3 +372,7 @@ data:
     pending_droplets:
       frequency_in_seconds: 300
       expiration_in_seconds: 42
+
+    # deployment updater properties
+    deployment_updater:
+      update_frequency_in_seconds: 1
