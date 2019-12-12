@@ -13,11 +13,11 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ .Chart.Name }}-api-server
+      app.kubernetes.io/name: {{ .Chart.Name }}-api
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ .Chart.Name }}-api-server
+        app.kubernetes.io/name: {{ .Chart.Name }}-api
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
