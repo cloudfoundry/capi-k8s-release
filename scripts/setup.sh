@@ -12,6 +12,8 @@ check_installed() {
 check_installed minikube
 check_installed helm
 
+minikube addons enable registry
+
 DAEMON_JSON="$HOME/.docker/daemon.json"
 
 # `read` returns non-zero when it reaches EOF, so disable error checking.
@@ -25,7 +27,7 @@ set -e
 
 TEMPFILE="$(mktemp)"
 
-if ! jq -e '.insecure\-registries' "${DAEMON_JSON}" > /dev/null 2>&1; then
+if ! jq -e '.["insecure-registries"]' "${DAEMON_JSON}" > /dev/null 2>&1; then
   cp "${DAEMON_JSON}" "${DAEMON_JSON}".bak
 
   # Combine "insecure_registries" key into daemon.json

@@ -2,17 +2,10 @@
 
 1. `minikube` (`brew install minikube`)
 1. `helm` (`brew install kubernetes-helm`) We require helm 3.0.0+ 
-1. `minikube addons enable registry`
-1. Add `minikube`'s IP:5000 (`minikube ip`) to the list of insecure docker registries of your
-   local docker daemon (Either using the Docker Desktop or editing
-   `~/.docker/daemon.json`):
-```
-{
-  "insecure-registries" : ["minikubeIP:5000"]
-}
-```
-Then, restart Docker. (Docker Desktop icon > Restart)
 1. To ensure cloud controller submodule is up-to-date run `git submodule update --init`
+1. Run `./scripts/setup.sh` to enable the minikube registry and add it to your
+   local docker daemon's list of insecure registries.
+1. Restart your docker daemon if the script thinks you should.
 
 
 ### Installing dependencies and CAPI
