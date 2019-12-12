@@ -20,7 +20,6 @@ uaa:
       secret: supers3cret
 
 apiServer:
-  name: api-server
   opi:  # these certs were manually generated for dev purposes, they are not real eirini certs and don't have SANs.
     client_key: |
       -----BEGIN RSA PRIVATE KEY-----

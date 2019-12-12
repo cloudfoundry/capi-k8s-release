@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-{{ .Values.apiServer.name }}
+  name: {{ .Chart.Name }}-api-server
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
@@ -13,13 +13,11 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "capi-k8s-release.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ .Chart.Name }}-api-server
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "capi-k8s-release.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ .Chart.Name }}-api-server
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -35,7 +33,7 @@ spec:
           - name: cloud-controller-ng-yaml
             mountPath: /config
       containers:
-        - name: {{ .Chart.Name  }}-{{ .Values.apiServer.name }}
+        - name: {{ .Chart.Name  }}-api-server
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           # ports:

@@ -9,13 +9,11 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "capi-k8s-release.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ .Chart.Name }}-worker
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "capi-k8s-release.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ .Chart.Name }}-worker
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
