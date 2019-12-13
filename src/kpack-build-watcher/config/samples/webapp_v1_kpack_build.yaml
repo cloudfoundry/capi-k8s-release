@@ -1,0 +1,7 @@
+apiVersion: webapp.my.domain/v1
+kind: KpackBuild
+metadata:
+  name: kpackbuild-sample
+spec:
+  # Add fields here
+  foo: bar

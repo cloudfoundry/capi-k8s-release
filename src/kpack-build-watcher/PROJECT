@@ -1,0 +1,7 @@
+domain: my.domain
+repo: capi_image_controller
+resources:
+- group: webapp
+  kind: KpackBuild
+  version: v1
+version: "2"
