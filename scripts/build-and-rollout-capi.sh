@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
+set -ex
+
+SCRIPT_DIR=$(dirname $0)
+REPO_BASE_DIR="${SCRIPT_DIR}/.."
+
 # Build the capi image and push it to minkube
-docker build -f dockerfiles/cloud_controller_ng/Dockerfile -t $(minikube ip):5000/capi src/
+${SCRIPT_DIR}/build.sh
 docker push $(minikube ip):5000/capi
 
-# Restart the capi deployment with the new image and wait until the restart is complete
-set -x
-CAPI_JOBS="deployment/capi-api-server deployment/capi-worker deployment/capi-clock deployment/capi-deployment-updater"
-kubectl rollout restart ${CAPI_JOBS}
-for job in ${CAPI_JOBS}; do
-  kubectl rollout status "${job}" -w
-done
+#capi
+helm template "${SCRIPT_DIR}/.." --set-string system_domain=minikube.local -f "${SCRIPT_DIR}/capi-values.yaml" \
+  | tee last-apply.yaml \
+  | kapp -y deploy -a capi -f -

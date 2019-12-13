@@ -15,6 +15,8 @@ check_installed helm
 minikube addons enable registry
 minikube addons enable helm-tiller
 
+helm repo add stable https://kubernetes-charts.storage.googleapis.com
+
 DAEMON_JSON="$HOME/.docker/daemon.json"
 
 # `read` returns non-zero when it reaches EOF, so disable error checking.

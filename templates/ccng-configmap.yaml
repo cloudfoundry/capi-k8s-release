@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: cloud-controller-ng-yaml
   namespace: {{ .Release.Namespace }}
+  annotations:
+    kapp.k14s.io/versioned: ""
 data:
   cloud_controller_ng.yml: |
     local_route: 0.0.0.0
