@@ -339,9 +339,9 @@ data:
       opi_staging: true
       enabled: true
       cc_uploader_url: "https://TODO.TODO"
-      ca_file: /config/opi/certs/opi.ca
-      client_cert_file: /config/opi/certs/opi.crt
-      client_key_file: /config/opi/certs/opi.key
+      ca_file: /config/certs/client/ca.crt
+      client_cert_file: /config/certs/client/tls.crt
+      client_key_file: /config/certs/client/tls.key
 
     perm:
       enabled: false
