@@ -22,7 +22,7 @@ spec:
         - name: image-registry-credentials
       initContainers:
         - name: pre-start
-          image: #@ "{}-{}".format(data.values.image.repository, data.values.image.tag)
+          image: #@ data.values.image.repository
           imagePullPolicy: #@ data.values.image.pullPolicy
           command:
           - /cloud_controller_ng/pre-start.sh
@@ -31,7 +31,7 @@ spec:
             mountPath: /config
       containers:
         - name: capi-api-server
-          image:  #@ "{}-{}".format(data.values.image.repository, data.values.image.tag)
+          image:  #@ data.values.image.repository
           imagePullPolicy: #@ data.values.image.pullPolicy
           volumeMounts:
           - name: server-sock
@@ -45,7 +45,7 @@ spec:
           - name: eirini-certs
             mountPath: /config/eirini/certs
         - name: nginx
-          image: #@ "{}-{}".format(data.values.nginx.image.repository, data.values.nginx.image.tag)
+          image: #@ data.values.nginx.image.repository
           imagePullPolicy: #@ data.values.nginx.image.pullPolicy
           ports:
           - containerPort: 80

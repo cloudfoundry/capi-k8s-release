@@ -2,14 +2,15 @@
 ---
 
 image:
-  repository: ""
-  tag: latest
+  repository: capi
   pullPolicy: Always
+
+kbld:
+  destination: localhost:5000/capi
 
 nginx:
   image:
     repository: "nginx"
-    tag: latest
     pullPolicy: Always
 
 imagePullSecrets:

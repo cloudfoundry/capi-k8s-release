@@ -1,0 +1,17 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Sources
+sources:
+- image: capi
+  path: src/
+  docker:
+    build:
+      file: "../dockerfiles/cloud_controller_ng/Dockerfile"
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageDestinations
+destinations:
+- image: capi
+  newImage: #@ data.values.kbld.destination
