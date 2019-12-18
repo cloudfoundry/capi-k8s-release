@@ -82,6 +82,50 @@ rebaseRules:
       apiVersion: v1
       kind: PersistentVolumeClaim
 
+#! these rules make it so that cert-manager can generate versioned secrets,
+#! thus allowing us to fully rotate leaf certs with kapp
+- path: [data]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: &opaqueSecrets
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Secret, type: "kubernetes.io/tls"}
+
+- path: [metadata, annotations, "cert-manager.io/alt-names"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: &opaqueSecrets
+  - apiVersionKindMatcher: {apiVersion: v1, kind: Secret, type: Opaque}
+
+- path: [metadata, annotations, "cert-manager.io/certificate-name"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
+- path: [metadata, annotations, "cert-manager.io/common-name"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
+- path: [metadata, annotations, "cert-manager.io/ip-sans"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
+- path: [metadata, annotations, "cert-manager.io/issuer-kind"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
+- path: [metadata, annotations, "cert-manager.io/issuer-name"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
+- path: [metadata, annotations, "cert-manager.io/uri-sans"]
+  type: copy
+  sources: [new, existing]
+  resourceMatchers: *opaqueSecrets
+
 - path: [metadata, annotations, "deployment.kubernetes.io/revision"]
   type: copy
   sources: [new, existing]

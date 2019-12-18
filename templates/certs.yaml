@@ -32,6 +32,7 @@ metadata:
 spec:
   ca:
     secretName: cf-system-root-ca
+
 ---
 #! components can use that issuer to generate internal server certs
 apiVersion: cert-manager.io/v1alpha2
@@ -45,6 +46,7 @@ spec:
     - capi.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     name: cf-system-ca-issuer
+
 ---
 #! as well as client certs for mtls
 apiVersion: cert-manager.io/v1alpha2
@@ -60,3 +62,31 @@ spec:
     - client auth
   issuerRef:
     name: cf-system-ca-issuer
+
+---
+#! if we make kapp responsible for versioning the underlying secrets
+#! it can also handle rolling pods that mount these certificates
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cc-server-tls
+  annotations:
+    kapp.k14s.io/versioned: ""
+type: "kubernetes.io/tls"
+#! removing "data" here will leave these certs alone
+#! empty fields here will regeneration trigger controlled rollout
+data:
+  tls.key:
+  tls.crt:
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cc-client-tls
+  annotations:
+    kapp.k14s.io/versioned: ""
+type: "kubernetes.io/tls"
+data:
+  tls.key:
+  tls.crt:
