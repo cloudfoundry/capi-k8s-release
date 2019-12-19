@@ -40,6 +40,9 @@ kind: Certificate
 metadata:
   name: cc-server-tls
   namespace: {{ .Release.Namespace }}
+  annotations:
+    kapp.k14s.io/versioned: ""
+    generation: "0"
 spec:
   secretName: cc-server-tls
   dnsNames:
@@ -54,6 +57,9 @@ kind: Certificate
 metadata:
   name: cc-client-tls
   namespace: {{ .Release.Namespace }}
+  annotations:
+    kapp.k14s.io/versioned: ""
+    generation: "1"
 spec:
   secretName: cc-client-tls
   dnsNames:
@@ -62,31 +68,3 @@ spec:
     - client auth
   issuerRef:
     name: cf-system-ca-issuer
-
----
-#! if we make kapp responsible for versioning the underlying secrets
-#! it can also handle rolling pods that mount these certificates
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cc-server-tls
-  annotations:
-    kapp.k14s.io/versioned: ""
-type: "kubernetes.io/tls"
-#! removing "data" here will leave these certs alone
-#! empty fields here will regeneration trigger controlled rollout
-data:
-  tls.key:
-  tls.crt:
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cc-client-tls
-  annotations:
-    kapp.k14s.io/versioned: ""
-type: "kubernetes.io/tls"
-data:
-  tls.key:
-  tls.crt:
