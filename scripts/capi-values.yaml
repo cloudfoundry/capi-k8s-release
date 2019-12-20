@@ -1,5 +1,8 @@
 image:
-  repository: localhost:5000/capi
+  capi:
+    repository: localhost:5000/capi
+  kpackWatcher:
+    repository: localhost:5000/capi-kpack-watcher
 
 app_domains: []
 ccdb:

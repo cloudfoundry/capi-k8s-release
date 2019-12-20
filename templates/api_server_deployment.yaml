@@ -25,7 +25,7 @@ spec:
     {{- end }}
       initContainers:
         - name: pre-start
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.capi.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
           - /cloud_controller_ng/pre-start.sh
@@ -34,7 +34,7 @@ spec:
             mountPath: /config
       containers:
         - name: {{ .Chart.Name  }}-api-server
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.capi.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           # ports:
           #   - name: http
