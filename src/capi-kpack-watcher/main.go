@@ -69,6 +69,8 @@ func main() {
 		UpdateFunc: update,
 	})
 
+	log.Printf("Watcher initialized. Listening...\n")
+
 	informer.Run(stopper)
 }
 
