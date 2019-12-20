@@ -1,5 +1,5 @@
 domain: my.domain
-repo: capi_image_controller
+repo: capi_kpack_watcher
 resources:
 - group: webapp
   kind: KpackBuild

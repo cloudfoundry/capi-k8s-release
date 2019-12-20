@@ -1,4 +1,4 @@
-module capi_image_controller
+module capi_kpack_watcher
 
 go 1.13
 
