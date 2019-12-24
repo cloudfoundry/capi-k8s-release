@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}-kpack-watcher
-  namespace: {{ .Release.Namespace }}
+  namespace: cf-system
   labels:
 {{ include "capi-k8s-release.labels" . | indent 4 }}
 spec:
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: {{ .Chart.Name }}-kpack-watcher
     spec:
-      serviceAccountName: controller
+      serviceAccountName: default
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
