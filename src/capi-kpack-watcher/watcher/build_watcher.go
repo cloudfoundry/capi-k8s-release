@@ -17,6 +17,7 @@ import (
 
 const buildGUIDLabel = "cloudfoundry.org/build_guid"
 const buildStagedState = "STAGED"
+const buildFailedState = "FAILED"
 
 // AddFunc handles when new Builds are detected.
 func (bw *buildWatcher) AddFunc(obj interface{}) {
@@ -44,9 +45,15 @@ steps:  %+v
 		if err := bw.client.PATCHBuild(guid, model.BuildStatus{State: buildStagedState}); err != nil {
 			log.Fatalf("Failed to send request: %v\n", err)
 		}
-	}
+	} else if status.GetCondition("Succeeded").IsFalse() {
+		labels := build.GetLabels()
+		guid := labels[buildGUIDLabel]
 
-	// TODO: Add error case for when a build fails to build.
+		// TODO pass real error message from pod creation when Kpack surfaces this
+		if err := bw.client.PATCHBuild(guid, model.BuildStatus{State: buildFailedState, Error: "Kpack build failed."}); err != nil {
+			log.Fatalf("Failed to send request: %v\n", err)
+		}
+	}
 }
 
 // NewBuildWatcher initializes a Watcher that watches for Builds in Kpack.
