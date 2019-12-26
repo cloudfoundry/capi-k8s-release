@@ -9,8 +9,6 @@ import (
 	"os"
 
 	"capi_kpack_watcher/model"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 // PATCHBuild send a PATCH request to CAPI with a guid and status about a build.
@@ -34,7 +32,7 @@ func (c *client) PATCHBuild(guid string, status model.BuildStatus) error {
 	}
 
 	log.Printf("[PATCHBuild] Sent payload: %s\n", status.ToJSON())
-	log.Printf("[PATCHBuild] Repsonse: %s\n", spew.Sdump(resp))
+	log.Printf("[PATCHBuild] Repsonse Status: %d\n", resp.StatusCode)
 	return nil
 }
 
