@@ -91,3 +91,20 @@ type buildWatcher struct {
 	informer cache.SharedIndexInformer
 }
 
+// TODO: getPodLogs needs permission to talk to the Kubernetes master for pod logs.
+//  Currently, we only mount kpack permissions into this watcher.
+//func getPodLogs(podName string) ([]byte, error) {
+//	config, err := rest.InClusterConfig()
+//	if err != nil {
+//		panic(err.Error())
+//	}
+//
+//	clientset, err := kubernetes.NewForConfig(config)
+//	if err != nil {
+//		panic(err.Error())
+//	}
+// // kubectl log cmd: k logs build-pod -n cf-workloads -c={failedStep} --ignore-errors
+//	return clientset.CoreV1().Pods("cf-workloads").GetLogs(podName, &corev1.PodLogOptions{
+//		Container: "build",
+//	}).Do().Raw()
+//}
