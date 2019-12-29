@@ -67,3 +67,27 @@ roleRef:
   kind: ClusterRole
   name: kpack-watcher
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kpack-watcher-pod-logs-reader
+  namespace: cf-workloads
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kpack-watcher-pod-logs-binding
+  namespace: cf-workloads
+subjects:
+- kind: ServiceAccount
+  namespace: cf-system
+  name: default
+roleRef:
+  kind: Role
+  name: kpack-watcher-pod-logs-reader
+  apiGroup: rbac.authorization.k8s.io
