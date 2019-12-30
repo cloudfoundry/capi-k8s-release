@@ -33,7 +33,7 @@ func (c *client) PATCHBuild(guid string, status model.BuildStatus) error {
 	defer resp.Body.Close()
 
 	log.Printf("[PATCHBuild] Sent payload: %s\n", status.ToJSON())
-	log.Printf("[PATCHBuild] Repsonse Status: %d\n", resp.StatusCode)
+	log.Printf("[PATCHBuild] Response Status: %d\n", resp.StatusCode)
 	return nil
 }
 

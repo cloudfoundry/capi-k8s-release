@@ -13,4 +13,3 @@ func (b *BuildStatus) ToJSON() []byte {
 	j, _ := json.Marshal(b)
 	return j
 }
-
