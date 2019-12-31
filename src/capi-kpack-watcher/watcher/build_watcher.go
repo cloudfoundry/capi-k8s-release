@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"log"
+	"regexp"
 
 	"capi_kpack_watcher/capi"
 	"capi_kpack_watcher/kubernetes"
@@ -68,7 +69,9 @@ steps:  %+v
 
 			model.Error = "Kpack build failed"
 		} else {
-			model.Error = string(logs)
+			// Take the first word character to the end of the line to avoid ANSI color codes
+			regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
+			model.Error = string(regex.FindSubmatch(logs)[2])
 		}
 
 		if err := bw.client.PATCHBuild(guid, model); err != nil {
