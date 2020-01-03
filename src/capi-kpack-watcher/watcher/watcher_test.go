@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"github.com/sclevine/spec"
 	"testing"
 
 	"capi_kpack_watcher/mocks"
@@ -19,31 +20,45 @@ type MockKubeClient struct {
 }
 
 func TestUpdateFunc(t *testing.T) {
-	// Create mocks for CAPI client.
-	mockCAPI := new(mocks.CAPI)
 
-	// Create our object under test. Attach mock client.
-	bw := new(buildWatcher)
-	bw.client = mockCAPI
+	spec.Run(t, "TestUpdateFunc", func(t *testing.T, when spec.G, it spec.S) {
+		var mockCAPI *mocks.CAPI
+		var bw *buildWatcher
 
-	// Mock call to CAPI.
-	mockCAPI.On("PATCHBuild", "guid", successfulBuildStatus()).Return(nil)
+		it.Before(func() {
+			// Create mocks for CAPI client.
+			mockCAPI = new(mocks.CAPI)
 
-	// Create our simulated inputs.
-	oldBuild := &kpack.Build{}
-	newBuild := &kpack.Build{
-		Status: kpack.BuildStatus{
-			PodName: "fake-pod-name",
-		},
-	}
-	setGUIDOnLabel(newBuild, "guid")
-	markBuildSuccessful(newBuild)
+			// Create our object under test. Attach mock client.
+			bw = new(buildWatcher)
+			bw.client = mockCAPI
+		})
 
-	// Make call to function under test.
-	bw.UpdateFunc(oldBuild, newBuild)
+		when("build is successful", func() {
 
-	// Perform assertion.
-	mock.AssertExpectationsForObjects(t, mockCAPI)
+			it("updates capi with the sucess status", func() {
+
+				// Mock call to CAPI.
+				mockCAPI.On("PATCHBuild", "guid", successfulBuildStatus()).Return(nil)
+
+				// Create our simulated inputs.
+				oldBuild := &kpack.Build{}
+				newBuild := &kpack.Build{
+					Status: kpack.BuildStatus{
+						PodName: "fake-pod-name",
+					},
+				}
+				setGUIDOnLabel(newBuild, "guid")
+				markBuildSuccessful(newBuild)
+
+				// Make call to function under test.
+				bw.UpdateFunc(oldBuild, newBuild)
+
+				// Perform assertion.
+				mock.AssertExpectationsForObjects(t, mockCAPI)
+			})
+		})
+	})
 }
 
 func setGUIDOnLabel(b *kpack.Build, guid string) {
