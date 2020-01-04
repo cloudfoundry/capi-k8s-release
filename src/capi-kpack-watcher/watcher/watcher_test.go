@@ -14,36 +14,64 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockKubeClient struct {
-	mock.Mock
-}
-
 func TestUpdateFunc(t *testing.T) {
-	// Create mocks for CAPI client.
+	// Create mocks.
 	mockCAPI := new(mocks.CAPI)
+	mockKubeClient := new(mocks.Kubernetes)
 
-	// Create our object under test. Attach mock client.
+	// Create our object under test. Attach mock clients.
 	bw := new(buildWatcher)
 	bw.client = mockCAPI
+	bw.kubeClient = mockKubeClient
 
-	// Mock call to CAPI.
-	mockCAPI.On("PATCHBuild", "guid", successfulBuildStatus()).Return(nil)
+	const (
+		guid          = "guid"
+		podName       = "fake-pod-name"
+		containerName = "fake-container-name"
+		fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
+	)
 
-	// Create our simulated inputs.
-	oldBuild := &kpack.Build{}
-	newBuild := &kpack.Build{
-		Status: kpack.BuildStatus{
-			PodName: "fake-pod-name",
-		},
-	}
-	setGUIDOnLabel(newBuild, "guid")
-	markBuildSuccessful(newBuild)
+	t.Run("successful kpack build", func(t *testing.T) {
+		// Mock call to CAPI.
+		mockCAPI.On("PATCHBuild", guid, successfulBuildStatus()).Return(nil)
 
-	// Make call to function under test.
-	bw.UpdateFunc(oldBuild, newBuild)
+		// Create our simulated inputs.
+		oldBuild := &kpack.Build{}
+		newBuild := &kpack.Build{
+			Status: kpack.BuildStatus{
+				PodName: podName,
+			},
+		}
+		setGUIDOnLabel(newBuild, guid)
+		markBuildSuccessful(newBuild)
+
+		// Make call to function under test.
+		bw.UpdateFunc(oldBuild, newBuild)
+	})
+
+	t.Run("failed kpack build", func(t *testing.T) {
+		// Mock call to CAPI and Kubernetes.
+		mockCAPI.On("PATCHBuild", guid, failedBuildStatus("some error")).Return(nil)
+		mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
+
+		// Create our simulated inputs.
+		oldBuild := &kpack.Build{}
+		newBuild := &kpack.Build{
+			Status: kpack.BuildStatus{
+				PodName: podName,
+				// Container name correspond to the Steps in kpack.
+				StepsCompleted: []string{containerName},
+			},
+		}
+		setGUIDOnLabel(newBuild, guid)
+		markBuildFailed(newBuild)
+
+		// Make call to function under test.
+		bw.UpdateFunc(oldBuild, newBuild)
+	})
 
 	// Perform assertion.
-	mock.AssertExpectationsForObjects(t, mockCAPI)
+	mock.AssertExpectationsForObjects(t, mockCAPI, mockKubeClient)
 }
 
 func setGUIDOnLabel(b *kpack.Build, guid string) {
