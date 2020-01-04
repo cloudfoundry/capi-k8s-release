@@ -80,8 +80,8 @@ steps:  %+v
 }
 
 // NewBuildWatcher initializes a Watcher that watches for Builds in Kpack.
-func NewBuildWatcher(clientset *kpackclient.Clientset) Watcher {
-	factory := kpackinformer.NewSharedInformerFactory(clientset, 0)
+func NewBuildWatcher(c kpackclient.Interface) Watcher {
+	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
 	bw := &buildWatcher{
 		client:     capi.NewCAPIClient(),
