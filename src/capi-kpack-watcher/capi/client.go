@@ -34,6 +34,7 @@ func (c *client) PATCHBuild(guid string, status model.BuildStatus) error {
 
 	log.Printf("[PATCHBuild] Sent payload: %s\n", status.ToJSON())
 	log.Printf("[PATCHBuild] Response Status: %d\n", resp.StatusCode)
+
 	return nil
 }
 

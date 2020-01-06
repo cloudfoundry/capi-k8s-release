@@ -18,7 +18,7 @@ func (c *InClusterClient) GetContainerLogs(podName, containerName string) ([]byt
 // Kubernetes master. An in-cluster client is intended to be used within a
 // Kubernetes cluster. In other words, it is meant to be used inside a pod.
 // This means that it can only access resources within said cluster.
-func NewInClusterClient() Kubernetes {
+func NewInClusterClient() *InClusterClient {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -35,5 +35,5 @@ func NewInClusterClient() Kubernetes {
 // InClusterClient is a thin wrapper over the standard (client-go) Kubernetes
 // API. This implements our Kubernetes interface.
 type InClusterClient struct {
-	kubernetes.Interface
+	*kubernetes.Clientset
 }

@@ -38,6 +38,7 @@ func main() {
 	// minikube. Set it if you want to do that. Otherwise, the Kubernetes
 	// libraries try to use an incluster config, so it does not need to be set.
 	kubeconfig := os.Getenv("KUBECONFIG")
+
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		panic(err.Error())

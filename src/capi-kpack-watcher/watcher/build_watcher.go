@@ -79,11 +79,15 @@ func (bw *buildWatcher) Run() {
 	bw.informer.Run(stopper)
 }
 
+type kubeClient interface {
+	GetContainerLogs(podName, containerName string) ([]byte, error)
+}
+
 type buildWatcher struct {
 	client capi.CAPI // The watcher uses this client to talk to CAPI.
 
 	// The watcher uses this kubernetes client to talk to the Kubernetes master.
-	kubeClient kubernetes.Kubernetes
+	kubeClient kubeClient
 
 	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
 	// They are in this struct to abstract away the Informer boilerplate.
@@ -91,12 +95,13 @@ type buildWatcher struct {
 }
 
 func (bw *buildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
-	if build.GetLabels() == nil {
+	labels := build.GetLabels()
+	if labels == nil {
+		return true
+	} else if _, ok := labels[buildGUIDLabel]; !ok {
 		return true
 	}
-	if _, ok := build.GetLabels()[buildGUIDLabel]; !ok {
-		return true
-	}
+
 	return false
 }
 
@@ -125,6 +130,7 @@ func (bw *buildWatcher) handleFailedBuild(build *kpack.Build) {
 	// Retrieve the last container's logs. In kpack, the steps correspond
 	// to container names, so we want the last container's logs.
 	container := status.StepsCompleted[len(status.StepsCompleted)-1]
+
 	logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
 	if err != nil {
 		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
