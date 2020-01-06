@@ -1,61 +1,85 @@
 package watcher
 
 import (
-	"github.com/sclevine/spec"
+	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"capi_kpack_watcher/mocks"
 	"capi_kpack_watcher/model"
 
+	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	"github.com/sclevine/spec"
 	corev1 "k8s.io/api/core/v1"
 	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
-
-	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
-
-	"github.com/stretchr/testify/mock"
 )
 
-type MockKubeClient struct {
-	mock.Mock
-}
-
 func TestUpdateFunc(t *testing.T) {
-
 	spec.Run(t, "TestUpdateFunc", func(t *testing.T, when spec.G, it spec.S) {
-		var mockCAPI *mocks.CAPI
-		var bw *buildWatcher
+		const (
+			guid          = "guid"
+			podName       = "fake-pod-name"
+			containerName = "fake-container-name"
+			fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
+		)
+		var (
+			mockCAPI       *mocks.CAPI
+			mockKubeClient *mocks.Kubernetes
+			bw             *buildWatcher
+		)
 
 		it.Before(func() {
-			// Create mocks for CAPI client.
 			mockCAPI = new(mocks.CAPI)
+			mockKubeClient = new(mocks.Kubernetes)
 
-			// Create our object under test. Attach mock client.
 			bw = new(buildWatcher)
 			bw.client = mockCAPI
+			bw.kubeClient = mockKubeClient
+		})
+
+		it.After(func() {
+			mock.AssertExpectationsForObjects(t,
+				mockCAPI,
+				mockKubeClient,
+			)
 		})
 
 		when("build is successful", func() {
+			it.Before(func() {
+				mockCAPI.On("PATCHBuild", guid, successfulBuildStatus()).Return(nil)
+			})
 
-			it("updates capi with the sucess status", func() {
-
-				// Mock call to CAPI.
-				mockCAPI.On("PATCHBuild", "guid", successfulBuildStatus()).Return(nil)
-
-				// Create our simulated inputs.
+			it("updates capi with the success status", func() {
 				oldBuild := &kpack.Build{}
 				newBuild := &kpack.Build{
 					Status: kpack.BuildStatus{
-						PodName: "fake-pod-name",
+						PodName: podName,
 					},
 				}
-				setGUIDOnLabel(newBuild, "guid")
+				setGUIDOnLabel(newBuild, guid)
 				markBuildSuccessful(newBuild)
 
-				// Make call to function under test.
 				bw.UpdateFunc(oldBuild, newBuild)
+			})
+		})
 
-				// Perform assertion.
-				mock.AssertExpectationsForObjects(t, mockCAPI)
+		when("build fails", func() {
+			it.Before(func() {
+				mockCAPI.On("PATCHBuild", guid, failedBuildStatus("some error")).Return(nil)
+				mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
+			})
+
+			it("updates capi with the failed state and error message", func() {
+				oldBuild := &kpack.Build{}
+				newBuild := &kpack.Build{
+					Status: kpack.BuildStatus{
+						PodName: podName,
+						StepsCompleted: []string{containerName},
+					},
+				}
+				setGUIDOnLabel(newBuild, guid)
+				markBuildFailed(newBuild)
+
+				bw.UpdateFunc(oldBuild, newBuild)
 			})
 		})
 	})

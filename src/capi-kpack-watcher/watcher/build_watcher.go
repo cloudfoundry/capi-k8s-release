@@ -8,7 +8,6 @@ import (
 	"capi_kpack_watcher/kubernetes"
 	"capi_kpack_watcher/model"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
@@ -32,57 +31,26 @@ func (bw *buildWatcher) AddFunc(obj interface{}) {
 // UpdateFunc handles when Builds are updated.
 func (bw *buildWatcher) UpdateFunc(oldobj, newobj interface{}) {
 	build := newobj.(*kpack.Build)
-	status := build.Status
 
 	log.Printf(
 		`[UpdateFunc] Update to Build: %s
 status: %s
 steps:  %+v
 
-`, build.GetName(), spew.Sdump(status.Status), status.StepsCompleted)
+`, build.GetName(), spew.Sdump(build.Status.Status), build.Status.StepsCompleted)
 
-	if status.GetCondition("Succeeded").IsTrue() {
-		labels := build.GetLabels()
-		guid := labels[buildGUIDLabel]
-
-		model := model.BuildStatus{
-			State: buildStagedState,
-		}
-
-		if err := bw.client.PATCHBuild(guid, model); err != nil {
-			log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
-		}
-	} else if status.GetCondition("Succeeded").IsFalse() {
-		labels := build.GetLabels()
-		guid := labels[buildGUIDLabel]
-
-		model := model.BuildStatus{
-			State: buildFailedState,
-		}
-
-		// Retrieve the last container's logs. In kpack, the steps correspond
-		// to container names, so we want the last container's logs.
-		container := status.StepsCompleted[len(status.StepsCompleted)-1]
-		logs, err := bw.getContainerLogs(status.PodName, container)
-		if err != nil {
-			log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
-
-			model.Error = "Kpack build failed"
-		} else {
-			// Take the first word character to the end of the line to avoid ANSI color codes
-			regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
-			model.Error = string(regex.FindSubmatch(logs)[2])
-		}
-
-		if err := bw.client.PATCHBuild(guid, model); err != nil {
-			log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
-		}
-	}
+	c := build.Status.GetCondition("Succeeded")
+	if c.IsTrue() {
+		bw.handleSuccessfulBuild(build)
+	} else if c.IsFalse() {
+		bw.handleFailedBuild(build)
+	} // else { // c.IsUnknown()
+	// }
 }
 
 // NewBuildWatcher initializes a Watcher that watches for Builds in Kpack.
-func NewBuildWatcher(clientset *kpackclient.Clientset) Watcher {
-	factory := kpackinformer.NewSharedInformerFactory(clientset, 0)
+func NewBuildWatcher(c kpackclient.Interface) Watcher {
+	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
 	bw := &buildWatcher{
 		client:     capi.NewCAPIClient(),
@@ -112,16 +80,50 @@ type buildWatcher struct {
 	client capi.CAPI // The watcher uses this client to talk to CAPI.
 
 	// The watcher uses this kubernetes client to talk to the Kubernetes master.
-	kubeClient kubernetes.InClusterClient
+	kubeClient kubernetes.Kubernetes
 
 	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
 	// They are in this struct to abstract away the Informer boilerplate.
 	informer cache.SharedIndexInformer
 }
 
-func (bw *buildWatcher) getContainerLogs(podName, containerName string) ([]byte, error) {
-	// kubectl log cmd: k logs build-pod -n cf-workloads -c={failedStep} --ignore-errors
-	return bw.kubeClient.CoreV1().Pods("cf-workloads").GetLogs(podName, &v1.PodLogOptions{
-		Container: containerName,
-	}).Do().Raw()
+func (bw *buildWatcher) handleSuccessfulBuild(build *kpack.Build) {
+	labels := build.GetLabels()
+	guid := labels[buildGUIDLabel]
+
+	model := model.BuildStatus{
+		State: buildStagedState,
+	}
+
+	if err := bw.client.PATCHBuild(guid, model); err != nil {
+		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
+}
+
+func (bw *buildWatcher) handleFailedBuild(build *kpack.Build) {
+	labels := build.GetLabels()
+	guid := labels[buildGUIDLabel]
+	model := model.BuildStatus{
+		State: buildFailedState,
+	}
+
+	status := build.Status
+
+	// Retrieve the last container's logs. In kpack, the steps correspond
+	// to container names, so we want the last container's logs.
+	container := status.StepsCompleted[len(status.StepsCompleted)-1]
+	logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
+	if err != nil {
+		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
+
+		model.Error = "Kpack build failed"
+	} else {
+		// Take the first word character to the end of the line to avoid ANSI color codes
+		regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
+		model.Error = string(regex.FindSubmatch(logs)[2])
+	}
+
+	if err := bw.client.PATCHBuild(guid, model); err != nil {
+		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
 }
