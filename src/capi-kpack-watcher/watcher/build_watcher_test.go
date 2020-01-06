@@ -82,6 +82,23 @@ func TestUpdateFunc(t *testing.T) {
 				bw.UpdateFunc(oldBuild, newBuild)
 			})
 		})
+
+		when("a build does not have a cloudfoundry.org/build_guid", func() {
+			it("ignores it", func() {
+				oldBuild := &kpack.Build{}
+				newBuild := &kpack.Build{
+					Status: kpack.BuildStatus{
+						PodName: podName,
+					},
+				}
+				newBuild.SetLabels(nil)
+				markBuildSuccessful(newBuild)
+
+				bw.UpdateFunc(oldBuild, newBuild)
+
+				mockCAPI.AssertNotCalled(t, "PATCHBuild")
+			})
+		})
 	})
 }
 

@@ -39,13 +39,16 @@ steps:  %+v
 
 `, build.GetName(), spew.Sdump(build.Status.Status), build.Status.StepsCompleted)
 
+	if bw.isBuildGUIDMissing(build) {
+		return
+	}
+
 	c := build.Status.GetCondition("Succeeded")
 	if c.IsTrue() {
 		bw.handleSuccessfulBuild(build)
 	} else if c.IsFalse() {
 		bw.handleFailedBuild(build)
-	} // else { // c.IsUnknown()
-	// }
+	} // c.isUnknown() is also available for pending builds
 }
 
 // NewBuildWatcher initializes a Watcher that watches for Builds in Kpack.
@@ -85,6 +88,16 @@ type buildWatcher struct {
 	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
 	// They are in this struct to abstract away the Informer boilerplate.
 	informer cache.SharedIndexInformer
+}
+
+func (bw *buildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
+	if build.GetLabels() == nil {
+		return true
+	}
+	if _, ok := build.GetLabels()[buildGUIDLabel]; !ok {
+		return true
+	}
+	return false
 }
 
 func (bw *buildWatcher) handleSuccessfulBuild(build *kpack.Build) {
