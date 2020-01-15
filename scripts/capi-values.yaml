@@ -1,8 +1,8 @@
 image:
   capi:
-    repository: localhost:5000/capi
+    repository: "gcr.io/cf-networking-images/capi-k8s-release/capi"
   kpackWatcher:
-    repository: localhost:5000/capi-kpack-watcher
+    repository: "gcr.io/cf-networking-images/capi-k8s-release/capi-kpack-watcher"
 
 app_domains: []
 ccdb:

@@ -50,6 +50,8 @@ spec:
           #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+          - containerPort: 80
           volumeMounts:
           - name: server-sock
             mountPath: /data/cloud_controller_ng
@@ -76,6 +78,8 @@ spec:
             mountPath: /data/cloud_controller_ng
           - name: nginx-logs
             mountPath: /cloud_controller_ng
+          - name: nginx-certs
+            mountPath: /etc/nginx-certs
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -110,4 +114,8 @@ spec:
         secret:
           secretName: {{ .Values.eirini_tls_certs_secret_name }}
       {{- end }}
+      - name: nginx-certs
+        secret:
+          secretName: nginx-certs
+
 
