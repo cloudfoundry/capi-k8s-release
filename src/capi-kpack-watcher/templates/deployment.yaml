@@ -1,50 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-kpack-watcher
+  name: capi-kpack-watcher
   namespace: cf-system
   labels:
-{{ include "capi-k8s-release.labels" . | indent 4 }}
+    app.kubernetes.io/name: capi-kpack-watcher
+    app.kubernetes.io/instance: capi-kpack-watcher-0
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   strategy:
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ .Chart.Name }}-kpack-watcher
+      app.kubernetes.io/name: capi-kpack-watcher
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ .Chart.Name }}-kpack-watcher
+        app.kubernetes.io/name: capi-kpack-watcher
     spec:
       serviceAccountName: default
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
       containers:
-        - name: {{ .Chart.Name  }}-kpack-watcher
-          image: "{{ .Values.image.kpackWatcher.repository }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: capi-kpack-watcher
+          image: localhost:5000/capi-kpack-watcher
           env:
           - name: CAPI_HOST
             value: capi
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
