@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx
-  namespace: {{ .Release.Namespace }}
+  namespace: cf-system
 data:
   nginx.conf: |
     error_log /cloud_controller_ng/nginx-error.log error;
