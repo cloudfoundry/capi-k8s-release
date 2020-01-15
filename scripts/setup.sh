@@ -15,6 +15,8 @@ check_installed helm
 minikube addons enable registry
 minikube addons enable helm-tiller
 
+minikube start
+
 DAEMON_JSON="$HOME/.docker/daemon.json"
 
 # `read` returns non-zero when it reaches EOF, so disable error checking.
