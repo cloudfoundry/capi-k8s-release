@@ -1,14 +1,14 @@
 package watcher
 
 import (
-	"github.com/stretchr/testify/mock"
 	"testing"
 
-	"capi_kpack_watcher/mocks"
 	"capi_kpack_watcher/model"
+	"capi_kpack_watcher/watcher/mocks"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	"github.com/sclevine/spec"
+	"github.com/stretchr/testify/mock"
 	corev1 "k8s.io/api/core/v1"
 	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
 )
@@ -22,30 +22,30 @@ func TestUpdateFunc(t *testing.T) {
 			fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
 		)
 		var (
-			mockCAPI       *mocks.CAPI
-			mockKubeClient *mocks.Kubernetes
-			bw             *buildWatcher
+			buildUpdater   *mocks.BuildUpdater
+			mockKubeClient *mocks.KubeClient
+			bw             *BuildWatcher
 		)
 
 		it.Before(func() {
-			mockCAPI = new(mocks.CAPI)
-			mockKubeClient = new(mocks.Kubernetes)
+			buildUpdater = new(mocks.BuildUpdater)
+			mockKubeClient = new(mocks.KubeClient)
 
-			bw = new(buildWatcher)
-			bw.client = mockCAPI
+			bw = new(BuildWatcher)
+			bw.buildUpdater = buildUpdater
 			bw.kubeClient = mockKubeClient
 		})
 
 		it.After(func() {
 			mock.AssertExpectationsForObjects(t,
-				mockCAPI,
+				buildUpdater,
 				mockKubeClient,
 			)
 		})
 
 		when("build is successful", func() {
 			it.Before(func() {
-				mockCAPI.On("PATCHBuild", guid, successfulBuildStatus()).Return(nil)
+				buildUpdater.On("UpdateBuild", guid, successfulBuildStatus()).Return(nil)
 			})
 
 			it("updates capi with the success status", func() {
@@ -64,7 +64,7 @@ func TestUpdateFunc(t *testing.T) {
 
 		when("build fails", func() {
 			it.Before(func() {
-				mockCAPI.On("PATCHBuild", guid, failedBuildStatus("some error")).Return(nil)
+				buildUpdater.On("UpdateBuild", guid, failedBuildStatus("some error")).Return(nil)
 				mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
 			})
 
@@ -72,7 +72,7 @@ func TestUpdateFunc(t *testing.T) {
 				oldBuild := &kpack.Build{}
 				newBuild := &kpack.Build{
 					Status: kpack.BuildStatus{
-						PodName: podName,
+						PodName:        podName,
 						StepsCompleted: []string{containerName},
 					},
 				}
@@ -96,7 +96,7 @@ func TestUpdateFunc(t *testing.T) {
 
 				bw.UpdateFunc(oldBuild, newBuild)
 
-				mockCAPI.AssertNotCalled(t, "PATCHBuild")
+				buildUpdater.AssertNotCalled(t, "UpdateBuild")
 			})
 		})
 	})

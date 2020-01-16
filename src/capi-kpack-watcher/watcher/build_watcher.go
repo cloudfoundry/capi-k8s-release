@@ -22,14 +22,14 @@ const buildStagedState = "STAGED"
 const buildFailedState = "FAILED"
 
 // AddFunc handles when new Builds are detected.
-func (bw *buildWatcher) AddFunc(obj interface{}) {
+func (bw *BuildWatcher) AddFunc(obj interface{}) {
 	build := obj.(*kpack.Build)
 
 	log.Printf("[AddFunc] New Build: %s\n", build.GetName())
 }
 
 // UpdateFunc handles when Builds are updated.
-func (bw *buildWatcher) UpdateFunc(oldobj, newobj interface{}) {
+func (bw *BuildWatcher) UpdateFunc(oldobj, newobj interface{}) {
 	build := newobj.(*kpack.Build)
 
 	log.Printf(
@@ -51,12 +51,11 @@ steps:  %+v
 	} // c.isUnknown() is also available for pending builds
 }
 
-// NewBuildWatcher initializes a Watcher that watches for Builds in Kpack.
-func NewBuildWatcher(c kpackclient.Interface) Watcher {
+func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
 	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
-	bw := &buildWatcher{
-		client:     capi.NewCAPIClient(),
+	bw := &BuildWatcher{
+		buildUpdater:     capi.NewCAPIClient(),
 		kubeClient: kubernetes.NewInClusterClient(),
 		informer:   factory.Build().V1alpha1().Builds().Informer(),
 	}
@@ -72,29 +71,34 @@ func NewBuildWatcher(c kpackclient.Interface) Watcher {
 
 // Run runs the informer and begins watching for Builds. This can be stopped by
 // sending to the stopped channel.
-func (bw *buildWatcher) Run() {
+func (bw *BuildWatcher) Run() {
 	stopper := make(chan struct{})
 	defer close(stopper)
 
 	bw.informer.Run(stopper)
 }
 
-type kubeClient interface {
+//go:generate mockery -case snake -name KubeClient
+type KubeClient interface {
 	GetContainerLogs(podName, containerName string) ([]byte, error)
 }
 
-type buildWatcher struct {
-	client capi.CAPI // The watcher uses this client to talk to CAPI.
+type BuildWatcher struct {
+	buildUpdater BuildUpdater // The watcher uses this client to talk to CAPI.
 
 	// The watcher uses this kubernetes client to talk to the Kubernetes master.
-	kubeClient kubeClient
+	kubeClient KubeClient
 
 	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
 	// They are in this struct to abstract away the Informer boilerplate.
 	informer cache.SharedIndexInformer
 }
+//go:generate mockery -case snake -name BuildUpdater
+type BuildUpdater interface {
+	UpdateBuild(guid string, model model.BuildStatus) error
+}
 
-func (bw *buildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
+func (bw *BuildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
 	labels := build.GetLabels()
 	if labels == nil {
 		return true
@@ -105,7 +109,7 @@ func (bw *buildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
 	return false
 }
 
-func (bw *buildWatcher) handleSuccessfulBuild(build *kpack.Build) {
+func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[buildGUIDLabel]
 
@@ -113,12 +117,12 @@ func (bw *buildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 		State: buildStagedState,
 	}
 
-	if err := bw.client.PATCHBuild(guid, model); err != nil {
+	if err := bw.buildUpdater.UpdateBuild(guid, model); err != nil {
 		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
 	}
 }
 
-func (bw *buildWatcher) handleFailedBuild(build *kpack.Build) {
+func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[buildGUIDLabel]
 	model := model.BuildStatus{
@@ -142,7 +146,7 @@ func (bw *buildWatcher) handleFailedBuild(build *kpack.Build) {
 		model.Error = string(regex.FindSubmatch(logs)[2])
 	}
 
-	if err := bw.client.PATCHBuild(guid, model); err != nil {
+	if err := bw.buildUpdater.UpdateBuild(guid, model); err != nil {
 		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
 	}
 }

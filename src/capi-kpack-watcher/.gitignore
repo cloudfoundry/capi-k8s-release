@@ -6,6 +6,7 @@
 *.so
 *.dylib
 bin
+capi_kpack_watcher
 
 # Test binary, build with `go test -c`
 *.test
