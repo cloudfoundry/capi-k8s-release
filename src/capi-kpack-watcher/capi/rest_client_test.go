@@ -2,22 +2,23 @@ package capi
 
 import (
 	"bytes"
-	"github.com/sclevine/spec"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/sclevine/spec"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRestClient_PATCH(t *testing.T) {
 	spec.Run(t, "TestRestClient_PATCH", func(t *testing.T, when spec.G, it spec.S) {
 		var (
-			restClient     RestClient
+			restClient RestClient
 			testServer *httptest.Server
-			authToken string
-			body io.Reader
+			authToken  string
+			body       io.Reader
 		)
 
 		it.Before(func() {
@@ -38,7 +39,7 @@ func TestRestClient_PATCH(t *testing.T) {
 
 				w.WriteHeader(http.StatusOK)
 			}))
-            authToken = "valid-auth-token-returned-by-uaa"
+			authToken = "valid-auth-token-returned-by-uaa"
 			restClient = RestClient{
 				client: testServer.Client(),
 			}

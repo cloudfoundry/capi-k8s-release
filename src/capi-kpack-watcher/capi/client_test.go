@@ -5,10 +5,11 @@ import (
 	"capi_kpack_watcher/capi/mocks"
 	"capi_kpack_watcher/model"
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/sclevine/spec"
 )
@@ -60,7 +61,7 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 
 			it("errors", func() {
-				assert.Error(t, client.UpdateBuild(guid,status))
+				assert.Error(t, client.UpdateBuild(guid, status))
 			})
 		})
 
@@ -73,7 +74,7 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 
 			it("errors", func() {
-				assert.Error(t, client.UpdateBuild(guid,status))
+				assert.Error(t, client.UpdateBuild(guid, status))
 			})
 		})
 	})
