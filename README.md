@@ -1,7 +1,10 @@
+disclaimer: this Repo is very new, experimental and not yet tested to the degree we'd like or continuously integrated
+
 ### Pre-requisites
 
 1. `minikube` (`brew install minikube`)
-1. `helm` (`brew install kubernetes-helm`) We require helm 3.0.0+ 
+1. `helm` (`brew install kubernetes-helm`) We require helm 3.0.0+ to install the
+   postgres & minio data stores in your minikube.
 1. To ensure cloud controller submodule is up-to-date run `git submodule update --init`
 1. Run `./scripts/setup.sh` to enable the minikube registry and add it to your
    local docker daemon's list of insecure registries.

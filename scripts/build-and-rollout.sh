@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 set -ex
-SCRIPTS_DIR=$(dirname $0)
-# Build the capi image and push it to minkube
-${SCRIPTS_DIR}/deploy.sh
 
-# Restart the capi deployment with the new image and wait until the restart is complete
-CAPI_JOBS="deployment/capi-api-server deployment/capi-worker deployment/capi-clock deployment/capi-deployment-updater"
-kubectl rollout restart ${CAPI_JOBS} -n cf-system
-for job in ${CAPI_JOBS}; do
-  kubectl rollout status "${job}" -w -n cf-system
-done
+SCRIPT_DIR=$(dirname $0)
+REPO_BASE_DIR="${SCRIPT_DIR}/.."
+
+${SCRIPT_DIR}/build.sh
+
+docker push $(minikube ip):5000/capi
+
+${SCRIPT_DIR}/rollout.sh
