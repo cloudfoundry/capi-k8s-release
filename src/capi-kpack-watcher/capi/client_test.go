@@ -48,7 +48,7 @@ func TestClientUpdateBuild(t *testing.T) {
 				assert.NoError(t, client.UpdateBuild(guid, status))
 				client.uaaClient.(*mocks.TokenFetcher).AssertCalled(t, "Fetch")
 				client.restClient.(*mocks.Rest).AssertCalled(t, "Patch",
-					"https://api.capi.host/v3/internal/build/guid",
+					"https://api.capi.host/v3/builds/guid",
 					"valid-token",
 					bytes.NewReader(status.ToJSON()),
 				)

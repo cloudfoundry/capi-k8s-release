@@ -60,7 +60,7 @@ func (c *Client) UpdateBuild(guid string, status model.BuildStatus) error {
 	json := status.ToJSON()
 
 	resp, err := c.restClient.Patch(
-		fmt.Sprintf("https://api.%s/v3/internal/build/%s", c.host, guid),
+		fmt.Sprintf("https://api.%s/v3/builds/%s", c.host, guid),
 		token,
 		bytes.NewReader(json),
 	)

@@ -2,6 +2,7 @@ package capi
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -23,6 +24,7 @@ func TestRestClient_PATCH(t *testing.T) {
 
 		it.Before(func() {
 			status := []byte(`{"status":"SUCCESS"}`)
+			authToken = "valid-auth-token-returned-by-uaa"
 
 			body = bytes.NewReader(status)
 			testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,22 +36,22 @@ func TestRestClient_PATCH(t *testing.T) {
 				}
 				assert.Equal(t, b, status)
 
-				assert.Equal(t, r.Header.Get("Authorization"), authToken)
+				assert.Equal(t, r.Header.Get("Authorization"), fmt.Sprintf("Bearer %s", authToken))
 				assert.Equal(t, r.Header.Get("Content-Type"), "application/json")
 
 				w.WriteHeader(http.StatusOK)
 			}))
-			authToken = "valid-auth-token-returned-by-uaa"
+
 			restClient = RestClient{
 				client: testServer.Client(),
 			}
 		})
 
-		when("request is valid", func() {
-			it.After(func() {
-				testServer.Close()
-			})
+		it.After(func() {
+			testServer.Close()
+		})
 
+		when("request is valid", func() {
 			it("responds with StatusOK returned from CAPI", func() {
 				response, err := restClient.Patch(testServer.URL, authToken, body)
 				assert.Equal(t, http.StatusOK, response.StatusCode)
