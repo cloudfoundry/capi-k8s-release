@@ -21,6 +21,9 @@ the approach we use to install them.
 
 1. `minikube start` to make sure `minikube` is up and running
 1. `./scripts/deploy.sh` to deploy the dependencies and CAPI
+1. Optionally, you can supply custom configuration as an additional argument.  E.g.:
+        `./scripts/deploy.sh my-custom-values.yaml`.  
+        See an example of custom configuration here: [custom-values.yml](https://github.com/cloudfoundry/capi-k8s-release/blob/master/scripts/custom-values.yaml)
 
 
 ### Rolling out changes to CAPI
@@ -28,6 +31,8 @@ the approach we use to install them.
 1. `./scripts/build-and-rollout-capi.sh` will take the `cloud_controller_ng` code in
    the `src/cloud_controller_ng` submodule, build a docker image with it, and
    roll the new image out to the `minikube` cluster.
+1. Optionally, you can supply custom configuration as an additional argument.  E.g.:
+        `./scripts/build-and-rollout-capi.sh my-custom-values.yaml`.  
 
 ### Known Issues
 

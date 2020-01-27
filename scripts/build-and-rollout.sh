@@ -7,6 +7,13 @@ REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
 ${SCRIPT_DIR}/build.sh
 
-docker push $(minikube ip):5000/capi
+docker push localhost:5000/capi
 
-${SCRIPT_DIR}/rollout.sh
+if [ -n "$1" ]
+then
+	${SCRIPT_DIR}/rollout.sh $1 
+else
+	${SCRIPT_DIR}/rollout.sh
+fi
+
+
