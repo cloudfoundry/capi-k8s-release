@@ -2,7 +2,7 @@ package capi
 
 import (
 	"bytes"
-	"capi_kpack_watcher/model"
+	"capi_kpack_watcher/capi_model"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -51,13 +51,13 @@ type Client struct {
 	uaaClient  TokenFetcher
 }
 
-func (c *Client) UpdateBuild(guid string, status model.BuildStatus) error {
+func (c *Client) UpdateBuild(guid string, build capi_model.Build) error {
 	token, err := c.uaaClient.Fetch()
 	if err != nil {
 		return err
 	}
 
-	json := status.ToJSON()
+	json := build.ToJSON()
 
 	resp, err := c.restClient.Patch(
 		fmt.Sprintf("https://api.%s/v3/builds/%s", c.host, guid),
@@ -69,7 +69,7 @@ func (c *Client) UpdateBuild(guid string, status model.BuildStatus) error {
 	}
 
 	log.Printf("[CAPI/UpdateBuild] Sent payload: %s\n", json)
-	log.Printf("[CAPI/UpdateBuild] Response status: %d\n", resp.StatusCode)
+	log.Printf("[CAPI/UpdateBuild] Response build: %d\n", resp.StatusCode)
 
 	return nil
 }

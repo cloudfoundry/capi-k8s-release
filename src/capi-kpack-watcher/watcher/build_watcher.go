@@ -5,8 +5,8 @@ import (
 	"regexp"
 
 	"capi_kpack_watcher/capi"
+	"capi_kpack_watcher/capi_model"
 	"capi_kpack_watcher/kubernetes"
-	"capi_kpack_watcher/model"
 
 	"k8s.io/client-go/tools/cache"
 
@@ -17,9 +17,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-const buildGUIDLabel = "cloudfoundry.org/build_guid"
-const buildStagedState = "STAGED"
-const buildFailedState = "FAILED"
+const BuildGUIDLabel = "cloudfoundry.org/build_guid"
 
 // AddFunc handles when new Builds are detected.
 func (bw *BuildWatcher) AddFunc(obj interface{}) {
@@ -51,48 +49,6 @@ steps:  %+v
 	} // c.isUnknown() is also available for pending builds
 }
 
-func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
-	labels := build.GetLabels()
-	guid := labels[buildGUIDLabel]
-
-	model := model.BuildStatus{
-		State: buildStagedState,
-	}
-
-	if err := bw.buildUpdater.UpdateBuild(guid, model); err != nil {
-		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
-	}
-}
-
-func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
-	labels := build.GetLabels()
-	guid := labels[buildGUIDLabel]
-	model := model.BuildStatus{
-		State: buildFailedState,
-	}
-
-	status := build.Status
-
-	// Retrieve the last container's logs. In kpack, the steps correspond
-	// to container names, so we want the last container's logs.
-	container := status.StepsCompleted[len(status.StepsCompleted)-1]
-
-	logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
-	if err != nil {
-		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
-
-		model.Error = "Kpack build failed"
-	} else {
-		// Take the first word character to the end of the line to avoid ANSI color codes
-		regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
-		model.Error = string(regex.FindSubmatch(logs)[2])
-	}
-
-	if err := bw.buildUpdater.UpdateBuild(guid, model); err != nil {
-		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
-	}
-}
-
 func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
 	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
@@ -115,7 +71,7 @@ func isBuildGUIDMissing(build *kpack.Build) bool {
 	labels := build.GetLabels()
 	if labels == nil {
 		return true
-	} else if _, ok := labels[buildGUIDLabel]; !ok {
+	} else if _, ok := labels[BuildGUIDLabel]; !ok {
 		return true
 	}
 
@@ -149,5 +105,56 @@ type BuildWatcher struct {
 
 //go:generate mockery -case snake -name BuildUpdater
 type BuildUpdater interface {
-	UpdateBuild(guid string, model model.BuildStatus) error
+	UpdateBuild(guid string, capi_model capi_model.Build) error
+}
+
+func (bw *BuildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
+	labels := build.GetLabels()
+	if labels == nil {
+		return true
+	} else if _, ok := labels[BuildGUIDLabel]; !ok {
+		return true
+	}
+
+	return false
+}
+
+func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
+	labels := build.GetLabels()
+	guid := labels[BuildGUIDLabel]
+
+	capi_model := capi_model.NewBuild(build)
+
+	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {
+		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
+}
+
+func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
+	labels := build.GetLabels()
+	guid := labels[BuildGUIDLabel]
+	capi_model := capi_model.Build{
+		State: capi_model.BuildFailedState,
+	}
+
+	status := build.Status
+
+	// Retrieve the last container's logs. In kpack, the steps correspond
+	// to container names, so we want the last container's logs.
+	container := status.StepsCompleted[len(status.StepsCompleted)-1]
+
+	logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
+	if err != nil {
+		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
+
+		capi_model.Error = "Kpack build failed"
+	} else {
+		// Take the first word character to the end of the line to avoid ANSI color codes
+		regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
+		capi_model.Error = string(regex.FindSubmatch(logs)[2])
+	}
+
+	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {
+		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
 }

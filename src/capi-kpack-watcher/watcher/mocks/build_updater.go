@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	model "capi_kpack_watcher/model"
+	model "capi_kpack_watcher/capi_model"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -14,11 +14,11 @@ type BuildUpdater struct {
 }
 
 // UpdateBuild provides a mock function with given fields: guid, _a1
-func (_m *BuildUpdater) UpdateBuild(guid string, _a1 model.BuildStatus) error {
+func (_m *BuildUpdater) UpdateBuild(guid string, _a1 model.Build) error {
 	ret := _m.Called(guid, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, model.BuildStatus) error); ok {
+	if rf, ok := ret.Get(0).(func(string, model.Build) error); ok {
 		r0 = rf(guid, _a1)
 	} else {
 		r0 = ret.Error(0)

@@ -3,7 +3,7 @@ package capi
 import (
 	"bytes"
 	"capi_kpack_watcher/capi/mocks"
-	"capi_kpack_watcher/model"
+	"capi_kpack_watcher/capi_model"
 	"errors"
 	"net/http"
 	"testing"
@@ -21,7 +21,7 @@ func TestClientUpdateBuild(t *testing.T) {
 		)
 		var (
 			client *Client
-			status model.BuildStatus
+			status capi_model.Build
 		)
 
 		it.Before(func() {
@@ -37,7 +37,7 @@ func TestClientUpdateBuild(t *testing.T) {
 
 		when("successfully updates", func() {
 			it.Before(func() {
-				status = model.BuildStatus{State: "SUCCESS"}
+				status = capi_model.Build{State: "SUCCESS"}
 				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				client.restClient.(*mocks.Rest).
 					On("Patch", mock.Anything, mock.Anything, mock.Anything).

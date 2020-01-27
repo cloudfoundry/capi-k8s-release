@@ -3,7 +3,7 @@ package watcher
 import (
 	"testing"
 
-	"capi_kpack_watcher/model"
+	"capi_kpack_watcher/capi_model"
 	"capi_kpack_watcher/watcher/mocks"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
@@ -19,6 +19,7 @@ func TestUpdateFunc(t *testing.T) {
 			guid          = "guid"
 			podName       = "fake-pod-name"
 			containerName = "fake-container-name"
+			imageRef      = "fake-image-ref"
 			fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
 		)
 		var (
@@ -44,27 +45,31 @@ func TestUpdateFunc(t *testing.T) {
 		})
 
 		when("build is successful", func() {
+			var newSuccessfulBuild *kpack.Build
 			it.Before(func() {
-				buildUpdater.On("UpdateBuild", guid, successfulBuildStatus()).Return(nil)
+				newSuccessfulBuild = &kpack.Build{
+					Status: kpack.BuildStatus{
+						LatestImage: imageRef,
+					},
+				}
+				buildUpdater.
+					On("UpdateBuild", guid, capi_model.NewBuild(newSuccessfulBuild)).
+					Return(nil).
+					Arguments.Assert(t, guid, capi_model.NewBuild(newSuccessfulBuild))
 			})
 
 			it("updates capi with the success status", func() {
 				oldBuild := &kpack.Build{}
-				newBuild := &kpack.Build{
-					Status: kpack.BuildStatus{
-						PodName: podName,
-					},
-				}
-				setGUIDOnLabel(newBuild, guid)
-				markBuildSuccessful(newBuild)
+				setGUIDOnLabel(newSuccessfulBuild, guid)
+				markBuildSuccessful(newSuccessfulBuild)
 
-				bw.UpdateFunc(oldBuild, newBuild)
+				bw.UpdateFunc(oldBuild, newSuccessfulBuild)
 			})
 		})
 
 		when("build fails", func() {
 			it.Before(func() {
-				buildUpdater.On("UpdateBuild", guid, failedBuildStatus("some error")).Return(nil)
+				buildUpdater.On("UpdateBuild", guid, failedBuild("some error")).Return(nil)
 				mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
 			})
 
@@ -108,7 +113,7 @@ func setGUIDOnLabel(b *kpack.Build, guid string) {
 		labels = make(map[string]string)
 	}
 
-	labels[buildGUIDLabel] = guid
+	labels[BuildGUIDLabel] = guid
 
 	b.SetLabels(labels)
 }
@@ -131,15 +136,9 @@ func markBuildFailed(b *kpack.Build) {
 	}
 }
 
-func successfulBuildStatus() model.BuildStatus {
-	return model.BuildStatus{
-		State: buildStagedState,
-	}
-}
-
-func failedBuildStatus(msg string) model.BuildStatus {
-	return model.BuildStatus{
-		State: buildFailedState,
+func failedBuild(msg string) capi_model.Build {
+	return capi_model.Build{
+		State: capi_model.BuildFailedState,
 		Error: msg,
 	}
 }
