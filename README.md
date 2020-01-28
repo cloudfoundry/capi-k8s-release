@@ -1,4 +1,5 @@
-disclaimer: this Repo is very new, experimental and not yet tested to the degree we'd like or continuously integrated
+### Disclaimer
+This repo is very new, experimental, and not yet continuously integrated or tested to the degree we'd like.
 
 ### Pre-requisites
 
