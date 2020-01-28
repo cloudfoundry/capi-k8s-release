@@ -39,7 +39,7 @@ steps:  %+v
 
 `, build.GetName(), spew.Sdump(build.Status.Status), build.Status.StepsCompleted)
 
-	if bw.isBuildGUIDMissing(build) {
+	if isBuildGUIDMissing(build) {
 		return
 	}
 
@@ -99,7 +99,7 @@ type BuildUpdater interface {
 	UpdateBuild(guid string, model model.BuildStatus) error
 }
 
-func (bw *BuildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
+func isBuildGUIDMissing(build *kpack.Build) bool {
 	labels := build.GetLabels()
 	if labels == nil {
 		return true
