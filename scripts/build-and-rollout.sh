@@ -5,6 +5,8 @@ set -ex
 SCRIPT_DIR=$(dirname $0)
 REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
+eval $(minikube docker-env)
+
 ${SCRIPT_DIR}/build.sh
 
 docker push localhost:5000/capi
