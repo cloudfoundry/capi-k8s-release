@@ -7,10 +7,11 @@ import (
 	"capi_kpack_watcher/watcher/mocks"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	kpackcore "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/sclevine/spec"
 	"github.com/stretchr/testify/mock"
-	corev1 "k8s.io/api/core/v1"
-	duckv1alpha1 "knative.dev/pkg/apis/duck/v1alpha1"
 )
 
 func TestUpdateFunc(t *testing.T) {
@@ -119,18 +120,18 @@ func setGUIDOnLabel(b *kpack.Build, guid string) {
 }
 
 func markBuildSuccessful(b *kpack.Build) {
-	b.Status.Conditions = duckv1alpha1.Conditions{
-		duckv1alpha1.Condition{
-			Type:   duckv1alpha1.ConditionSucceeded,
+	b.Status.Conditions = kpackcore.Conditions{
+		kpackcore.Condition{
+			Type:   kpackcore.ConditionSucceeded,
 			Status: corev1.ConditionTrue,
 		},
 	}
 }
 
 func markBuildFailed(b *kpack.Build) {
-	b.Status.Conditions = duckv1alpha1.Conditions{
-		duckv1alpha1.Condition{
-			Type:   duckv1alpha1.ConditionSucceeded,
+	b.Status.Conditions = kpackcore.Conditions{
+		kpackcore.Condition{
+			Type:   kpackcore.ConditionSucceeded,
 			Status: corev1.ConditionFalse,
 		},
 	}
