@@ -51,65 +51,6 @@ steps:  %+v
 	} // c.isUnknown() is also available for pending builds
 }
 
-func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
-	factory := kpackinformer.NewSharedInformerFactory(c, 0)
-
-	bw := &BuildWatcher{
-		buildUpdater: capi.NewCAPIClient(),
-		kubeClient:   kubernetes.NewInClusterClient(),
-		informer:     factory.Build().V1alpha1().Builds().Informer(),
-	}
-
-	// TODO: ignore added builds at watcher startup
-	bw.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    bw.AddFunc,
-		UpdateFunc: bw.UpdateFunc,
-	})
-
-	return bw
-}
-
-// Run runs the informer and begins watching for Builds. This can be stopped by
-// sending to the stopped channel.
-func (bw *BuildWatcher) Run() {
-	stopper := make(chan struct{})
-	defer close(stopper)
-
-	bw.informer.Run(stopper)
-}
-
-//go:generate mockery -case snake -name KubeClient
-type KubeClient interface {
-	GetContainerLogs(podName, containerName string) ([]byte, error)
-}
-
-type BuildWatcher struct {
-	buildUpdater BuildUpdater // The watcher uses this client to talk to CAPI.
-
-	// The watcher uses this kubernetes client to talk to the Kubernetes master.
-	kubeClient KubeClient
-
-	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
-	// They are in this struct to abstract away the Informer boilerplate.
-	informer cache.SharedIndexInformer
-}
-
-//go:generate mockery -case snake -name BuildUpdater
-type BuildUpdater interface {
-	UpdateBuild(guid string, model model.BuildStatus) error
-}
-
-func isBuildGUIDMissing(build *kpack.Build) bool {
-	labels := build.GetLabels()
-	if labels == nil {
-		return true
-	} else if _, ok := labels[buildGUIDLabel]; !ok {
-		return true
-	}
-
-	return false
-}
-
 func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[buildGUIDLabel]
@@ -150,4 +91,63 @@ func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 	if err := bw.buildUpdater.UpdateBuild(guid, model); err != nil {
 		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
 	}
+}
+
+func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
+	factory := kpackinformer.NewSharedInformerFactory(c, 0)
+
+	bw := &BuildWatcher{
+		buildUpdater: capi.NewCAPIClient(),
+		kubeClient:   kubernetes.NewInClusterClient(),
+		informer:     factory.Build().V1alpha1().Builds().Informer(),
+	}
+
+	// TODO: ignore added builds at watcher startup
+	bw.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    bw.AddFunc,
+		UpdateFunc: bw.UpdateFunc,
+	})
+
+	return bw
+}
+
+func isBuildGUIDMissing(build *kpack.Build) bool {
+	labels := build.GetLabels()
+	if labels == nil {
+		return true
+	} else if _, ok := labels[buildGUIDLabel]; !ok {
+		return true
+	}
+
+	return false
+}
+
+// Run runs the informer and begins watching for Builds. This can be stopped by
+// sending to the stopped channel.
+func (bw *BuildWatcher) Run() {
+	stopper := make(chan struct{})
+	defer close(stopper)
+
+	bw.informer.Run(stopper)
+}
+
+//go:generate mockery -case snake -name KubeClient
+type KubeClient interface {
+	GetContainerLogs(podName, containerName string) ([]byte, error)
+}
+
+type BuildWatcher struct {
+	buildUpdater BuildUpdater // The watcher uses this client to talk to CAPI.
+
+	// The watcher uses this kubernetes client to talk to the Kubernetes master.
+	kubeClient KubeClient
+
+	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
+	// They are in this struct to abstract away the Informer boilerplate.
+	informer cache.SharedIndexInformer
+}
+
+//go:generate mockery -case snake -name BuildUpdater
+type BuildUpdater interface {
+	UpdateBuild(guid string, model model.BuildStatus) error
 }
