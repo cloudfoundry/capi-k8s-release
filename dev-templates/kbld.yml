@@ -1,0 +1,14 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Sources
+sources:
+  - image: cloudfoundry/cloud-controller-ng
+    path: src/cloud_controller_ng
+
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageDestinations
+destinations:
+  - image: cloudfoundry/cloud-controller-ng
+    newImage: #@ data.values.kbld.destination

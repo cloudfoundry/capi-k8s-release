@@ -26,7 +26,7 @@ spec:
           workingDir: "/cloud_controller_ng"
           command: ["/usr/local/bin/bundle"]
           args: ["exec", "rake", "clock:start"]
-          image: localhost:5000/capi
+          image: #@ data.values.image
           imagePullPolicy: Always
           volumeMounts:
           - name: cloud-controller-ng-yaml

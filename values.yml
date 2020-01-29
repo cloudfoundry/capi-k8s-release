@@ -2,10 +2,7 @@
 ---
 replicaCount: 1
 
-image:
-  repository: ""
-  tag: latest
-  pullPolicy: Always
+image: cloudfoundry/cloud-controller-ng
 
 nginx:
   image:
@@ -104,3 +101,6 @@ apiServer:
       Qv9xehvYLNuXDjluVRXneVpnRmC6XDAMAgT90qfZvktKj3KwLIZCdBczH9Kflhsr
       2Xru1Dw19HiJCfX+ZotYMNOhx92qTiL0ELlJjqeu8c0bdAo0tuYYew==
       -----END CERTIFICATE-----
+
+kbld:
+  destination:

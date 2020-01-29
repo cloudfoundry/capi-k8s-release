@@ -21,10 +21,5 @@ helm -n cf-system upgrade --install capi-database stable/postgresql -f "${SCRIPT
 helm -n cf-system upgrade --install capi-blobstore stable/minio
 
 
-if [ -n "$1" ]
-then
-	${SCRIPT_DIR}/build-and-rollout.sh $1 
-else
-	${SCRIPT_DIR}/build-and-rollout.sh
-fi
+${SCRIPT_DIR}/rollout.sh "$@"
 
