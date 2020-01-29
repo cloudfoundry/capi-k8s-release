@@ -23,16 +23,16 @@ spec:
       imagePullSecrets: #@ data.values.imagePullSecrets
       initContainers:
         - name: pre-start
-          image: localhost:5000/capi
+          image: #@ data.values.image.repository
           imagePullPolicy: Always
           command:
-          - /cloud_controller_ng/pre-start.sh
+          - /cloud_controller_ng/setup_database.sh
           volumeMounts:
           - name: cloud-controller-ng-yaml
             mountPath: /config
       containers:
         - name: capi-api-server
-          image: localhost:5000/capi
+          image: #@ data.values.image.repository
           imagePullPolicy: Always
           volumeMounts:
           - name: server-sock

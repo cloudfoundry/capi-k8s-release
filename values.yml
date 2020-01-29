@@ -3,7 +3,7 @@
 replicaCount: 1
 
 image:
-  repository: ""
+  repository: cloudfoundry/capi:cloud-controller-ng@sha256:18fa3b123cc18f361cab6efa733643a2c6ae2fe456764076b63c4e684de34127
   tag: latest
   pullPolicy: Always
 
