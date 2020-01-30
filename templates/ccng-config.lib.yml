@@ -123,7 +123,7 @@ login:
 #! TODO: change the UAA's Kube DNS name when the service is named correctly later
 uaa:
   url: #@ "https://uaa.{}".format(data.values.system_domain)
-  internal_url: http://uaa:8080 #! does this work without a namespace?
+  internal_url: http://uaa.cf-system.svc.cluster.local:8080
   resource_id: cloud_controller,cloud_controller_service_permissions
   client_timeout: 60
   ca_file: /config/uaa/certs/uaa.crt
@@ -326,13 +326,13 @@ diego:
   use_privileged_containers_for_staging: false
 
 opi:
-  url: "https://eirini:8085"
+  url: "https://eirini.cf-system.svc.cluster.local:8085"
   opi_staging: true
   enabled: true
   cc_uploader_url: "https://TODO.TODO"
-  ca_file: /config/opi/certs/opi.ca
-  client_cert_file: /config/opi/certs/opi.crt
-  client_key_file: /config/opi/certs/opi.key
+  ca_file: /config/eirini/certs/tls.ca
+  client_cert_file: /config/eirini/certs/tls.crt
+  client_key_file: /config/eirini/certs/tls.key
 
 perm:
   enabled: false
