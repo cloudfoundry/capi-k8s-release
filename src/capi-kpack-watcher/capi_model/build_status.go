@@ -19,11 +19,11 @@ type Build struct {
 }
 
 type Lifecycle struct {
-	Type string        `json:type`
+	Type string        `json:"type"`
 	Data LifecycleData `json:"data"`
 }
 type LifecycleData struct {
-	Image string `json:image`
+	Image string `json:"image"`
 }
 
 func (b *Build) ToJSON() []byte {
