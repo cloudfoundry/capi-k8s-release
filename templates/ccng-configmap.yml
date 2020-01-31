@@ -7,5 +7,7 @@ kind: ConfigMap
 metadata:
   name: cloud-controller-ng-yaml
   namespace: #@ data.values.namespace
+  annotations:
+    kapp.k14s.io/versioned: ""
 data:
   cloud_controller_ng.yml: #@ yaml.encode(ccng_config())

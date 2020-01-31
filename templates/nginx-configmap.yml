@@ -5,6 +5,8 @@ kind: ConfigMap
 metadata:
   name: nginx
   namespace: #@ data.values.namespace
+  annotations:
+    kapp.k14s.io/versioned: ""
 data:
   nginx.conf: |
     error_log /cloud_controller_ng/nginx-error.log error;
