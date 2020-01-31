@@ -31,12 +31,14 @@ spec:
           volumeMounts:
           - name: cloud-controller-ng-yaml
             mountPath: /config
-          - name: opi-secrets
-            mountPath: /config/opi/certs
+          #@ if/end data.values.eirini.serverCerts.secretName:
+          - name: eirini-certs
+            mountPath: /config/eirini/certs
       volumes:
       - name: cloud-controller-ng-yaml
         configMap:
           name: cloud-controller-ng-yaml
-      - name: opi-secrets
+      #@ if/end data.values.eirini.serverCerts.secretName:
+      - name: eirini-certs
         secret:
-          secretName: opi-secrets
+          secretName: #@ data.values.eirini.serverCerts.secretName
