@@ -1,5 +1,6 @@
+#@ load("@ytt:data", "data")
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: cf-system
+  name: #@ data.values.namespace
 

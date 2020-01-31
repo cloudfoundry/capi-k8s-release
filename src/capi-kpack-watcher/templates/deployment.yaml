@@ -7,7 +7,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: capi-kpack-watcher
-  namespace: cf-system
+  namespace: #@ data.values.namespace
   labels:
     app.kubernetes.io/name: capi-kpack-watcher
     app.kubernetes.io/instance: capi-kpack-watcher-0
@@ -48,7 +48,7 @@ metadata:
   name: kpack-watcher-binding
 subjects:
 - kind: ServiceAccount
-  namespace: cf-system
+  namespace: #@ data.values.namespace
   name: default
 roleRef:
   kind: ClusterRole
@@ -72,7 +72,7 @@ metadata:
   namespace: cf-workloads
 subjects:
 - kind: ServiceAccount
-  namespace: cf-system
+  namespace: #@ data.values.namespace
   name: default
 roleRef:
   kind: Role

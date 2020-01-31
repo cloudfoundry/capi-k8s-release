@@ -3,6 +3,7 @@
 replicaCount: 1
 
 image: cloudfoundry/cloud-controller-ng
+namespace: cf-system
 
 nginx:
   image:
