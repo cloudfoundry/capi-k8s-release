@@ -326,7 +326,7 @@ diego:
   use_privileged_containers_for_staging: false
 
 opi:
-  url: #@ "http://eirini.{}.svc.cluster.local:8085".format(data.values.namespace)
+  url: #@ "https://eirini.{}.svc.cluster.local:8085".format(data.values.namespace)
   opi_staging: true
   enabled: true
   cc_uploader_url: "https://TODO.TODO"
