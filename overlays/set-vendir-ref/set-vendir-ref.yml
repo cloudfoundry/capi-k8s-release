@@ -1,0 +1,13 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:data", "data")
+
+#@overlay/match by=overlay.subset({"apiVersion":"vendir.k14s.io/v1alpha1"})
+---
+directories:
+#@overlay/match by="path"
+- path: config/_ytt_lib
+  contents:
+  #@overlay/match by="path"
+  - path: github.com/cloudfoundry/capi-k8s-release
+    git:
+      ref: #@ data.values.ref
