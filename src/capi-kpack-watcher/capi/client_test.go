@@ -26,7 +26,7 @@ func TestClientUpdateBuild(t *testing.T) {
 
 		it.Before(func() {
 			client = new(Client)
-			client.host = "capi.host"
+			client.host = "http://capi.host"
 			client.restClient = new(mocks.Rest)
 			client.uaaClient = new(mocks.TokenFetcher)
 		})
@@ -48,7 +48,7 @@ func TestClientUpdateBuild(t *testing.T) {
 				assert.NoError(t, client.UpdateBuild(guid, status))
 				client.uaaClient.(*mocks.TokenFetcher).AssertCalled(t, "Fetch")
 				client.restClient.(*mocks.Rest).AssertCalled(t, "Patch",
-					"https://api.capi.host/v3/builds/guid",
+					"http://capi.host/v3/builds/guid",
 					"valid-token",
 					bytes.NewReader(status.ToJSON()),
 				)

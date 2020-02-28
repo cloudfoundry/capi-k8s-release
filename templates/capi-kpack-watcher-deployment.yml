@@ -1,13 +1,10 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cf-workloads
+#@ load("@ytt:data", "data")
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: capi-kpack-watcher
-  namespace: #@ data.values.namespace
+  namespace: #@ data.values.system_namespace
   labels:
     app.kubernetes.io/name: capi-kpack-watcher
     app.kubernetes.io/instance: capi-kpack-watcher-0
@@ -28,10 +25,16 @@ spec:
       serviceAccountName: default
       containers:
         - name: capi-kpack-watcher
-          image: localhost:5000/capi-kpack-watcher
+          image: #@ data.values.images.capi_kpack_watcher
           env:
+          - name: UAA_CLIENT_SECRET
+            value: #@ data.values.uaa.clients.capi_kpack_watcher.secret
+          - name: UAA_ENDPOINT
+            value: #@ "http://uaa.{}.svc.cluster.local:8080".format(data.values.system_namespace)
+          - name: UAA_CLIENT_NAME
+            value: capi_kpack_watcher
           - name: CAPI_HOST
-            value: capi
+            value: #@ "http://capi.{}.svc.cluster.local".format(data.values.system_namespace)
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -48,7 +51,7 @@ metadata:
   name: kpack-watcher-binding
 subjects:
 - kind: ServiceAccount
-  namespace: #@ data.values.namespace
+  namespace: #@ data.values.system_namespace
   name: default
 roleRef:
   kind: ClusterRole
@@ -59,7 +62,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: kpack-watcher-pod-logs-reader
-  namespace: cf-workloads
+  namespace: #@ data.values.workloads_namespace
 rules:
 - apiGroups: [""]
   resources: ["pods", "pods/log"]
@@ -69,10 +72,10 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kpack-watcher-pod-logs-binding
-  namespace: cf-workloads
+  namespace: #@ data.values.workloads_namespace
 subjects:
 - kind: ServiceAccount
-  namespace: #@ data.values.namespace
+  namespace: #@ data.values.system_namespace
   name: default
 roleRef:
   kind: Role

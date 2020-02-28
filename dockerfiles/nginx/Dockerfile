@@ -32,7 +32,7 @@ RUN cd nginx-1.16.1 && \
     --with-debug \
     --with-pcre=../pcre-8.42 \
     --add-module=../nginx-upload-module-2.3.0 && \
-  make && \
-  make install
+  make -j $(nproc) && \
+  make -j $(nproc) install
 
 CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;", "-c", "/etc/nginx/nginx.conf" ]
