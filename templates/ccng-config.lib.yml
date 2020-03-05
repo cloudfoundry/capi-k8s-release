@@ -81,7 +81,7 @@ logging:
   max_retries: 1
 
 logcache:
-  host: #@ "log-cache.{}".format(data.values.system_domain)
+  host: #@ "https://log-cache.{}".format(data.values.system_domain)
   port: 8080
   temporary_ignore_server_unavailable_errors: true
 
