@@ -24,6 +24,10 @@ spec:
           args: ["exec", "rake", "jobs:generic"]
           image: #@ data.values.images.ccng
           imagePullPolicy: Always
+          readinessProbe:
+            tcpSocket:
+              port: 4444
+            periodSeconds: 3
           volumeMounts:
           - name: cloud-controller-ng-yaml
             mountPath: /config
