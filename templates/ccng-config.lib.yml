@@ -86,8 +86,8 @@ logcache:
   temporary_ignore_server_unavailable_errors: true
 
 logcache_tls:
-  #@ if data.values.metric_proxy.tls_secret:
-  ca_file: "/config/metric_proxy_ca/ca/tls.crt"
+  #@ if data.values.metric_proxy.cert.secret_name:
+  ca_file: "/config/metric_proxy/ca/tls.crt"
   cert_file: "/config/metric_proxy/certs/tls.crt"
   key_file: "/config/metric_proxy/certs/tls.key"
   #@ else:
