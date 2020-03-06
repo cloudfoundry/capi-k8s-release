@@ -81,15 +81,15 @@ logging:
   max_retries: 1
 
 logcache:
-  host: #@ "https://log-cache.{}".format(data.values.system_domain)
+  host: metric-proxy
   port: 8080
   temporary_ignore_server_unavailable_errors: true
 
 logcache_tls:
-  key_file: "/dev/null"
-  cert_file: "/dev/null"
-  ca_file: "/dev/null"
-  subject_name: log_cache
+  ca_file: "/config/metric_proxy_ca/certs/tls.ca"
+  cert_file: "/config/metric_proxy/certs/tls.crt"
+  key_file: "/config/metric_proxy/certs/tls.key"
+  subject_name: metric-proxy
 
 loggregator:
   router: 127.0.0.1:3457
