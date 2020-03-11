@@ -168,10 +168,7 @@ resource_pool:
   blobstore_type: fog
   fog_connection:
     provider: AWS
-
-    #@ if data.values.blobstore.endpoint:
     endpoint: #@ data.values.blobstore.endpoint
-    #@ end
     aws_access_key_id: #@ data.values.blobstore.access_key_id
     aws_secret_access_key: #@ data.values.blobstore.secret_access_key
     aws_signature_version: '2'
@@ -192,9 +189,7 @@ packages:
   blobstore_type: fog
   fog_connection:
     provider: AWS
-    #@ if data.values.blobstore.endpoint:
     endpoint: #@ data.values.blobstore.endpoint
-    #@ end
     aws_access_key_id: #@ data.values.blobstore.access_key_id
     aws_secret_access_key: #@ data.values.blobstore.secret_access_key
     aws_signature_version: '2'
@@ -215,9 +210,7 @@ droplets:
   blobstore_type: fog
   fog_connection:
     provider: AWS
-    #@ if data.values.blobstore.endpoint:
     endpoint: #@ data.values.blobstore.endpoint
-    #@ end
     aws_access_key_id: #@ data.values.blobstore.access_key_id
     aws_secret_access_key: #@ data.values.blobstore.secret_access_key
     aws_signature_version: '2'
@@ -237,9 +230,7 @@ buildpacks:
   blobstore_type: fog
   fog_connection:
     provider: AWS
-    #@ if data.values.blobstore.endpoint:
     endpoint: #@ data.values.blobstore.endpoint
-    #@ end
     aws_access_key_id: #@ data.values.blobstore.access_key_id
     aws_secret_access_key: #@ data.values.blobstore.secret_access_key
     aws_signature_version: '2'
