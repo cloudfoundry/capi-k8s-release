@@ -3,7 +3,7 @@
 replicaCount: 1
 
 images:
-  ccng: cloudfoundry/capi:sa-token
+  ccng: cloudfoundry/cloud-controller-ng:21c38f7d3451dcc25c8a7e9fa65aa0814d2a4c0f@sha256:4c8c88a84aa8419abfcbd28d02ec295ff3977f2bbe808bf310eec89a9885a231
   nginx: cloudfoundry/capi:nginx
   capi_kpack_watcher: cloudfoundry/capi-kpack-watcher:latest
 system_namespace: cf-system
