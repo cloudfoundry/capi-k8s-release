@@ -121,3 +121,4 @@ kpack:
     repository: ""
     username: ""
     password: ""
+custom_metric_tags: false

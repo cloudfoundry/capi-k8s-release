@@ -389,3 +389,5 @@ pending_droplets:
 deployment_updater:
   update_frequency_in_seconds: 1
 #@ end
+
+custom_metric_tags: #@ data.values.custom_metric_tags
