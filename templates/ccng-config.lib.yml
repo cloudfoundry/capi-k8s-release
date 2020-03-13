@@ -126,7 +126,7 @@ db: &db
 
 telemetry_log_path: "/dev/null"
 log_cache:
-  url: #@ "log-cache.{}".format(data.values.system_domain)
+  url: #@ "https://log-cache.{}".format(data.values.system_domain)
 threadpool_size: 20
 internal_route_vip_range: ""
 
