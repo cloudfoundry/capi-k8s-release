@@ -356,7 +356,7 @@ default_app_lifecycle: kpack
 
 #! kpack stager properties
 kubernetes:
-  host_url: #@ data.values.kubernetes.api.url
+  host_url: https://kubernetes.default
   service_account:
     token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
   ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
