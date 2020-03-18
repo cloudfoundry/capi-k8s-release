@@ -55,7 +55,7 @@ nginx:
 index: 0
 name: ""
 route_services_enabled: true
-volume_services_enabled: false
+volume_services_enabled: true
 
 info:
   name: ""
