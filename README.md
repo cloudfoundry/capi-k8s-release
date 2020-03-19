@@ -11,9 +11,6 @@ This repo is very new, experimental, and not yet continuously integrated or test
 `capi-k8s-release` currently uploads app source code to a blobstore, but then hands that off to `kpack` to build app images that are then placed in a registry.  In order for this to work, you must configure the following values:
 
 ```yaml
-kubernetes:
-  api:
-    url: # the url of your k8s cluster
 kpack:
   registry:
     hostname: # the hostname of the registry (i.e. docker.io, gcr.io)
