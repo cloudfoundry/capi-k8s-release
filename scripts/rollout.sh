@@ -7,4 +7,4 @@ SCRIPT_DIR=$(dirname $0)
 REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
 ${SCRIPT_DIR}/bump-cf-for-k8s.sh
-${CF_FOR_K8s_DIR}/bin/install-cf.sh $@
+${CF_FOR_K8s_DIR}/bin/install-cf.sh "$@"
