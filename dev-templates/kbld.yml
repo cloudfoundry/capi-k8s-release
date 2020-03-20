@@ -3,12 +3,21 @@
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Sources
 sources:
-  - image: cloudfoundry/cloud-controller-ng
+  - imageRepo: cloudfoundry/cloud-controller-ng
+    path: src/cloud_controller_ng
+  - imageRepo: #@ data.values.kbld.destination
     path: src/cloud_controller_ng
 
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
 destinations:
-  - image: cloudfoundry/cloud-controller-ng
+  - imageRepo: cloudfoundry/cloud-controller-ng
     newImage: #@ data.values.kbld.destination
+  - imageRepo: #@ data.values.kbld.destination
+    newImage: #@ data.values.kbld.destination
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageKeys
+keys:
+- ccng
