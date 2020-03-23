@@ -3,7 +3,7 @@
 set -ex
 
 CF_FOR_K8s_DIR="${CF_FOR_K8s_DIR:-${HOME}/workspace/cf-for-k8s/}"
-SCRIPT_DIR=$(dirname $0)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
 if [ -z "$1" ]
@@ -23,8 +23,10 @@ KBLD_TMP="$(mktemp)"
 ytt -f "${REPO_BASE_DIR}/dev-templates/" -v kbld.destination="${2}" > "${KBLD_TMP}"
 
 # build a new values file with kbld
-VALUES_TMP="$(mktemp)"
-echo "#@data/values" > "${VALUES_TMP}"
-kbld -f "${KBLD_TMP}" -f "$1" >> "${VALUES_TMP}"
+pushd "${REPO_BASE_DIR}"
+  VALUES_TMP="$(mktemp)"
+  echo "#@data/values" > "${VALUES_TMP}"
+  kbld -f "${KBLD_TMP}" -f "$1" >> "${VALUES_TMP}"
+popd
 
 cat "${VALUES_TMP}" > "$1"
