@@ -5,10 +5,10 @@ local_route: 0.0.0.0
 
 external_port: 9022
 tls_port: 9023
-readiness_ports:
+readiness_port:
   cloud_controller_worker: 4444
-  cc_deployment_updater: 4445
-  cloud_controller_clock: 4446
+  deployment_updater: 4445
+  clock: 4446
 
 internal_service_hostname: cloud_controller_ng
 
