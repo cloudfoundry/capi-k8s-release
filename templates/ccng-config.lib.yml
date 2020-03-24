@@ -361,7 +361,7 @@ kubernetes:
     token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
   ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
   kpack:
-    builder_namespace: #@ data.values.system_namespace
+    builder_namespace: #@ data.values.staging_namespace
     registry_service_account_name: cc-kpack-registry-service-account
     registry_tag_base: #@ "{}/{}".format(data.values.kpack.registry.hostname, data.values.kpack.registry.repository)
 
