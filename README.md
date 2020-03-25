@@ -13,10 +13,30 @@ This repo is very new, experimental, and not yet continuously integrated or test
 ```yaml
 kpack:
   registry:
-    hostname: # the hostname of the registry (i.e. docker.io, gcr.io)
-    repository: # the repository within the registry (i.e. cloudfoundry/capi)
+    hostname: # the hostname of the registry, used for authentication
+    repository: # the destination of the build app images within the registry
     username: # basic auth registry username
     password: # basic auth registry password
+```
+
+dockerhub example:
+```yaml
+kpack:
+  registry:
+    hostname: https://index.docker.io/v1/
+    repository: cloudfoundry/capi
+    username: <username>
+    password: <password>
+```
+
+gcr example:
+```yaml
+kpack:
+  registry:
+    hostname: gcr.io
+    repository: gcr.io/cloudfoundry/capi
+    username: <username>
+    password: <password>
 ```
 
 
