@@ -52,4 +52,5 @@ func main() {
 	log.Printf("Watcher initialized. Listening...\n")
 
 	watcher.NewBuildWatcher(clientset).Run()
+	watcher.NewImageWatcher(clientset).Run()
 }
