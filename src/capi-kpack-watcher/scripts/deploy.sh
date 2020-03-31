@@ -6,6 +6,6 @@ SCRIPT_DIR="$(dirname $0)"
 TEMPLATES_DIR="${SCRIPT_DIR}/../templates/"
 
 "${SCRIPT_DIR}/build.sh"
-docker push cloudfoundry/capi-kpack-watcher:dev
+docker push gcr.io/cf-capi-arya/dev-capi-kpack-watcher
 
 kubectl apply -f "${TEMPLATES_DIR}"

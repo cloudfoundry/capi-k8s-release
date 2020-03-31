@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	v12 "k8s.io/api/apps/v1"
 	"log"
 	"regexp"
 
@@ -90,6 +91,8 @@ func (bw *BuildWatcher) Run() {
 //go:generate mockery -case snake -name KubeClient
 type KubeClient interface {
 	GetContainerLogs(podName, containerName string) ([]byte, error)
+	GetStatefulSet(labelSelector, labelSelectorValue, namespace string) (*v12.StatefulSetList, error)
+	UpdateStatefulSet(statefulSet *v12.StatefulSet, namespace string) (*v12.StatefulSet, error)
 }
 
 type BuildWatcher struct {

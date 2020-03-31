@@ -18,6 +18,8 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"capi_kpack_watcher/watcher"
 
@@ -50,7 +52,13 @@ func main() {
 	}
 
 	log.Printf("Watcher initialized. Listening...\n")
-
-	watcher.NewBuildWatcher(clientset).Run()
-	watcher.NewImageWatcher(clientset).Run()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go watcher.NewBuildWatcher(clientset).Run()
+	go watcher.NewImageWatcher(clientset).Run()
+	select {
+	  case <-sigs:
+	  	log.Printf("closing")
+	  	close(sigs)
+	}
 }

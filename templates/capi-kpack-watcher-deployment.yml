@@ -22,7 +22,7 @@ spec:
       labels:
         app.kubernetes.io/name: capi-kpack-watcher
     spec:
-      serviceAccountName: default
+      serviceAccountName: cc-api-service-account
       containers:
         - name: capi-kpack-watcher
           image: #@ data.values.images.capi_kpack_watcher
