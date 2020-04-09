@@ -3,8 +3,10 @@
 set -ex
 
 CF_FOR_K8s_DIR="${CF_FOR_K8s_DIR:-${HOME}/workspace/cf-for-k8s/}"
+CAPI_RELEASE_DIR="${CAPI_RELEASE_DIR:-${HOME}/workspace/capi-release/}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_BASE_DIR="${SCRIPT_DIR}/.."
+CCNG_DIR="${CAPI_RELEASE_DIR}src/cloud_controller_ng"
 
 if [ -z "$1" ]
   then
@@ -20,7 +22,10 @@ fi
 
 # template the image destination into the kbld yml
 KBLD_TMP="$(mktemp)"
-ytt -f "${REPO_BASE_DIR}/dev-templates/" -v kbld.destination="${2}" > "${KBLD_TMP}"
+ytt -f "${REPO_BASE_DIR}/dev-templates/" \
+    -v kbld.destination="${2}" \
+    -v ccng_dir="${CCNG_DIR}" \
+     > "${KBLD_TMP}"
 
 # build a new values file with kbld
 pushd "${REPO_BASE_DIR}"

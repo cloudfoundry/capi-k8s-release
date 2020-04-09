@@ -4,9 +4,9 @@ apiVersion: kbld.k14s.io/v1alpha1
 kind: Sources
 sources:
   - imageRepo: cloudfoundry/cloud-controller-ng
-    path: src/cloud_controller_ng
+    path: #@ data.values.ccng_dir
   - imageRepo: #@ data.values.kbld.destination
-    path: src/cloud_controller_ng
+    path: #@ data.values.ccng_dir
 
 ---
 apiVersion: kbld.k14s.io/v1alpha1
