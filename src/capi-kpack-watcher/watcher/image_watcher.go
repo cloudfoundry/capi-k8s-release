@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"capi_kpack_watcher/capi"
 	"capi_kpack_watcher/kubernetes"
 	"log"
 	"os"
@@ -14,6 +15,22 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+const AppGUIDLabel = "cloudfoundry.org/app_guid"
+
+type ImageWatcher struct {
+	// The watcher uses this kubernetes client to talk to the Kubernetes master.
+	kubeClient     KubeClient
+	dropletHandler DropletHandler
+	logger         *log.Logger
+	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
+	// They are in this struct to abstract away the Informer boilerplate.
+	informer cache.SharedIndexInformer
+}
+
+type DropletHandler interface {
+	GetCurrentDroplet(guid string) (string, error)
+	CreateDropletCopy(dropletGUID, appGUID, image string) error
+}
 
 func (iw *ImageWatcher) AddFunc(obj interface{}) {
 	image := obj.(*kpack.Image)
@@ -23,8 +40,6 @@ func (iw *ImageWatcher) AddFunc(obj interface{}) {
 
 // UpdateFunc handles when Images are updated.
 func (iw *ImageWatcher) UpdateFunc(oldobj, newobj interface{}) {
-	iw.logger.Printf(`OLD IMAGE: %v+`, oldobj.(*kpack.Image))
-	iw.logger.Printf(`NEW IMAGE: %v+`, newobj.(*kpack.Image))
 	image := newobj.(*kpack.Image)
 
 	iw.logger.Printf(
@@ -32,18 +47,23 @@ func (iw *ImageWatcher) UpdateFunc(oldobj, newobj interface{}) {
 latest image sha: %s`, image.GetName(), spew.Sdump(image.Status.LatestImage))
 	updatedImage := image.Status.LatestImage
 
-    statefulSets, err := iw.kubeClient.GetStatefulSet("cloudfoundry.org/app_guid",
+    statefulSets, err := iw.kubeClient.GetStatefulSet(AppGUIDLabel,
     	image.GetLabels()["cloudfoundry.org/app_guid"], "cf-workloads")
     if err!=nil || len(statefulSets.Items)<1 {
    	  panic(err)
     }
 
     newStatefulSet := statefulSets.Items[0]
-	for _ , c := range newStatefulSet.Spec.Template.Spec.Containers {
+    ctrs := newStatefulSet.Spec.Template.Spec.Containers
+	for i , c := range ctrs {
 		if c.Name == "opi" {
-			c.Image = updatedImage
+			if c.Image!=updatedImage {
+				ctrs[i].Image = updatedImage
+				//iw.handleUpdate(image)
+			}
 		}
 	}
+
 	_ , err = iw.kubeClient.UpdateStatefulSet(&newStatefulSet, "cf-workloads")
 	if err!=nil{
 		panic(err)
@@ -54,9 +74,10 @@ func NewImageWatcher(c kpackclient.Interface) *ImageWatcher {
 	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
 	iw := &ImageWatcher{
-		kubeClient:   kubernetes.NewInClusterClient(),
-		logger: log.New(os.Stdout, "iwPIYALIiw", log.LstdFlags),
-		informer:     factory.Build().V1alpha1().Images().Informer(),
+		dropletHandler: capi.NewCAPIClient(),
+		kubeClient:     kubernetes.NewInClusterClient(),
+		logger:         log.New(os.Stdout, "ImageWatcher", log.LstdFlags),
+		informer:       factory.Build().V1alpha1().Images().Informer(),
 	}
 
 	// TODO: ignore added builds at watcher startup
@@ -64,7 +85,7 @@ func NewImageWatcher(c kpackclient.Interface) *ImageWatcher {
 		AddFunc:    iw.AddFunc,
 		UpdateFunc: iw.UpdateFunc,
 	})
-	iw.logger.Printf(`Image watcher made!!!!!!!`)
+
 	return iw
 }
 
@@ -73,16 +94,22 @@ func NewImageWatcher(c kpackclient.Interface) *ImageWatcher {
 func (iw *ImageWatcher) Run() {
 	stopper := make(chan struct{})
 	defer close(stopper)
-    iw.logger.Printf(`RUNNNNNN`)
+
 	iw.informer.Run(stopper)
 }
 
-type ImageWatcher struct {
-	// The watcher uses this kubernetes client to talk to the Kubernetes master.
-	kubeClient KubeClient
-    logger *log.Logger
-	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
-	// They are in this struct to abstract away the Informer boilerplate.
-	informer cache.SharedIndexInformer
+func (iw *ImageWatcher) handleUpdate(image *kpack.Image) {
+	labels := image.GetLabels()
+	appGUID := labels[AppGUIDLabel]
+	iw.logger.Printf(`APP GUID: %s`, appGUID)
+    dropletGUID, err := iw.dropletHandler.GetCurrentDroplet(appGUID)
+    if err != nil {
+		log.Fatalf("[GetDropletFunc] Failed to send request: %v\n", err)
+	}
+
+	//create new droplet w updated image reference and relationship with app guid
+	iw.dropletHandler.CreateDropletCopy(dropletGUID, appGUID, image.Status.LatestImage)
+	//start rolling deploy with  new droplet guid (includes setting current droplet)
 }
+
 

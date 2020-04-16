@@ -6,10 +6,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
-
+    "encoding/json"
 	"capi_kpack_watcher/auth"
 )
 
@@ -38,6 +40,8 @@ func NewCAPIClient() *Client {
 //go:generate mockery -case snake -name Rest
 type Rest interface {
 	Patch(url string, authToken string, body io.Reader) (*http.Response, error)
+	Post(url string, authToken string, body io.Reader) (*http.Response, error)
+	Get(url string, authToken string, body io.Reader) (*http.Response, error)
 }
 
 //go:generate mockery -case snake -name TokenFetcher
@@ -71,5 +75,62 @@ func (c *Client) UpdateBuild(guid string, build capi_model.Build) error {
 	log.Printf("[CAPI/UpdateBuild] Sent payload: %s\n", json)
 	log.Printf("[CAPI/UpdateBuild] Response build: %d\n", resp.StatusCode)
 
+	return nil
+}
+
+func (c *Client) GetCurrentDroplet(guid string) (string, error) {
+	token, err := c.uaaClient.Fetch()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := c.restClient.Get(
+		fmt.Sprintf("%s/v3/apps/%s/droplets/current", c.host, guid),
+		token,
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+	log.Printf(`[CAPI/GetAppCurrentDroplet] Response StatusCode: %d`, resp.StatusCode)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	var result map[string]interface{}
+	json.Unmarshal(bodyBytes, &result)
+	dropletGUID := result["guid"].(string)
+	log.Printf(`[CAPI/GetAppCurrentDroplet] Droplet Guid: %s`, dropletGUID)
+	return dropletGUID, nil
+}
+
+func (c *Client) CreateDropletCopy(dropletGUID, appGUID, image string) error {
+	token, err := c.uaaClient.Fetch()
+	if err != nil {
+		return err
+	}
+	reqBody := fmt.Sprintf(`{
+    "relationships": {
+      "app": {
+        "data": {
+          "guid": "%s"
+        }
+      }
+    }}`, appGUID)
+	raw := json.RawMessage(reqBody)
+	reqBodyBytes, err := raw.MarshalJSON()
+	if err!=nil{
+		return err
+	}
+	params := url.Values{}
+	params.Add("source_guid", dropletGUID)
+	params.Add("image_ref", image)
+
+	resp, err := c.restClient.Post(
+		fmt.Sprintf(`%s/v3/droplets?%s`, c.host, params.Encode()),
+		token,
+		bytes.NewReader(reqBodyBytes),
+	)
+	if err != nil {
+		return err
+	}
+	log.Printf(`[CAPI/CreateDropletCopy] Response StatusCode: %d`, resp.StatusCode)
 	return nil
 }

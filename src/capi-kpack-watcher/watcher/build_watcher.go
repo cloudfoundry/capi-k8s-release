@@ -111,6 +111,8 @@ type BuildUpdater interface {
 	UpdateBuild(guid string, capi_model capi_model.Build) error
 }
 
+
+
 func (bw *BuildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
 	labels := build.GetLabels()
 	if labels == nil {
