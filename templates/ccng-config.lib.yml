@@ -360,6 +360,7 @@ kubernetes:
   service_account:
     token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
   ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  workloads_namespace: cf-workloads
   kpack:
     builder_namespace: #@ data.values.staging_namespace
     registry_service_account_name: cc-kpack-registry-service-account
