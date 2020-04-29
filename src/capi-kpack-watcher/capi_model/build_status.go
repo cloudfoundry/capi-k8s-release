@@ -1,6 +1,7 @@
 package capi_model
 
 import (
+	"capi_kpack_watcher/oci_registry"
 	"encoding/json"
 
 	kpack_build "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
@@ -23,7 +24,8 @@ type Lifecycle struct {
 	Data LifecycleData `json:"data"`
 }
 type LifecycleData struct {
-	Image string `json:"image"`
+	Image        string            `json:"image"`
+	ProcessTypes map[string]string `json:"processTypes"`
 }
 
 func (b *Build) ToJSON() []byte {
@@ -31,7 +33,7 @@ func (b *Build) ToJSON() []byte {
 	return j
 }
 
-func NewBuild(build *kpack_build.Build) Build {
+func NewBuild(build *kpack_build.Build, manifestFetcher *oci_registry.ManifestFetcher) Build {
 	return Build{
 		State: BuildStagedState,
 		Lifecycle: Lifecycle{
