@@ -54,10 +54,10 @@ func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
 	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
 	bw := &BuildWatcher{
-		buildUpdater:    capi.NewCAPIClient(),
-		kubeClient:      kubernetes.NewInClusterClient(),
-		informer:        factory.Build().V1alpha1().Builds().Informer(),
-		manifestFetcher: image_registry.NewManifestFetcher(image_registry.DockerManifestType),
+		buildUpdater:       capi.NewCAPIClient(),
+		kubeClient:         kubernetes.NewInClusterClient(),
+		informer:           factory.Build().V1alpha1().Builds().Informer(),
+		imageConfigFetcher: image_registry.NewImageConfigFetcher(),
 	}
 
 	// TODO: ignore added builds at watcher startup
@@ -104,7 +104,7 @@ type BuildWatcher struct {
 	// They are in this struct to abstract away the Informer boilerplate.
 	informer cache.SharedIndexInformer
 
-	manifestFetcher image_registry.ManifestFetcher
+	imageConfigFetcher image_registry.ImageConfigFetcher
 }
 
 //go:generate mockery -case snake -name BuildUpdater
