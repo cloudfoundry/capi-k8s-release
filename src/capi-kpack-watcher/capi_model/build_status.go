@@ -1,7 +1,6 @@
 package capi_model
 
 import (
-	"capi_kpack_watcher/oci_registry"
 	"encoding/json"
 
 	kpack_build "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
@@ -33,7 +32,7 @@ func (b *Build) ToJSON() []byte {
 	return j
 }
 
-func NewBuild(build *kpack_build.Build, manifestFetcher *oci_registry.ManifestFetcher) Build {
+func NewBuild(build *kpack_build.Build) Build {
 	return Build{
 		State: BuildStagedState,
 		Lifecycle: Lifecycle{

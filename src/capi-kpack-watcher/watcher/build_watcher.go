@@ -6,6 +6,7 @@ import (
 
 	"capi_kpack_watcher/capi"
 	"capi_kpack_watcher/capi_model"
+	"capi_kpack_watcher/image_registry"
 	"capi_kpack_watcher/kubernetes"
 
 	"k8s.io/client-go/tools/cache"
@@ -53,9 +54,10 @@ func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
 	factory := kpackinformer.NewSharedInformerFactory(c, 0)
 
 	bw := &BuildWatcher{
-		buildUpdater: capi.NewCAPIClient(),
-		kubeClient:   kubernetes.NewInClusterClient(),
-		informer:     factory.Build().V1alpha1().Builds().Informer(),
+		buildUpdater:    capi.NewCAPIClient(),
+		kubeClient:      kubernetes.NewInClusterClient(),
+		informer:        factory.Build().V1alpha1().Builds().Informer(),
+		manifestFetcher: image_registry.NewManifestFetcher(image_registry.DockerManifestType),
 	}
 
 	// TODO: ignore added builds at watcher startup
@@ -101,6 +103,8 @@ type BuildWatcher struct {
 	// Below are Kubernetes-internal objects for creating Kubernetes Informers.
 	// They are in this struct to abstract away the Informer boilerplate.
 	informer cache.SharedIndexInformer
+
+	manifestFetcher image_registry.ManifestFetcher
 }
 
 //go:generate mockery -case snake -name BuildUpdater
