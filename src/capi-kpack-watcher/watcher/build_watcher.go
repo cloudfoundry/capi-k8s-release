@@ -54,12 +54,6 @@ func NewBuildWatcher(informer cache.SharedIndexInformer, buildUpdater BuildUpdat
 		imageConfigFetcher: image_registry.NewImageConfigFetcher(),
 	}
 
-	// TODO: ignore added builds at watcher startup
-	bw.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    bw.AddFunc,
-		UpdateFunc: bw.UpdateFunc,
-	})
-
 	return bw
 }
 
@@ -77,6 +71,12 @@ func isBuildGUIDMissing(build *kpack.Build) bool {
 // Run runs the informer and begins watching for Builds. This can be stopped by
 // sending to the stopped channel.
 func (bw *BuildWatcher) Run() {
+	// TODO: ignore added builds at watcher startup
+	bw.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    bw.AddFunc,
+		UpdateFunc: bw.UpdateFunc,
+	})
+
 	stopper := make(chan struct{})
 	defer close(stopper)
 
