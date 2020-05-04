@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"capi_kpack_watcher/capi"
+	"capi_kpack_watcher/image_registry"
 	"capi_kpack_watcher/kubernetes"
 	"capi_kpack_watcher/watcher"
 
@@ -59,5 +60,6 @@ func main() {
 		factory.Build().V1alpha1().Builds().Informer(),
 		capi.NewCAPIClient(),
 		kubernetes.NewInClusterClient(),
+		image_registry.NewImageConfigFetcher(),
 	).Run()
 }

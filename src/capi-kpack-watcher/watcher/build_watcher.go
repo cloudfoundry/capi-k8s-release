@@ -1,14 +1,17 @@
 package watcher
 
 import (
+	"encoding/json"
 	"log"
 	"regexp"
 
 	"capi_kpack_watcher/capi_model"
 	"capi_kpack_watcher/image_registry"
 
+	imageV1 "github.com/google/go-containerregistry/pkg/v1"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/buildpacks/lifecycle"
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 
 	"github.com/davecgh/go-spew/spew"
@@ -46,12 +49,12 @@ steps:  %+v
 	} // c.isUnknown() is also available for pending builds
 }
 
-func NewBuildWatcher(informer cache.SharedIndexInformer, buildUpdater BuildUpdater, kubeClient KubeClient) *BuildWatcher {
+func NewBuildWatcher(informer cache.SharedIndexInformer, buildUpdater BuildUpdater, kubeClient KubeClient, imageConfigFetcher image_registry.ImageConfigFetcher) *BuildWatcher {
 	bw := &BuildWatcher{
 		buildUpdater:       buildUpdater,
 		kubeClient:         kubeClient,
 		informer:           informer,
-		imageConfigFetcher: image_registry.NewImageConfigFetcher(),
+		imageConfigFetcher: imageConfigFetcher,
 	}
 
 	return bw
@@ -111,17 +114,42 @@ func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[BuildGUIDLabel]
 
-	capi_model := capi_model.NewBuild(build)
+	capiBuild := capi_model.NewBuild(build)
 
-	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {
-		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	imageConfig, err := bw.imageConfigFetcher.FetchImageConfig(build.Status.LatestImage)
+	if err != nil {
+		log.Printf("[UpdateFunc] Failed to fetch image config: %v\n", err)
+		return
 	}
+	processTypes, err := bw.extractProcessTypes(imageConfig)
+	if err != nil {
+		log.Printf("[UpdateFunc] Failed to parse process types info from image config: %v\n", err)
+		return
+	}
+	capiBuild.Lifecycle.Data.ProcessTypes = processTypes
+
+	if err := bw.buildUpdater.UpdateBuild(guid, capiBuild); err != nil {
+		log.Printf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
+}
+
+func (bw *BuildWatcher) extractProcessTypes(config *imageV1.Config) (map[string]string, error) {
+	var buildMetadata lifecycle.BuildMetadata
+	if err := json.Unmarshal([]byte(config.Labels[lifecycle.BuildMetadataLabel]), &buildMetadata); err != nil {
+		return nil, err
+	}
+
+	ret := make(map[string]string)
+	for _, process := range buildMetadata.Processes {
+		ret[process.Type] = process.Command
+	}
+	return ret, nil
 }
 
 func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[BuildGUIDLabel]
-	capi_model := capi_model.Build{
+	capiBuild := capi_model.Build{
 		State: capi_model.BuildFailedState,
 	}
 
@@ -135,14 +163,14 @@ func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 	if err != nil {
 		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
 
-		capi_model.Error = "Kpack build failed"
+		capiBuild.Error = "Kpack build failed"
 	} else {
 		// Take the first word character to the end of the line to avoid ANSI color codes
 		regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
-		capi_model.Error = string(regex.FindSubmatch(logs)[2])
+		capiBuild.Error = string(regex.FindSubmatch(logs)[2])
 	}
 
-	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {
+	if err := bw.buildUpdater.UpdateBuild(guid, capiBuild); err != nil {
 		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
 	}
 }

@@ -3,14 +3,18 @@ package watcher_test
 import (
 	"testing"
 
-	"capi_kpack_watcher/capi_model"
 	. "capi_kpack_watcher/watcher"
+
+	"capi_kpack_watcher/capi_model"
+	"capi_kpack_watcher/image_registry/image_registryfakes"
 	"capi_kpack_watcher/watcher/watcherfakes"
 
+	"github.com/buildpacks/lifecycle"
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	kpackcore "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 )
@@ -25,9 +29,10 @@ func TestUpdateFunc(t *testing.T) {
 			fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
 		)
 		var (
-			buildUpdater *watcherfakes.FakeBuildUpdater
-			kubeClient   *watcherfakes.FakeKubeClient
-			bw           *BuildWatcher
+			buildUpdater       *watcherfakes.FakeBuildUpdater
+			kubeClient         *watcherfakes.FakeKubeClient
+			imageConfigFetcher *image_registryfakes.FakeImageConfigFetcher
+			bw                 *BuildWatcher
 		)
 
 		it.Before(func() {
@@ -35,33 +40,48 @@ func TestUpdateFunc(t *testing.T) {
 
 			kubeClient = &watcherfakes.FakeKubeClient{}
 			buildUpdater = &watcherfakes.FakeBuildUpdater{}
+			imageConfigFetcher = &image_registryfakes.FakeImageConfigFetcher{}
 
-			bw = NewBuildWatcher(nil, buildUpdater, kubeClient)
+			bw = NewBuildWatcher(nil, buildUpdater, kubeClient, imageConfigFetcher)
 		})
 
 		when("build is successful", func() {
 			var newSuccessfulBuild *kpack.Build
 			var oldBuild *kpack.Build
+			var expectedCCBuild capi_model.Build
 
 			it.Before(func() {
+				oldBuild = &kpack.Build{}
 				newSuccessfulBuild = &kpack.Build{
 					Status: kpack.BuildStatus{
 						LatestImage: imageRef,
 					},
 				}
-
-				oldBuild = &kpack.Build{}
 				setGUIDOnLabel(newSuccessfulBuild, guid)
 				markBuildSuccessful(newSuccessfulBuild)
+
+				expectedCCBuild = capi_model.NewBuild(newSuccessfulBuild)
+				expectedCCBuild.Lifecycle.Data.ProcessTypes = map[string]string{
+					"foo": "some process-start",
+				}
+
+				imageConfigFetcher.FetchImageConfigReturns(&v1.Config{
+					Labels: map[string]string{
+						lifecycle.BuildMetadataLabel: `{"processes":[{"type":"foo","command":"some process-start","args":null,"direct":false}]}`,
+					},
+				}, nil)
 			})
 
 			it("updates capi with the success status", func() {
 				bw.UpdateFunc(oldBuild, newSuccessfulBuild)
 
+				Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(1))
+				Expect(imageConfigFetcher.FetchImageConfigArgsForCall(0)).To(Equal(imageRef))
+
 				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
 				actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
 				Expect(actualGuid).To(Equal(guid))
-				Expect(actualBuild).To(Equal(capi_model.NewBuild(newSuccessfulBuild)))
+				Expect(actualBuild).To(Equal(expectedCCBuild))
 			})
 		})
 
