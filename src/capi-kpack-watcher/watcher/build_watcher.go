@@ -4,16 +4,12 @@ import (
 	"log"
 	"regexp"
 
-	"capi_kpack_watcher/capi"
 	"capi_kpack_watcher/capi_model"
 	"capi_kpack_watcher/image_registry"
-	"capi_kpack_watcher/kubernetes"
 
 	"k8s.io/client-go/tools/cache"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
-	kpackclient "github.com/pivotal/kpack/pkg/client/clientset/versioned"
-	kpackinformer "github.com/pivotal/kpack/pkg/client/informers/externalversions"
 
 	"github.com/davecgh/go-spew/spew"
 )
@@ -50,13 +46,11 @@ steps:  %+v
 	} // c.isUnknown() is also available for pending builds
 }
 
-func NewBuildWatcher(c kpackclient.Interface) *BuildWatcher {
-	factory := kpackinformer.NewSharedInformerFactory(c, 0)
-
+func NewBuildWatcher(informer cache.SharedIndexInformer, buildUpdater BuildUpdater, kubeClient KubeClient) *BuildWatcher {
 	bw := &BuildWatcher{
-		buildUpdater:       capi.NewCAPIClient(),
-		kubeClient:         kubernetes.NewInClusterClient(),
-		informer:           factory.Build().V1alpha1().Builds().Informer(),
+		buildUpdater:       buildUpdater,
+		kubeClient:         kubeClient,
+		informer:           informer,
 		imageConfigFetcher: image_registry.NewImageConfigFetcher(),
 	}
 
@@ -105,11 +99,6 @@ type BuildWatcher struct {
 	informer cache.SharedIndexInformer
 
 	imageConfigFetcher image_registry.ImageConfigFetcher
-}
-
-//go:generate mockery -case snake -name BuildUpdater
-type BuildUpdater interface {
-	UpdateBuild(guid string, capi_model capi_model.Build) error
 }
 
 func (bw *BuildWatcher) isBuildGUIDMissing(build *kpack.Build) bool {
