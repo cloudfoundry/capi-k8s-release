@@ -8,4 +8,3 @@ import (
 type BuildUpdater interface {
 	UpdateBuild(guid string, capi_model capi_model.Build) error
 }
-

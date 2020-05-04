@@ -1,17 +1,18 @@
-package watcher
+package watcher_test
 
 import (
 	"testing"
 
 	"capi_kpack_watcher/capi_model"
-	"capi_kpack_watcher/watcher/mocks"
+	. "capi_kpack_watcher/watcher"
+	"capi_kpack_watcher/watcher/watcherfakes"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	kpackcore "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 
+	. "github.com/onsi/gomega"
 	"github.com/sclevine/spec"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestUpdateFunc(t *testing.T) {
@@ -24,59 +25,55 @@ func TestUpdateFunc(t *testing.T) {
 			fakeLogs      = "ERROR:some error" // Must match regex pattern in UpdateFunc.
 		)
 		var (
-			buildUpdater   *mocks.BuildUpdater
-			mockKubeClient *mocks.KubeClient
-			bw             *BuildWatcher
+			buildUpdater *watcherfakes.FakeBuildUpdater
+			kubeClient   *watcherfakes.FakeKubeClient
+			bw           *BuildWatcher
 		)
 
 		it.Before(func() {
-			buildUpdater = new(mocks.BuildUpdater)
-			mockKubeClient = new(mocks.KubeClient)
+			RegisterTestingT(t)
 
-			bw = new(BuildWatcher)
-			bw.buildUpdater = buildUpdater
-			bw.kubeClient = mockKubeClient
-		})
+			kubeClient = &watcherfakes.FakeKubeClient{}
+			buildUpdater = &watcherfakes.FakeBuildUpdater{}
 
-		it.After(func() {
-			mock.AssertExpectationsForObjects(t,
-				buildUpdater,
-				mockKubeClient,
-			)
+			bw = NewBuildWatcher(nil, buildUpdater, kubeClient)
 		})
 
 		when("build is successful", func() {
 			var newSuccessfulBuild *kpack.Build
+			var oldBuild *kpack.Build
+
 			it.Before(func() {
 				newSuccessfulBuild = &kpack.Build{
 					Status: kpack.BuildStatus{
 						LatestImage: imageRef,
 					},
 				}
-				buildUpdater.
-					On("UpdateBuild", guid, capi_model.NewBuild(newSuccessfulBuild)).
-					Return(nil).
-					Arguments.Assert(t, guid, capi_model.NewBuild(newSuccessfulBuild))
+
+				oldBuild = &kpack.Build{}
+				setGUIDOnLabel(newSuccessfulBuild, guid)
+				markBuildSuccessful(newSuccessfulBuild)
 			})
 
 			it("updates capi with the success status", func() {
-				oldBuild := &kpack.Build{}
-				setGUIDOnLabel(newSuccessfulBuild, guid)
-				markBuildSuccessful(newSuccessfulBuild)
-
 				bw.UpdateFunc(oldBuild, newSuccessfulBuild)
+
+				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+				actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+				Expect(actualGuid).To(Equal(guid))
+				Expect(actualBuild).To(Equal(capi_model.NewBuild(newSuccessfulBuild)))
 			})
 		})
 
 		when("build fails", func() {
-			it.Before(func() {
-				buildUpdater.On("UpdateBuild", guid, failedBuild("some error")).Return(nil)
-				mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
-			})
+			var oldBuild *kpack.Build
+			var newBuild *kpack.Build
 
-			it("updates capi with the failed state and error message", func() {
-				oldBuild := &kpack.Build{}
-				newBuild := &kpack.Build{
+			it.Before(func() {
+				kubeClient.GetContainerLogsReturns([]byte(fakeLogs), nil)
+
+				oldBuild = &kpack.Build{}
+				newBuild = &kpack.Build{
 					Status: kpack.BuildStatus{
 						PodName:        podName,
 						StepsCompleted: []string{containerName},
@@ -84,8 +81,20 @@ func TestUpdateFunc(t *testing.T) {
 				}
 				setGUIDOnLabel(newBuild, guid)
 				markBuildFailed(newBuild)
+			})
 
+			it("updates capi with the failed state and error message", func() {
 				bw.UpdateFunc(oldBuild, newBuild)
+
+				Expect(kubeClient.GetContainerLogsCallCount()).To(Equal(1))
+				actualPodName, actualContainerName := kubeClient.GetContainerLogsArgsForCall(0)
+				Expect(actualPodName).To(Equal(podName))
+				Expect(actualContainerName).To(Equal(containerName))
+
+				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+				actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+				Expect(actualGuid).To(Equal(guid))
+				Expect(actualBuild).To(Equal(failedBuild("some error")))
 			})
 		})
 
@@ -102,7 +111,7 @@ func TestUpdateFunc(t *testing.T) {
 
 				bw.UpdateFunc(oldBuild, newBuild)
 
-				buildUpdater.AssertNotCalled(t, "UpdateBuild")
+				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(0))
 			})
 		})
 	})

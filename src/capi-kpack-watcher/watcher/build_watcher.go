@@ -83,11 +83,6 @@ func (bw *BuildWatcher) Run() {
 	bw.informer.Run(stopper)
 }
 
-//go:generate mockery -case snake -name KubeClient
-type KubeClient interface {
-	GetContainerLogs(podName, containerName string) ([]byte, error)
-}
-
 type BuildWatcher struct {
 	buildUpdater BuildUpdater // The watcher uses this client to talk to CAPI.
 
