@@ -1,5 +1,9 @@
 #@data/values
 ---
 kbld:
-  destination: ""
-ccng_dir: ""
+  destination:
+    ccng: ""
+    capi_kpack_watcher: ""
+src_dirs:
+  ccng: ""
+  capi_kpack_watcher: ""
