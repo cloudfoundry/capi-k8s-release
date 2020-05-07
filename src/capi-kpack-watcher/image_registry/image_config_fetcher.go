@@ -14,6 +14,7 @@ type ImageConfigFetcher interface {
 type ociImageConfigFetcher struct {
 }
 
+// TODO: supply private registry credentials, defaulting to empty strings
 func NewImageConfigFetcher() ImageConfigFetcher {
 	return ociImageConfigFetcher{}
 }
@@ -24,6 +25,7 @@ func (f ociImageConfigFetcher) FetchImageConfig(imageReference string) (*v1.Conf
 		return nil, err
 	}
 
+	// TODO: supply registry with credentials if present on fetcher
 	img, err := remote.Image(ref)
 	if err != nil {
 		return nil, err
