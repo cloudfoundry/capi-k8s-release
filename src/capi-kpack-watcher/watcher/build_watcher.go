@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 
@@ -11,6 +12,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	kpack "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	conditions "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	kpackclient "github.com/pivotal/kpack/pkg/client/clientset/versioned"
 	kpackinformer "github.com/pivotal/kpack/pkg/client/informers/externalversions"
 
@@ -138,20 +140,25 @@ func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 	}
 
 	status := build.Status
+	condition := status.GetCondition(conditions.ConditionSucceeded)
 
 	// Retrieve the last container's logs. In kpack, the steps correspond
 	// to container names, so we want the last container's logs.
-	container := status.StepsCompleted[len(status.StepsCompleted)-1]
+	if len(status.StepsCompleted) > 0 {
+		container := status.StepsCompleted[len(status.StepsCompleted)-1]
 
-	logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
-	if err != nil {
-		log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
+		logs, err := bw.kubeClient.GetContainerLogs(status.PodName, container)
+		if err != nil {
+			log.Printf("[UpdateFunc] Failed to get pod logs: %v\n", err)
 
-		capi_model.Error = "Kpack build failed"
+			capi_model.Error = fmt.Sprintf("Kpack build failed. build failure message: '%s'. err: '%v'", condition.Message, err)
+		} else {
+			// Take the first word character to the end of the line to avoid ANSI color codes
+			regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
+			capi_model.Error = string(regex.FindSubmatch(logs)[2])
+		}
 	} else {
-		// Take the first word character to the end of the line to avoid ANSI color codes
-		regex := regexp.MustCompile(`ERROR:[^\w\[]*(\[[0-9]+m)?(\w[^\n]*)`)
-		capi_model.Error = string(regex.FindSubmatch(logs)[2])
+		capi_model.Error = fmt.Sprintf("Kpack build failed. build failure message: '%s'.", condition.Message)
 	}
 
 	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {

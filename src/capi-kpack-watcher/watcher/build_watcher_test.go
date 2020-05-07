@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"errors"
 	"testing"
 
 	"capi_kpack_watcher/capi_model"
@@ -69,23 +70,66 @@ func TestUpdateFunc(t *testing.T) {
 		})
 
 		when("build fails", func() {
-			it.Before(func() {
-				buildUpdater.On("UpdateBuild", guid, failedBuild("some error")).Return(nil)
-				mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
+			when("kpack did not complete any step", func() {
+				it.Before(func() {
+					buildUpdater.On("UpdateBuild", guid, failedBuild("Kpack build failed. build failure message: 'internal kpack build error'.")).Return(nil)
+				})
+
+				it("updates capi with the failed state and error message", func() {
+					oldBuild := &kpack.Build{}
+					newBuild := &kpack.Build{
+						Status: kpack.BuildStatus{
+							PodName:        podName,
+							StepsCompleted: []string{},
+						},
+					}
+					setGUIDOnLabel(newBuild, guid)
+					markBuildFailed(newBuild)
+
+					bw.UpdateFunc(oldBuild, newBuild)
+				})
 			})
 
-			it("updates capi with the failed state and error message", func() {
-				oldBuild := &kpack.Build{}
-				newBuild := &kpack.Build{
-					Status: kpack.BuildStatus{
-						PodName:        podName,
-						StepsCompleted: []string{containerName},
-					},
-				}
-				setGUIDOnLabel(newBuild, guid)
-				markBuildFailed(newBuild)
+			when("container logs can be retrieved", func() {
+				it.Before(func() {
+					buildUpdater.On("UpdateBuild", guid, failedBuild("some error")).Return(nil)
+					mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte(fakeLogs), nil)
+				})
 
-				bw.UpdateFunc(oldBuild, newBuild)
+				it("updates capi with the failed state and error message", func() {
+					oldBuild := &kpack.Build{}
+					newBuild := &kpack.Build{
+						Status: kpack.BuildStatus{
+							PodName:        podName,
+							StepsCompleted: []string{containerName},
+						},
+					}
+					setGUIDOnLabel(newBuild, guid)
+					markBuildFailed(newBuild)
+
+					bw.UpdateFunc(oldBuild, newBuild)
+				})
+			})
+
+			when("container logs cannot be retrieved", func() {
+				it.Before(func() {
+					buildUpdater.On("UpdateBuild", guid, failedBuild("Kpack build failed. build failure message: 'internal kpack build error'. err: 'some error'")).Return(nil)
+					mockKubeClient.On("GetContainerLogs", podName, containerName).Return([]byte{}, errors.New("some error"))
+				})
+
+				it("updates capi with the failed state and error message", func() {
+					oldBuild := &kpack.Build{}
+					newBuild := &kpack.Build{
+						Status: kpack.BuildStatus{
+							PodName:        podName,
+							StepsCompleted: []string{containerName},
+						},
+					}
+					setGUIDOnLabel(newBuild, guid)
+					markBuildFailed(newBuild)
+
+					bw.UpdateFunc(oldBuild, newBuild)
+				})
 			})
 		})
 
@@ -131,8 +175,9 @@ func markBuildSuccessful(b *kpack.Build) {
 func markBuildFailed(b *kpack.Build) {
 	b.Status.Conditions = kpackcore.Conditions{
 		kpackcore.Condition{
-			Type:   kpackcore.ConditionSucceeded,
-			Status: corev1.ConditionFalse,
+			Type:    kpackcore.ConditionSucceeded,
+			Status:  corev1.ConditionFalse,
+			Message: "internal kpack build error",
 		},
 	}
 }
