@@ -2,9 +2,10 @@
 
 set -ex
 
-CF_FOR_K8s_DIR="${CF_FOR_K8s_DIR:-${HOME}/workspace/cf-for-k8s/}"
-SCRIPT_DIR=$(dirname $0)
-REPO_BASE_DIR="${SCRIPT_DIR}/.."
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CAPI_K8S_DIR="${SCRIPT_DIR}/.."
+CF_FOR_K8S_DIR="${SCRIPT_DIR}/../../cf-for-k8s"
 
 ${SCRIPT_DIR}/bump-cf-for-k8s.sh
-${CF_FOR_K8s_DIR}/bin/install-cf.sh "$@"
+
+kapp deploy -a cf -f <(ytt -f "${CF_FOR_K8S_DIR}/config" -f "$@") -y
