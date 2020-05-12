@@ -1,60 +1,41 @@
 #@data/values
 ---
-replicaCount: 1
-
-images:
-  ccng: cloudfoundry/cloud-controller-ng:078281af7f346884fa87aafbff98f444fb1c5b79@sha256:5283da84299d3eab96326fd0ee3d6edd40ec200d2a40f80cb1c92cb5ba070b51
-  nginx: cloudfoundry/capi:nginx@sha256:51e4e48c457d5cb922cf0f569e145054e557e214afa78fb2b312a39bb2f938b6
-  capi_kpack_watcher: cloudfoundry/capi-kpack-watcher:956150dae0a95dcdf3c1f29c23c3bf11db90f7a0@sha256:67125e0d3a4026a23342d80e09aad9284c08ab4f7b3d9a993ae66e403d5d0796
-  statsd_exporter: prom/statsd-exporter:v0.15.0@sha256:e3174186628b401e4a441b78513ba06e957644267332436be0c77dd7af9bdddc
-  cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
-system_namespace: cf-system
-workloads_namespace: cf-workloads
-staging_namespace: cf-workloads-staging
-imagePullSecrets:
-
-app_domains: []
-system_domain: cf-system.svc.cluster.local
-
-ccdb:
-  adapter: postgres
-  host: capi-database-postgresql
-  port: 5432
-  user: cloud_controller
-  password: cloud_controller
-  database: cloud_controller
-
-blobstore:
-  region: ""
-  package_directory_key: cc-packages
-  droplet_directory_key: cc-droplets
-  resource_directory_key: cc-resources
-  buildpack_directory_key: cc-buildpacks
-  endpoint: http://capi-blobstore-minio.default:9000
-  access_key_id: AKIAIOSFODNN7EXAMPLE
-  secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-
-uaa:
-  serverCerts:
-    secretName:
-  clients:
-    cloud_controller_username_lookup:
-      secret: supers3cret
-    capi_kpack_watcher:
-      secret: supers3cret
-
-eirini:
-  serverCerts:
-    secretName:
-
-metric_proxy:
-  ca:
-    secret_name:
-  cert:
-    secret_name:
-
 apiServer:
-  opi:  #! these certs were manually generated for dev purposes, they are not real eirini certs and don't have SANs.
+  opi:
+    ca: |
+      -----BEGIN CERTIFICATE-----
+      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
+      MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
+      ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
+      KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL
+      kvHg25/DXlf2gzFx5hzQ4LzOFcX7/Qr+KXdCT2TWjn+ppKhOyt6QMfYvTuRZMQ+0
+      TTDOUm+fd06S2pvJonW0h7sIwIuT1BVooH/WQIHkmbu+iW/V1AHJtPwBnd/YOEwP
+      yijAs9mdfi6s7h0ysJJ3NWGIxSSR9H0fIdx3OKX+6Vzw+9Na/dlzVNZgJ+6tR4TU
+      RGcSojbzei8YdX9VQy0fjns0mavxrq/aezrQeX5sj3lH0iiMiKmXoEoE1ZvnF1sC
+      AwEAATANBgkqhkiG9w0BAQUFAAOCAQEAXeQ1dAnHXklorPBkc/TMwjZ7fRCG3twJ
+      giViAvsGrGrXtKGwAfWENlM+8kG99VGpQ5RZ+wWGXayObqATMKMmrUZ5LSlBGfQz
+      AgKiDYURoKe+IHC3dBw/7nNFIXfuVexWhULQj6kyg0XlwNLSk/3DaJrsvOjirymY
+      j0ubnTrEwgl+2Yam97VW4a1Q3VXbay6VhNrEetMUUHokFPz6Go1bxDs07/fYfVfJ
+      Qv9xehvYLNuXDjluVRXneVpnRmC6XDAMAgT90qfZvktKj3KwLIZCdBczH9Kflhsr
+      2Xru1Dw19HiJCfX+ZotYMNOhx92qTiL0ELlJjqeu8c0bdAo0tuYYew==
+      -----END CERTIFICATE-----
+    client_cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
+      MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
+      ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
+      KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL
+      kvHg25/DXlf2gzFx5hzQ4LzOFcX7/Qr+KXdCT2TWjn+ppKhOyt6QMfYvTuRZMQ+0
+      TTDOUm+fd06S2pvJonW0h7sIwIuT1BVooH/WQIHkmbu+iW/V1AHJtPwBnd/YOEwP
+      yijAs9mdfi6s7h0ysJJ3NWGIxSSR9H0fIdx3OKX+6Vzw+9Na/dlzVNZgJ+6tR4TU
+      RGcSojbzei8YdX9VQy0fjns0mavxrq/aezrQeX5sj3lH0iiMiKmXoEoE1ZvnF1sC
+      AwEAATANBgkqhkiG9w0BAQUFAAOCAQEAXeQ1dAnHXklorPBkc/TMwjZ7fRCG3twJ
+      giViAvsGrGrXtKGwAfWENlM+8kG99VGpQ5RZ+wWGXayObqATMKMmrUZ5LSlBGfQz
+      AgKiDYURoKe+IHC3dBw/7nNFIXfuVexWhULQj6kyg0XlwNLSk/3DaJrsvOjirymY
+      j0ubnTrEwgl+2Yam97VW4a1Q3VXbay6VhNrEetMUUHokFPz6Go1bxDs07/fYfVfJ
+      Qv9xehvYLNuXDjluVRXneVpnRmC6XDAMAgT90qfZvktKj3KwLIZCdBczH9Kflhsr
+      2Xru1Dw19HiJCfX+ZotYMNOhx92qTiL0ELlJjqeu8c0bdAo0tuYYew==
+      -----END CERTIFICATE-----
     client_key: |
       -----BEGIN RSA PRIVATE KEY-----
       MIIEpQIBAAKCAQEA0a/I76aefa2mcgvG7YM2WDAopD7yLCoLTuAC/BsaaQQaOJ/G
@@ -83,47 +64,56 @@ apiServer:
       G+IH4ZZUCENYiFbGfygd+xLAQ1CmhUzaOjZVONbKugbMqHSISaH90Yzfd2qpKawD
       0NvW20ZPCnvqegG8wOIGlqWwNBSARitdfWIHpGl/Rogp6+mYRw1It4I=
       -----END RSA PRIVATE KEY-----
-    client_cert: |
-      -----BEGIN CERTIFICATE-----
-      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
-      MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
-      ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
-      KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL
-      kvHg25/DXlf2gzFx5hzQ4LzOFcX7/Qr+KXdCT2TWjn+ppKhOyt6QMfYvTuRZMQ+0
-      TTDOUm+fd06S2pvJonW0h7sIwIuT1BVooH/WQIHkmbu+iW/V1AHJtPwBnd/YOEwP
-      yijAs9mdfi6s7h0ysJJ3NWGIxSSR9H0fIdx3OKX+6Vzw+9Na/dlzVNZgJ+6tR4TU
-      RGcSojbzei8YdX9VQy0fjns0mavxrq/aezrQeX5sj3lH0iiMiKmXoEoE1ZvnF1sC
-      AwEAATANBgkqhkiG9w0BAQUFAAOCAQEAXeQ1dAnHXklorPBkc/TMwjZ7fRCG3twJ
-      giViAvsGrGrXtKGwAfWENlM+8kG99VGpQ5RZ+wWGXayObqATMKMmrUZ5LSlBGfQz
-      AgKiDYURoKe+IHC3dBw/7nNFIXfuVexWhULQj6kyg0XlwNLSk/3DaJrsvOjirymY
-      j0ubnTrEwgl+2Yam97VW4a1Q3VXbay6VhNrEetMUUHokFPz6Go1bxDs07/fYfVfJ
-      Qv9xehvYLNuXDjluVRXneVpnRmC6XDAMAgT90qfZvktKj3KwLIZCdBczH9Kflhsr
-      2Xru1Dw19HiJCfX+ZotYMNOhx92qTiL0ELlJjqeu8c0bdAo0tuYYew==
-      -----END CERTIFICATE-----
-    ca: |
-      -----BEGIN CERTIFICATE-----
-      MIIClDCCAXwCCQCU6a04MFuU6zANBgkqhkiG9w0BAQUFADAMMQowCAYDVQQDDAEq
-      MB4XDTE5MTIwOTIzMjYzM1oXDTIwMTIwODIzMjYzM1owDDEKMAgGA1UEAwwBKjCC
-      ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANGvyO+mnn2tpnILxu2DNlgw
-      KKQ+8iwqC07gAvwbGmkEGjifxlRO5sbK1Cel79LUO3McCm4rfy4Kkk7VyFUFxduL
-      kvHg25/DXlf2gzFx5hzQ4LzOFcX7/Qr+KXdCT2TWjn+ppKhOyt6QMfYvTuRZMQ+0
-      TTDOUm+fd06S2pvJonW0h7sIwIuT1BVooH/WQIHkmbu+iW/V1AHJtPwBnd/YOEwP
-      yijAs9mdfi6s7h0ysJJ3NWGIxSSR9H0fIdx3OKX+6Vzw+9Na/dlzVNZgJ+6tR4TU
-      RGcSojbzei8YdX9VQy0fjns0mavxrq/aezrQeX5sj3lH0iiMiKmXoEoE1ZvnF1sC
-      AwEAATANBgkqhkiG9w0BAQUFAAOCAQEAXeQ1dAnHXklorPBkc/TMwjZ7fRCG3twJ
-      giViAvsGrGrXtKGwAfWENlM+8kG99VGpQ5RZ+wWGXayObqATMKMmrUZ5LSlBGfQz
-      AgKiDYURoKe+IHC3dBw/7nNFIXfuVexWhULQj6kyg0XlwNLSk/3DaJrsvOjirymY
-      j0ubnTrEwgl+2Yam97VW4a1Q3VXbay6VhNrEetMUUHokFPz6Go1bxDs07/fYfVfJ
-      Qv9xehvYLNuXDjluVRXneVpnRmC6XDAMAgT90qfZvktKj3KwLIZCdBczH9Kflhsr
-      2Xru1Dw19HiJCfX+ZotYMNOhx92qTiL0ELlJjqeu8c0bdAo0tuYYew==
-      -----END CERTIFICATE-----
-
+app_domains: []
+blobstore:
+  access_key_id: AKIAIOSFODNN7EXAMPLE
+  buildpack_directory_key: cc-buildpacks
+  droplet_directory_key: cc-droplets
+  endpoint: http://capi-blobstore-minio.default:9000
+  package_directory_key: cc-packages
+  region: ""
+  resource_directory_key: cc-resources
+  secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+ccdb:
+  adapter: postgres
+  database: cloud_controller
+  host: capi-database-postgresql
+  password: cloud_controller
+  port: 5432
+  user: cloud_controller
+eirini:
+  serverCerts:
+    secretName: null
+imagePullSecrets: null
+images:
+  capi_kpack_watcher: cloudfoundry/capi-kpack-watcher@sha256:88e06b9b420a7b9f80a86535f58a2e62ea12f7176886a505b148af0ea07ee4ea
+  ccng: cloudfoundry/cloud-controller-ng@sha256:7c4bab2a2d06a50a008b804d774db3508fb63269e33a078dd97024628f0b186a
+  cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
+  nginx: cloudfoundry/capi-nginx@sha256:98bd1a5240c5d39d64a04af7e847284582329eeb007db324dce19ac260f81c09
+  statsd_exporter: prom/statsd-exporter:v0.15.0@sha256:e3174186628b401e4a441b78513ba06e957644267332436be0c77dd7af9bdddc
 kbld:
-  destination:
-
+  destination: null
 kpack:
   registry:
-    hostname: "" #! Used to fill in the hostname of the kpack registry auth secret
-    repository: "" #! Passed as spec.tag to the kpack Image resource
-    username: ""
+    hostname: ""
     password: ""
+    repository: ""
+    username: ""
+metric_proxy:
+  ca:
+    secret_name: null
+  cert:
+    secret_name: null
+replicaCount: 1
+staging_namespace: cf-workloads-staging
+system_domain: cf-system.svc.cluster.local
+system_namespace: cf-system
+uaa:
+  clients:
+    capi_kpack_watcher:
+      secret: supers3cret
+    cloud_controller_username_lookup:
+      secret: supers3cret
+  serverCerts:
+    secretName: null
+workloads_namespace: cf-workloads
