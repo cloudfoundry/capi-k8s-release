@@ -61,31 +61,33 @@ func TestImageConfigFetcher(t *testing.T) {
 							ghttp.VerifyRequest("GET", "/v2/"),
 						),
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v2/busybox/manifests/sha256:3d234de17ec9ceb63617e4eed1a8d3bfd6ceb1bb94ae6bd5b7b820041ffd7aa2"),
+							ghttp.VerifyRequest("GET", "/v2/busybox/manifests/sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd"),
 							ghttp.RespondWith(http.StatusOK, `{
         "schemaVersion": 2,
         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
         "config": {
                 "mediaType": "application/vnd.docker.container.image.v1+json",
                 "size": 1494,
-                "digest": "sha256:be68ed756f4cae7f30097b64ab89281b6693a48c001fc7f4b00704ecdc5e9aab"
+                "digest": "sha256:ad0ac93746366a1c56e3c5e41910ccf4d15b678c1835dc9fb1ae2edd4b496596"
         },
         "layers": [
                 {
                         "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
                         "size": 760854,
-                        "digest": "sha256:be68ed756f4cae7f30097b64ab89281b6693a48c001fc7f4b00704ecdc5e9aab"
+                        "digest": "sha256:ad0ac93746366a1c56e3c5e41910ccf4d15b678c1835dc9fb1ae2edd4b496596"
                 }
         ]
 }`),
 						),
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v2/busybox/blobs/sha256:be68ed756f4cae7f30097b64ab89281b6693a48c001fc7f4b00704ecdc5e9aab"),
+							ghttp.VerifyRequest("GET", "/v2/busybox/blobs/sha256:ad0ac93746366a1c56e3c5e41910ccf4d15b678c1835dc9fb1ae2edd4b496596"),
 							ghttp.RespondWith(http.StatusOK, `{
         "schemaVersion": 2,
-		"image": "some/image",
         "mediaType": "application/vnd.docker.distribution.blob.v2+json",
         "config": {
+				"image": "sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f",
+				"cmd": ["sh"],
+				"env": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
                 "mediaType": "application/vnd.docker.container.image.v1+json",
                 "size": 1494,
                 "digest": "sha256:8c0a103553d9c86d5d6b628f0af2c354a23dded270f3f5b090b08e34d6845adf"
@@ -108,13 +110,12 @@ func TestImageConfigFetcher(t *testing.T) {
 
 				it("returns a valid, expected OCI Image Config", func() {
 					registryDomain := strings.TrimPrefix(fakeRegistryServer.URL(), `http://`)
-					imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:3d234de17ec9ceb63617e4eed1a8d3bfd6ceb1bb94ae6bd5b7b820041ffd7aa2", registryDomain))
+					imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd", registryDomain))
 
 					Expect(err).ToNot(HaveOccurred())
-					Expect(imageConfig).To(BeNil())
-
-
-					Expect(imageConfig.Domainname).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
+					Expect(imageConfig).ToNot(BeNil())
+					
+					Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
 					Expect(imageConfig.Cmd).To(ConsistOf("sh"))
 					Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
 				})
