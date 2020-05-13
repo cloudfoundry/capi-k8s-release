@@ -11,13 +11,13 @@ CCNG_DIR="${CAPI_RELEASE_DIR}src/cloud_controller_ng"
 if [ -z "$1" ]
   then
     echo "No values file was supplied!"
-		exit 1
+    exit 1
 fi
 
 if [ -z "$2" ]
   then
     echo "No image destination was supplied!"
-		exit 1
+    exit 1
 fi
 
 # template the image destination into the kbld yml
