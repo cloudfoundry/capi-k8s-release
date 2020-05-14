@@ -105,7 +105,7 @@ func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 
 	capiBuild := capi_model.NewBuild(build)
 
-	imageConfig, err := bw.imageConfigFetcher.FetchImageConfig(build.Status.LatestImage)
+	imageConfig, err := bw.imageConfigFetcher.FetchImageConfig(build.Status.LatestImage,build.Spec.ServiceAccount,build.Namespace)
 	if err != nil {
 		log.Printf("[UpdateFunc] Failed to fetch image config: %v\n", err)
 		return

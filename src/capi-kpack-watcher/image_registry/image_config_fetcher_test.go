@@ -2,6 +2,9 @@ package image_registry
 
 import (
 	"fmt"
+	"github.com/pivotal/kpack/pkg/registry"
+	"github.com/pivotal/kpack/pkg/registry/registryfakes"
+
 	"net/http"
 	"strings"
 	"testing"
@@ -33,7 +36,7 @@ func TestImageConfigFetcher(t *testing.T) {
 				})
 
 				it("returns a valid, expected OCI Image Config", func() {
-					imageConfig, err = fetcher.FetchImageConfig("busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6")
+					imageConfig, err = fetcher.FetchImageConfig("busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6", "", "")
 
 					Expect(err).ToNot(HaveOccurred())
 					Expect(imageConfig).ToNot(BeNil())
@@ -50,6 +53,7 @@ func TestImageConfigFetcher(t *testing.T) {
 					imageConfig        *v1.Config
 					err                error
 					fakeRegistryServer *ghttp.Server
+					keychainFactory = &registryfakes.FakeKeychainFactory{}
 				)
 
 				it.Before(func() {
@@ -109,12 +113,18 @@ func TestImageConfigFetcher(t *testing.T) {
 				})
 
 				it("returns a valid, expected OCI Image Config", func() {
+					appImageSecretRef := registry.SecretRef{
+						ServiceAccount: "build-service-account",
+						Namespace:      "build-namespace",
+					}
+					appImageKeychain := &registryfakes.FakeKeychain{}
+					keychainFactory.AddKeychainForSecretRef(t, appImageSecretRef, appImageKeychain)
 					registryDomain := strings.TrimPrefix(fakeRegistryServer.URL(), `http://`)
-					imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd", registryDomain))
+					imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd", registryDomain),"build-service-account", "build-namespace")
 
 					Expect(err).ToNot(HaveOccurred())
 					Expect(imageConfig).ToNot(BeNil())
-					
+
 					Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
 					Expect(imageConfig.Cmd).To(ConsistOf("sh"))
 					Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
