@@ -18,10 +18,5 @@ destinations:
     newImage: #@ data.values.kbld.destination
 ---
 apiVersion: kbld.k14s.io/v1alpha1
-kind: ImageKeys
-keys:
-- ccng
----
-apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
-minimumRequiredVersion: 0.16.0
+minimumRequiredVersion: 0.15.0
