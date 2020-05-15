@@ -16,7 +16,7 @@ RUN cd nginx-upload-module-2.3.0 && \
 RUN tar xzvf nginx-1.16.1.tar.gz
 RUN tar xzvf pcre-8.42.tar.gz
 
-# install whatever is needed for nginx installation
+# install whatever is needed for "./configure"
 RUN apt-get install -y \
   gcc \
   g++ \
