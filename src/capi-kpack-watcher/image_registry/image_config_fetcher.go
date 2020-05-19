@@ -5,7 +5,6 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pivotal/kpack/pkg/registry"
-	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . ImageConfigFetcher
@@ -13,25 +12,26 @@ type ImageConfigFetcher interface {
 	FetchImageConfig(imageReference, buildServiceAccount, buildNamespace string) (*v1.Config, error)
 }
 
-type ociImageConfigFetcher struct {
+type OciImageConfigFetcher struct {
+	KeychainFactory registry.KeychainFactory
+	ImageConfigFetcher    ImageConfigFetcher
 }
 
 // TODO: supply private registry credentials, defaulting to empty strings
-func NewImageConfigFetcher() ImageConfigFetcher {
-	return ociImageConfigFetcher{}
+func NewOciImageConfigFetcher(keychainFactory registry.KeychainFactory) OciImageConfigFetcher {
+	return OciImageConfigFetcher{KeychainFactory: keychainFactory}
 }
 
-func (f ociImageConfigFetcher) FetchImageConfig(imageReference, buildServiceAccount, buildNamespace string) (*v1.Config, error) {
+func (f OciImageConfigFetcher) FetchImageConfig(imageReference, buildServiceAccount, buildNamespace string) (*v1.Config, error) {
 	ref, err := name.ParseReference(imageReference)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: supply registry with credentials if present on fetcher
-    keychainFactory, err := k8sdockercreds.NewSecretKeychainFactory(k8sClient)
-	keychain, err := keychainFactory.KeychainForSecretRef(registry.SecretRef{
-		ServiceAccount: "foo",
-		Namespace:      "bar",
+	keychain, err := f.KeychainFactory.KeychainForSecretRef(registry.SecretRef{
+		ServiceAccount: buildServiceAccount,
+		Namespace:      buildNamespace,
 	})
 	img, err := remote.Image(ref, remote.WithAuthFromKeychain(keychain))
 	if err != nil {

@@ -28,11 +28,12 @@ func TestImageConfigFetcher(t *testing.T) {
 				var (
 					fetcher     ImageConfigFetcher
 					imageConfig *v1.Config
+					keychainFactory = &registryfakes.FakeKeychainFactory{}
 					err         error
 				)
 
 				it.Before(func() {
-					fetcher = NewImageConfigFetcher()
+					fetcher = NewOciImageConfigFetcher(keychainFactory)
 				})
 
 				it("returns a valid, expected OCI Image Config", func() {
@@ -41,8 +42,8 @@ func TestImageConfigFetcher(t *testing.T) {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(imageConfig).ToNot(BeNil())
 
-					Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
-					Expect(imageConfig.Cmd).To(ConsistOf("sh"))
+					Expect(imageConfig.Image).To(Equal("sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6"))
+					Expect(imageConfig.Cmd).To(ConsistOf("cmd"))
 					Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
 				})
 			})
@@ -57,7 +58,7 @@ func TestImageConfigFetcher(t *testing.T) {
 				)
 
 				it.Before(func() {
-					fetcher = NewImageConfigFetcher()
+					fetcher = NewOciImageConfigFetcher(keychainFactory)
 					// TODO: setup Ginkgo mock HTTP server to return mock Image Config response
 					fakeRegistryServer = ghttp.NewServer()
 					fakeRegistryServer.AppendHandlers(

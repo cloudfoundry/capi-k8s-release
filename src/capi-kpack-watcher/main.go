@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	"log"
 	"os"
 
@@ -56,10 +57,17 @@ func main() {
 	log.Printf("Watcher initialized. Listening...\n")
 	factory := kpackinformer.NewSharedInformerFactory(clientset, 0)
 
+	client := kubernetes.NewInClusterClient()
+
+	keychainFactory, err := k8sdockercreds.NewSecretKeychainFactory(client)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	watcher.NewBuildWatcher(
 		factory.Build().V1alpha1().Builds().Informer(),
 		capi.NewCAPIClient(),
-		kubernetes.NewInClusterClient(),
-		image_registry.NewImageConfigFetcher(),
+		client,
+		image_registry.NewOciImageConfigFetcher(keychainFactory),
 	).Run()
 }
