@@ -23,7 +23,8 @@ type Lifecycle struct {
 	Data LifecycleData `json:"data"`
 }
 type LifecycleData struct {
-	Image string `json:"image"`
+	Image        string            `json:"image"`
+	ProcessTypes map[string]string `json:"processTypes"`
 }
 
 func (b *Build) ToJSON() []byte {

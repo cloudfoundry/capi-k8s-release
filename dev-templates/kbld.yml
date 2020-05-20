@@ -4,19 +4,32 @@ apiVersion: kbld.k14s.io/v1alpha1
 kind: Sources
 sources:
   - imageRepo: cloudfoundry/cloud-controller-ng
-    path: #@ data.values.ccng_dir
-  - imageRepo: #@ data.values.kbld.destination
-    path: #@ data.values.ccng_dir
-
+    path: #@ data.values.src_dirs.ccng
+  - imageRepo: #@ data.values.kbld.destination.ccng
+    path: #@ data.values.src_dirs.ccng
+  - imageRepo: cloudfoundry/capi-kpack-watcher
+    path: #@ data.values.src_dirs.capi_kpack_watcher
+  - imageRepo: #@ data.values.kbld.destination.capi_kpack_watcher
+    path: #@ data.values.src_dirs.capi_kpack_watcher
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
 destinations:
   - imageRepo: cloudfoundry/cloud-controller-ng
-    newImage: #@ data.values.kbld.destination
-  - imageRepo: #@ data.values.kbld.destination
-    newImage: #@ data.values.kbld.destination
+    newImage: #@ data.values.kbld.destination.ccng
+  - imageRepo: #@ data.values.kbld.destination.ccng
+    newImage: #@ data.values.kbld.destination.ccng
+  - imageRepo: cloudfoundry/capi-kpack-watcher
+    newImage: #@ data.values.kbld.destination.capi_kpack_watcher
+  - imageRepo: #@ data.values.kbld.destination.capi_kpack_watcher
+    newImage: #@ data.values.kbld.destination.capi_kpack_watcher
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageKeys
+keys:
+- ccng
+- capi_kpack_watcher
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
-minimumRequiredVersion: 0.15.0
+minimumRequiredVersion: 0.16.0

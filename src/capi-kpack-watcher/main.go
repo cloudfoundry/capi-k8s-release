@@ -16,9 +16,13 @@ limitations under the License.
 package main
 
 import (
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	"log"
 	"os"
 
+	"capi_kpack_watcher/capi"
+	"capi_kpack_watcher/image_registry"
+	"capi_kpack_watcher/kubernetes"
 	"capi_kpack_watcher/watcher"
 
 	// The import below is needed to authenticate with GCP.
@@ -27,6 +31,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	kpackclient "github.com/pivotal/kpack/pkg/client/clientset/versioned"
+	kpackinformer "github.com/pivotal/kpack/pkg/client/informers/externalversions"
 )
 
 func main() {
@@ -50,6 +55,19 @@ func main() {
 	}
 
 	log.Printf("Watcher initialized. Listening...\n")
+	factory := kpackinformer.NewSharedInformerFactory(clientset, 0)
 
-	watcher.NewBuildWatcher(clientset).Run()
+	client := kubernetes.NewInClusterClient()
+
+	keychainFactory, err := k8sdockercreds.NewSecretKeychainFactory(client)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	watcher.NewBuildWatcher(
+		factory.Build().V1alpha1().Builds().Informer(),
+		capi.NewCAPIClient(),
+		client,
+		image_registry.NewOciImageConfigFetcher(keychainFactory),
+	).Run()
 }
