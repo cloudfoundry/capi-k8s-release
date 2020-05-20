@@ -1,9 +1,10 @@
 package watcher_test
 
 import (
-	"testing"
-
 	. "capi_kpack_watcher/watcher"
+	"errors"
+	"fmt"
+	"testing"
 
 	"capi_kpack_watcher/capi_model"
 	"capi_kpack_watcher/image_registry/image_registryfakes"
@@ -43,6 +44,22 @@ func TestUpdateFunc(t *testing.T) {
 			imageConfigFetcher = &image_registryfakes.FakeImageConfigFetcher{}
 
 			bw = NewBuildWatcher(nil, buildUpdater, kubeClient, imageConfigFetcher)
+		})
+		when("a build does not have a cloudfoundry.org/build_guid", func() {
+			it("ignores it", func() {
+				oldBuild := &kpack.Build{}
+				newBuild := &kpack.Build{
+					Status: kpack.BuildStatus{
+						PodName: podName,
+					},
+				}
+				newBuild.SetLabels(nil)
+				markBuildSuccessful(newBuild)
+
+				bw.UpdateFunc(oldBuild, newBuild)
+
+				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(0))
+			})
 		})
 
 		when("build is successful", func() {
@@ -86,54 +103,96 @@ func TestUpdateFunc(t *testing.T) {
 		})
 
 		when("build fails", func() {
+			var newFailedBuild *kpack.Build
 			var oldBuild *kpack.Build
-			var newBuild *kpack.Build
+			var expectedCCBuild capi_model.Build
+			when("kpack did not complete any step", func() {
+				it.Before(func() {
+					oldBuild = &kpack.Build{}
+					newFailedBuild = &kpack.Build{
+						Status: kpack.BuildStatus{
+							LatestImage:    imageRef,
+							StepsCompleted: []string{},
+						},
+					}
+					setGUIDOnLabel(newFailedBuild, guid)
+					markBuildFailed(newFailedBuild)
 
-			it.Before(func() {
-				kubeClient.GetContainerLogsReturns([]byte(fakeLogs), nil)
+					expectedCCBuild = capi_model.NewBuild(newFailedBuild)
+					expectedCCBuild.State = capi_model.BuildFailedState
+					expectedCCBuild.Error = fmt.Sprintf("Kpack build failed. build failure message: 'internal kpack build error'.")
 
-				oldBuild = &kpack.Build{}
-				newBuild = &kpack.Build{
-					Status: kpack.BuildStatus{
-						PodName:        podName,
-						StepsCompleted: []string{containerName},
-					},
-				}
-				setGUIDOnLabel(newBuild, guid)
-				markBuildFailed(newBuild)
+				})
+
+				it("updates capi with the failed state and error message", func() {
+					bw.UpdateFunc(oldBuild, newFailedBuild)
+
+					Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(0))
+
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild)) // Failing because state is STAGED -- helper creates as failed
+				})
 			})
 
-			it("updates capi with the failed state and error message", func() {
-				bw.UpdateFunc(oldBuild, newBuild)
+			when("container logs can be retrieved", func() {
+				it.Before(func() {
+					oldBuild = &kpack.Build{}
+					newFailedBuild = &kpack.Build{
+						Status: kpack.BuildStatus{
+							LatestImage:    imageRef,
+							PodName:        podName,
+							StepsCompleted: []string{containerName},
+						},
+					}
+					setGUIDOnLabel(newFailedBuild, guid)
+					markBuildFailed(newFailedBuild)
 
-				Expect(kubeClient.GetContainerLogsCallCount()).To(Equal(1))
-				actualPodName, actualContainerName := kubeClient.GetContainerLogsArgsForCall(0)
-				Expect(actualPodName).To(Equal(podName))
-				Expect(actualContainerName).To(Equal(containerName))
+					kubeClient.GetContainerLogsReturns([]byte(fakeLogs), nil)
+					expectedCCBuild = capi_model.NewBuild(newFailedBuild)
+					expectedCCBuild.State = capi_model.BuildFailedState
+					expectedCCBuild.Error = "some error"
+				})
 
-				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
-				actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
-				Expect(actualGuid).To(Equal(guid))
-				Expect(actualBuild).To(Equal(failedBuild("some error")))
+				it("updates capi with the failed state and error message", func() {
+					bw.UpdateFunc(oldBuild, newFailedBuild)
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild))
+				})
+			})
+
+			when("container logs cannot be retrieved", func() {
+				it.Before(func() {
+					oldBuild = &kpack.Build{}
+					newFailedBuild = &kpack.Build{
+						Status: kpack.BuildStatus{
+							LatestImage:    imageRef,
+							PodName:        podName,
+							StepsCompleted: []string{containerName},
+						},
+					}
+					setGUIDOnLabel(newFailedBuild, guid)
+					markBuildFailed(newFailedBuild)
+
+					kubeClient.GetContainerLogsReturns([]byte{}, errors.New("log fetch error"))
+					expectedCCBuild = capi_model.NewBuild(newFailedBuild)
+					expectedCCBuild.State = capi_model.BuildFailedState
+					expectedCCBuild.Error = "Kpack build failed. build failure message: 'internal kpack build error'. err: 'log fetch error'"
+				})
+
+				it("updates capi with the failed state and error message", func() {
+					bw.UpdateFunc(oldBuild, newFailedBuild)
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild))
+				})
 			})
 		})
 
-		when("a build does not have a cloudfoundry.org/build_guid", func() {
-			it("ignores it", func() {
-				oldBuild := &kpack.Build{}
-				newBuild := &kpack.Build{
-					Status: kpack.BuildStatus{
-						PodName: podName,
-					},
-				}
-				newBuild.SetLabels(nil)
-				markBuildSuccessful(newBuild)
-
-				bw.UpdateFunc(oldBuild, newBuild)
-
-				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(0))
-			})
-		})
 	})
 }
 
@@ -160,15 +219,9 @@ func markBuildSuccessful(b *kpack.Build) {
 func markBuildFailed(b *kpack.Build) {
 	b.Status.Conditions = kpackcore.Conditions{
 		kpackcore.Condition{
-			Type:   kpackcore.ConditionSucceeded,
-			Status: corev1.ConditionFalse,
+			Type:    kpackcore.ConditionSucceeded,
+			Status:  corev1.ConditionFalse,
+			Message: "internal kpack build error",
 		},
-	}
-}
-
-func failedBuild(msg string) capi_model.Build {
-	return capi_model.Build{
-		State: capi_model.BuildFailedState,
-		Error: msg,
 	}
 }

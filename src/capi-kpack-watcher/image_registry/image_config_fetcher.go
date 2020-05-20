@@ -13,8 +13,8 @@ type ImageConfigFetcher interface {
 }
 
 type OciImageConfigFetcher struct {
-	KeychainFactory registry.KeychainFactory
-	ImageConfigFetcher    ImageConfigFetcher
+	KeychainFactory    registry.KeychainFactory
+	ImageConfigFetcher ImageConfigFetcher
 }
 
 // TODO: supply private registry credentials, defaulting to empty strings

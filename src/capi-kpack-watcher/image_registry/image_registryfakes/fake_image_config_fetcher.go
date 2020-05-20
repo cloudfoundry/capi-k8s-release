@@ -9,10 +9,12 @@ import (
 )
 
 type FakeImageConfigFetcher struct {
-	FetchImageConfigStub        func(string) (*v1.Config, error)
+	FetchImageConfigStub        func(string, string, string) (*v1.Config, error)
 	fetchImageConfigMutex       sync.RWMutex
 	fetchImageConfigArgsForCall []struct {
 		arg1 string
+		arg2 string
+		arg3 string
 	}
 	fetchImageConfigReturns struct {
 		result1 *v1.Config
@@ -26,16 +28,18 @@ type FakeImageConfigFetcher struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeImageConfigFetcher) FetchImageConfig(arg1 string) (*v1.Config, error) {
+func (fake *FakeImageConfigFetcher) FetchImageConfig(arg1 string, arg2 string, arg3 string) (*v1.Config, error) {
 	fake.fetchImageConfigMutex.Lock()
 	ret, specificReturn := fake.fetchImageConfigReturnsOnCall[len(fake.fetchImageConfigArgsForCall)]
 	fake.fetchImageConfigArgsForCall = append(fake.fetchImageConfigArgsForCall, struct {
 		arg1 string
-	}{arg1})
-	fake.recordInvocation("FetchImageConfig", []interface{}{arg1})
+		arg2 string
+		arg3 string
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("FetchImageConfig", []interface{}{arg1, arg2, arg3})
 	fake.fetchImageConfigMutex.Unlock()
 	if fake.FetchImageConfigStub != nil {
-		return fake.FetchImageConfigStub(arg1)
+		return fake.FetchImageConfigStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -50,17 +54,17 @@ func (fake *FakeImageConfigFetcher) FetchImageConfigCallCount() int {
 	return len(fake.fetchImageConfigArgsForCall)
 }
 
-func (fake *FakeImageConfigFetcher) FetchImageConfigCalls(stub func(string) (*v1.Config, error)) {
+func (fake *FakeImageConfigFetcher) FetchImageConfigCalls(stub func(string, string, string) (*v1.Config, error)) {
 	fake.fetchImageConfigMutex.Lock()
 	defer fake.fetchImageConfigMutex.Unlock()
 	fake.FetchImageConfigStub = stub
 }
 
-func (fake *FakeImageConfigFetcher) FetchImageConfigArgsForCall(i int) string {
+func (fake *FakeImageConfigFetcher) FetchImageConfigArgsForCall(i int) (string, string, string) {
 	fake.fetchImageConfigMutex.RLock()
 	defer fake.fetchImageConfigMutex.RUnlock()
 	argsForCall := fake.fetchImageConfigArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
 func (fake *FakeImageConfigFetcher) FetchImageConfigReturns(result1 *v1.Config, result2 error) {
