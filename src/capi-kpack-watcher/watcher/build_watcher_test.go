@@ -89,16 +89,80 @@ func TestUpdateFunc(t *testing.T) {
 				}, nil)
 			})
 
-			it("updates capi with the success status", func() {
-				bw.UpdateFunc(oldBuild, newSuccessfulBuild)
+			when("there is an error fetching image config", func() {
+				it.Before(func() {
+					fakeErrorString := "oh no failed to fetch image config"
 
-				Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(1))
-				Expect(imageConfigFetcher.FetchImageConfigArgsForCall(0)).To(Equal(imageRef))
+					newFailedBuild := &kpack.Build{
+						Status: kpack.BuildStatus{
+							LatestImage:    imageRef,
+							StepsCompleted: []string{},
+						},
+					}
+					expectedCCBuild = capi_model.NewBuild(newFailedBuild)
+					expectedCCBuild.State = capi_model.BuildFailedState
+					expectedCCBuild.Error = fmt.Sprintf("Failed to handle successful kpack build: %s", fakeErrorString)
 
-				Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
-				actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
-				Expect(actualGuid).To(Equal(guid))
-				Expect(actualBuild).To(Equal(expectedCCBuild))
+					imageConfigFetcher.FetchImageConfigReturns(nil, errors.New(fakeErrorString))
+				})
+
+				it("updates the CC build as FAILED", func() {
+					bw.UpdateFunc(oldBuild, newSuccessfulBuild)
+
+					Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(1))
+					Expect(imageConfigFetcher.FetchImageConfigArgsForCall(0)).To(Equal(imageRef))
+
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild))
+				})
+			})
+
+			when("there is an error parsing image config", func() {
+				it.Before(func() {
+					newFailedBuild := &kpack.Build{
+						Status: kpack.BuildStatus{
+							LatestImage:    imageRef,
+							StepsCompleted: []string{},
+						},
+					}
+					expectedCCBuild = capi_model.NewBuild(newFailedBuild)
+					expectedCCBuild.State = capi_model.BuildFailedState
+					expectedCCBuild.Error = fmt.Sprintf("Failed to handle successful kpack build: unexpected end of JSON input")
+
+					imageConfigFetcher.FetchImageConfigReturns(&v1.Config{
+						Labels: map[string]string{
+							lifecycle.BuildMetadataLabel: "",
+						},
+					}, nil)
+				})
+
+				it("updates the CC build as FAILED", func() {
+					bw.UpdateFunc(oldBuild, newSuccessfulBuild)
+
+					Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(1))
+					Expect(imageConfigFetcher.FetchImageConfigArgsForCall(0)).To(Equal(imageRef))
+
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild))
+				})
+			})
+
+			when("there is no error fetching image config", func() {
+				it("updates capi with the success status", func() {
+					bw.UpdateFunc(oldBuild, newSuccessfulBuild)
+
+					Expect(imageConfigFetcher.FetchImageConfigCallCount()).To(Equal(1))
+					Expect(imageConfigFetcher.FetchImageConfigArgsForCall(0)).To(Equal(imageRef))
+
+					Expect(buildUpdater.UpdateBuildCallCount()).To(Equal(1))
+					actualGuid, actualBuild := buildUpdater.UpdateBuildArgsForCall(0)
+					Expect(actualGuid).To(Equal(guid))
+					Expect(actualBuild).To(Equal(expectedCCBuild))
+				})
 			})
 		})
 

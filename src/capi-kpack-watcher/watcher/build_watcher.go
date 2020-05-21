@@ -104,18 +104,26 @@ func (bw *BuildWatcher) handleSuccessfulBuild(build *kpack.Build) {
 	labels := build.GetLabels()
 	guid := labels[BuildGUIDLabel]
 
-	capiBuild := capi_model.NewBuild(build)
-
 	imageConfig, err := bw.imageConfigFetcher.FetchImageConfig(build.Status.LatestImage, build.Spec.ServiceAccount, build.Namespace)
 	if err != nil {
 		log.Printf("[UpdateFunc] Failed to fetch image config: %v\n", err)
+		updateCAPIBuild := createFailedCAPIBuild(fmt.Sprintf("Failed to handle successful kpack build: %s", err), build.Status.LatestImage)
+		if err := bw.buildUpdater.UpdateBuild(guid, updateCAPIBuild); err != nil {
+			log.Printf("[UpdateFunc] Failed to send request: %v\n", err)
+		}
 		return
 	}
 	processTypes, err := bw.extractProcessTypes(imageConfig)
 	if err != nil {
 		log.Printf("[UpdateFunc] Failed to parse process types info from image config: %v\n", err)
+		updateCAPIBuild := createFailedCAPIBuild(fmt.Sprintf("Failed to handle successful kpack build: %s", err), build.Status.LatestImage)
+		if err := bw.buildUpdater.UpdateBuild(guid, updateCAPIBuild); err != nil {
+			log.Printf("[UpdateFunc] Failed to send request: %v\n", err)
+		}
 		return
 	}
+
+	capiBuild := capi_model.NewBuild(build)
 	capiBuild.Lifecycle.Data.ProcessTypes = processTypes
 
 	if err := bw.buildUpdater.UpdateBuild(guid, capiBuild); err != nil {
@@ -173,5 +181,18 @@ func (bw *BuildWatcher) handleFailedBuild(build *kpack.Build) {
 
 	if err := bw.buildUpdater.UpdateBuild(guid, capi_model); err != nil {
 		log.Fatalf("[UpdateFunc] Failed to send request: %v\n", err)
+	}
+}
+
+func createFailedCAPIBuild(errorMessage string, latestImageRef string) capi_model.Build {
+	return capi_model.Build{
+		State: capi_model.BuildFailedState,
+		Error: errorMessage,
+		Lifecycle: capi_model.Lifecycle{
+			Type: capi_model.KpackLifecycleType,
+			Data: capi_model.LifecycleData{
+				Image: latestImageRef,
+			},
+		},
 	}
 }
