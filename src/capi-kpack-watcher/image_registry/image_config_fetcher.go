@@ -33,6 +33,10 @@ func (f OciImageConfigFetcher) FetchImageConfig(imageReference, buildServiceAcco
 		ServiceAccount: buildServiceAccount,
 		Namespace:      buildNamespace,
 	})
+	if err != nil {
+		return nil, err
+	}
+
 	img, err := remote.Image(ref, remote.WithAuthFromKeychain(keychain))
 	if err != nil {
 		return nil, err
