@@ -1,8 +1,8 @@
-
 package image_registry
 
 import (
 	"fmt"
+
 	"github.com/pivotal/kpack/pkg/registry"
 	"github.com/pivotal/kpack/pkg/registry/registryfakes"
 
@@ -34,6 +34,7 @@ func TestImageConfigFetcher(t *testing.T) {
 				)
 
 				it.Before(func() {
+					keychainFactory.AddKeychainForSecretRef(t, registry.SecretRef{}, &registryfakes.FakeKeychain{})
 					fetcher = NewOciImageConfigFetcher(keychainFactory)
 				})
 
