@@ -2,7 +2,7 @@
 ---
 images:
   capi_kpack_watcher: cloudfoundry/capi-kpack-watcher@sha256:b7ef61b9966df01e9d1af96506dd92907e87b520c53e0174c3fa0207bf173412
-  ccng: cloudfoundry/cloud-controller-ng@sha256:4edeab74f97bad1e2e9f5b7bdfe1ec8f080ef33f588ffc4c81c9ff05ac8b854a
+  ccng: cloudfoundry/cloud-controller-ng@sha256:faf8e37f510195572fd78fa9cb6544087255d967d1b125657ad2096f1c2ba8c2
   cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
   nginx: cloudfoundry/capi-nginx@sha256:abfa8900163892fae1ebdaffbe3619ef821b769646d51279278bff4334b3d8bc
   statsd_exporter: prom/statsd-exporter:v0.15.0@sha256:e3174186628b401e4a441b78513ba06e957644267332436be0c77dd7af9bdddc
