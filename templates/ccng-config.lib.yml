@@ -81,7 +81,7 @@ directories:
 logging:
   file: /dev/stdout
   syslog: vcap.cloud_controller_ng
-  level: "debug"
+  level: "info"
   max_retries: 1
 
 logcache:
