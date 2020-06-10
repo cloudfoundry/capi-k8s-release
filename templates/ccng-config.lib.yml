@@ -119,11 +119,11 @@ db: &db
   pool_timeout: 10
   log_level: "debug2"
   log_db_queries: false
-  ssl_verify_hostname: false
   read_timeout: 3600
   connection_validation_timeout: 3600
   #! TODO: secure db connection?
-  #! ca_cert_path: "/dev/null"
+  ca_cert_path: "/config/database/certs/ca.crt"
+  ssl_verify_hostname: true
 
 telemetry_log_path: "/dev/null"
 log_cache:
