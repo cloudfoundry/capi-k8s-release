@@ -16,9 +16,10 @@ limitations under the License.
 package main
 
 import (
-	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	"log"
 	"os"
+
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 
 	"capi_kpack_watcher/capi"
 	"capi_kpack_watcher/image_registry"
@@ -36,7 +37,10 @@ import (
 
 func main() {
 	if os.Getenv("CAPI_HOST") == "" {
-		panic("CAPI_HOST environment variable must be set")
+		panic("`CAPI_HOST` environment variable must be set")
+	}
+	if os.Getenv("STAGING_NAMESPACE") == "" {
+		panic("`STAGING_NAMESPACE` environment variable must be set")
 	}
 
 	// This environment variable is useful if running locally such as on
@@ -55,7 +59,11 @@ func main() {
 	}
 
 	log.Printf("Watcher initialized. Listening...\n")
-	factory := kpackinformer.NewSharedInformerFactory(clientset, 0)
+	factory := kpackinformer.NewSharedInformerFactoryWithOptions(
+		clientset,
+		0,
+		kpackinformer.WithNamespace(os.Getenv("STAGING_NAMESPACE")),
+	)
 
 	client := kubernetes.NewInClusterClient()
 

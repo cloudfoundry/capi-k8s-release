@@ -78,7 +78,7 @@ spec:
         - name: statsd-exporter
           image: #@ data.values.images.statsd_exporter
           imagePullPolicy: Always
-      serviceAccountName: cc-api-service-account
+      serviceAccountName: cf-api-server-service-account
       volumes:
       - name: server-sock
         emptyDir: {}
