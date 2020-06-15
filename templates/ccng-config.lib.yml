@@ -121,9 +121,12 @@ db: &db
   log_db_queries: false
   read_timeout: 3600
   connection_validation_timeout: 3600
-  #! TODO: secure db connection?
+  #@ if data.values.ccdb.ca_cert:
   ca_cert_path: "/config/database/certs/ca.crt"
   ssl_verify_hostname: true
+  #@ else:
+  ssl_verify_hostname: false
+  #@ end
 
 telemetry_log_path: "/dev/null"
 log_cache:

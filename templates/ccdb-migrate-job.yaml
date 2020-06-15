@@ -24,6 +24,7 @@ spec:
         volumeMounts:
         - name: cloud-controller-ng-yaml
           mountPath: /config
+        #@ if/end data.values.ccdb.ca_cert:
         - name: database-ca-cert
           mountPath: /config/database/certs
       restartPolicy: OnFailure
@@ -31,6 +32,7 @@ spec:
       - name: cloud-controller-ng-yaml
         configMap:
           name: cloud-controller-ng-yaml
+      #@ if/end data.values.ccdb.ca_cert:
       - name: database-ca-cert
         secret:
           secretName: database-ca-cert
