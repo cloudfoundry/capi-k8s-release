@@ -24,12 +24,17 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
 
   pushd "${HOME}/workspace/capi-k8s-release" > /dev/null
     git checkout ${OLD_VERSION} 2>/dev/null
-    old_ccng_image_digest="$(bosh int --path=/images/ccng values/images.yml)"
-    old_ccng_sha="$(git log --grep="${old_ccng_image_digest}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
+    OLD_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
+    OLD_CCNG_SHA="$(git log --grep="${OLD_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
 
     git checkout ${NEW_VERSION} 2>/dev/null
-    new_ccng_image_digest="$(bosh int --path=/images/ccng values/images.yml)"
-    new_ccng_sha="$(git log --grep="${new_ccng_image_digest}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
+    NEW_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
+    NEW_CCNG_SHA="$(git log --grep="${NEW_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
+  popd > /dev/null
+
+  pushd "${HOME}/workspace/capi-release/src/cloud_controller_ng" > /dev/null
+    git checkout ${NEW_CCNG_SHA} 2>/dev/null
+    MIGRATIONS=($(git diff --diff-filter=A --name-only $OLD_CCNG_SHA db/migrations))
   popd > /dev/null
 
   echo ""
@@ -38,6 +43,19 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
   # NOTE: if you're not authorized properly, this could mask that (i.e. gave a valid tracker token
   # but don't have permissions on our project)
   bundle exec rake \
-    "changelog[${HOME}/workspace/capi-release/src/cloud_controller_ng,${old_ccng_sha},${new_ccng_sha},]" \
+    "changelog[${HOME}/workspace/capi-release/src/cloud_controller_ng,${OLD_CCNG_SHA},${NEW_CCNG_SHA},]" \
     2>/dev/null | tail -n+2 | sort | uniq | rg -v "failed to fetch story title"
+
+  echo ""
+  echo "🚀 Generating database migrations list for cloud_controller_ng... 🚀" 1>&2
+  MIGRATIONS_FORMATTED=()
+  if [ ${#MIGRATIONS[@]} -eq '0' ]; then
+    MIGRATIONS_FORMATTED+=("None")
+  else
+    for i in "${MIGRATIONS[@]}"
+    do
+      MIGRATIONS_FORMATTED+=("- [$(basename $i)](https://github.com/cloudfoundry/cloud_controller_ng/blob/$NEW_CCNG_SHA/$i)")
+    done
+  fi
+  echo "${MIGRATIONS_FORMATTED[*]}"
 popd > /dev/null
