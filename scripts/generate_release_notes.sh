@@ -14,6 +14,8 @@ if [[ $# -lt 1 ]]; then
   usage_text >&2
 fi
 
+test $TRACKER_API_TOKEN
+
 OLD_VERSION="$1"
 NEW_VERSION="$2"
 
@@ -42,9 +44,15 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
   # filters out duplicates and any failures to fetch stories
   # NOTE: if you're not authorized properly, this could mask that (i.e. gave a valid tracker token
   # but don't have permissions on our project)
-  bundle exec rake \
+  CCNG_NOTES="$(bundle exec rake \
     "changelog[${HOME}/workspace/capi-release/src/cloud_controller_ng,${OLD_CCNG_SHA},${NEW_CCNG_SHA},]" \
-    2>/dev/null | tail -n+2 | sort | uniq | rg -v "failed to fetch story title"
+    2>/dev/null | tail -n+2 | sort | uniq | rg -v "failed to fetch story title")"
+  # Repos we care about:
+  # - cloudfoundry/cloud_controller_ng
+  # - cloudfoundry/capi-k8s-release
+  # - cloudfoundry/cli
+  REPOS_REGEX="(?:cloudfoundry/cloud_controller_ng|cloudfoundry/capi-k8s-release|cloudfoundry/cli)\s\#\d+:"
+  echo "${CCNG_NOTES}" | rg -v "${REPOS_REGEX}"
 
   echo ""
   echo "🚀 Generating database migrations list for cloud_controller_ng... 🚀" 1>&2
@@ -58,4 +66,8 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
     done
   fi
   echo "${MIGRATIONS_FORMATTED[*]}"
+
+  echo ""
+  echo "🚀 Generating list of related PRs and Issues... 🚀" 1>&2
+  echo "${CCNG_NOTES}" | rg "${REPOS_REGEX}"
 popd > /dev/null
