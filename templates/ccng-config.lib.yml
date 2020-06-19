@@ -1,4 +1,5 @@
 #@ load("@ytt:data","data")
+#@ load("fog-connection.lib.yml","fog_connection")
 #@ def ccng_config():
 ---
 local_route: 0.0.0.0
