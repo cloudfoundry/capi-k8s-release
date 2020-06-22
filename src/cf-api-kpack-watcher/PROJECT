@@ -1,0 +1,7 @@
+domain: build.pivotal.io
+repo: code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher
+resources:
+- group: build.pivotal.io
+  kind: Build
+  version: v1alpha1
+version: "2"

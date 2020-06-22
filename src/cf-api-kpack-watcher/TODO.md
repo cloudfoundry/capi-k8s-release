@@ -1,0 +1,1 @@
+- remove `config` directory and any related make directives
