@@ -21,17 +21,17 @@ NEW_VERSION="$2"
 
 pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
   echo "🚀 Generating release notes for capi-k8s-release... 🚀" 1>&2
-  bundle exec rake "changelog[${HOME}/workspace/capi-k8s-release,${OLD_VERSION},${NEW_VERSION},]" \
-    2>/dev/null | tail -n+2 | sort | uniq
+  pivotal-tracker-changelog --path "${HOME}/workspace/capi-k8s-release" --from "${OLD_VERSION}" --to "${NEW_VERSION}" \
+    2>/dev/null | sort
 
   pushd "${HOME}/workspace/capi-k8s-release" > /dev/null
     git checkout ${OLD_VERSION} 2>/dev/null
     OLD_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
-    OLD_CCNG_SHA="$(git log --grep="${OLD_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
+    OLD_CCNG_SHA="$(git log --grep="${OLD_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2 | tr -d "[:space:]")"
 
     git checkout ${NEW_VERSION} 2>/dev/null
     NEW_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
-    NEW_CCNG_SHA="$(git log --grep="${NEW_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
+    NEW_CCNG_SHA="$(git log --grep="${NEW_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2 | tr -d "[:space:]")"
   popd > /dev/null
 
   pushd "${HOME}/workspace/capi-release/src/cloud_controller_ng" > /dev/null
@@ -44,9 +44,8 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
   # filters out duplicates and any failures to fetch stories
   # NOTE: if you're not authorized properly, this could mask that (i.e. gave a valid tracker token
   # but don't have permissions on our project)
-  CCNG_NOTES="$(bundle exec rake \
-    "changelog[${HOME}/workspace/capi-release/src/cloud_controller_ng,${OLD_CCNG_SHA},${NEW_CCNG_SHA},]" \
-    2>/dev/null | tail -n+2 | sort | uniq | rg -v "failed to fetch story title")"
+  CCNG_NOTES="$(pivotal-tracker-changelog --path "${HOME}/workspace/capi-release/src/cloud_controller_ng" --from "${OLD_CCNG_SHA}" --to "${NEW_CCNG_SHA}" 2>/dev/null | \
+    sort | rg -v "failed to fetch story title")"
   # Repos we care about:
   # - cloudfoundry/cloud_controller_ng
   # - cloudfoundry/capi-k8s-release
