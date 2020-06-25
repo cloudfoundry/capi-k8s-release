@@ -23,11 +23,14 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
 	"github.com/go-logr/logr"
 	kpackbuild "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
@@ -40,39 +43,40 @@ type BuildReconciler struct {
 	CFAPIClient *capi.Client
 }
 
-// +kubebuilder:rbac:groups=build.pivotal.io.build.pivotal.io,resources=buildren,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=build.pivotal.io.build.pivotal.io,resources=buildren/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=build.pivotal.io,resources=builds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=build.pivotal.io,resources=builds/status,verbs=get;update;patch
 
 func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	logger := r.Log.WithValues("request", req.NamespacedName)
+
+	// TODO: only process builds for a particular namespace
 
 	// fetch build object
 	var build kpackbuild.Build
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
 		// TODO: should we requeue here?
+		// TODO: might need to do `client.IgnoreNotFound(err)` to deal with delete events
 		return ctrl.Result{}, err
 	}
-	// TODO: this amount of logging too much?
-	logger = logger.WithValues("build", build)
 
 	// handle deletion of kpack Build resource
 	if isBeingDeleted(&build.ObjectMeta) {
-		logger.V(1).Info("TODO: do we need to do anything if a kpack build is being deleted?")
+		logger.V(1).Info("TODO: Do we need to do anything if a kpack build is being deleted?")
 		return ctrl.Result{}, nil
 	}
 
 	// handle create/update of a kpack Build resource
-	// TODO: do we need to distinguish between create and update?
-	if areAllContainersCompletedSuccessfully(build.Status.StepStates) {
+	if build.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue() {
 		// mark build as staged successfully
 		buildGUID := build.GetLabels()[BuildGUIDLabel]
-		logger.WithValues("guid", buildGUID).V(1).Info("build completed successfully, marking as staged")
+		logger.WithValues("guid", buildGUID).V(1).Info("Build completed successfully, marking as staged")
 
+		// TODO: do the things to determine `processTypes` stuff
 		err := r.CFAPIClient.UpdateBuild(buildGUID, capi_model.NewBuild(&build))
 		if err != nil {
-			logger.Error(err, "failed to send request to CF API")
+			logger.Error(err, "Failed to send request to CF API")
 			// TODO: is it safe to always requeue here?
 			return ctrl.Result{Requeue: true}, nil
 		}
@@ -81,10 +85,11 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	} else {
 		// if any steps have explicitly failed, then mark build as failed
 		if hasAnyContainerFailed(build.Status.StepStates) {
-			logger.V(1).Info("received a kpack build which failed; uh-oh")
+			logger.V(1).Info("Received a kpack build which failed; uh-oh")
 			return ctrl.Result{}, nil
 		} else {
 			// else requeue
+			logger.V(1).Info("Build is still progressing, requeueing")
 			return ctrl.Result{Requeue: true}, nil
 		}
 	}
@@ -93,21 +98,31 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kpackbuild.Build{}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				// TODO: log self-link or UID for debugging?
+				r.Log.WithValues("request", e.Meta.GetSelfLink()).V(1).Info("Build created, watching for updates...")
+				return false
+			},
+			UpdateFunc:  r.updateEventFilter,
+			DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
+			GenericFunc: func(_ event.GenericEvent) bool { return false },
+		}).
 		Complete(r)
+}
+
+func (r *BuildReconciler) updateEventFilter(event event.UpdateEvent) bool {
+	newBuild, ok := event.ObjectNew.(*kpackbuild.Build)
+	if !ok {
+		// TODO: log something?
+		return false
+	}
+	// TODO: what happens though if we do this, build is actually failed and need to report to CCNG?
+	return newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue()
 }
 
 func isBeingDeleted(objectMeta *metav1.ObjectMeta) bool {
 	return !objectMeta.DeletionTimestamp.IsZero()
-}
-
-// returns true if all containers have terminated with exit code of zero
-func areAllContainersCompletedSuccessfully(containerStates []corev1.ContainerState) bool {
-	for _, container := range containerStates {
-		if container.Terminated == nil || container.Terminated.ExitCode != 0 {
-			return false
-		}
-	}
-	return true
 }
 
 // returns true if any container has terminated with a non-zero exit code
