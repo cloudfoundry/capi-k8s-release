@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/controllers"
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
@@ -40,7 +41,6 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = buildpivotaliov1alpha1.AddToScheme(scheme)
-	// _ = buildpivotaliov1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -53,6 +53,9 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
+	// TODO: add some startup validation for necessary config to interact with CCNG (e.g. its domain)
+
+	// TODO: change this to somehow use `lager` for consistency?
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -71,6 +74,8 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
+		// TODO: use `capi.NewCFAPIClient()` instead
+		CFAPIClient: capi.NewCAPIClient(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
 		os.Exit(1)
