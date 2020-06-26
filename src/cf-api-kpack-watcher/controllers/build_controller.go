@@ -83,9 +83,23 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 		return ctrl.Result{}, nil
 	} else {
-		// if any steps have explicitly failed, then mark build as failed
-		if hasAnyContainerFailed(build.Status.StepStates) {
-			logger.V(1).Info("Received a kpack build which failed; uh-oh")
+		// if any steps have explicitly failed, then mark CCNG build as failed
+		failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
+		if failedContainerState != nil {
+			logger.V(1).Info("Build terminated because of failure, marking as failed staging")
+
+			buildGUID := build.GetLabels()[BuildGUIDLabel]
+			cfAPIBuild := capi_model.Build{
+				State: capi_model.BuildFailedState,
+				Error: failedContainerState.Terminated.Message,
+			}
+			err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
+			if err != nil {
+				logger.Error(err, "Failed to send request to CF API")
+				// TODO: is it safe to always requeue here?
+				return ctrl.Result{Requeue: true}, nil
+			}
+
 			return ctrl.Result{}, nil
 		} else {
 			// else requeue
@@ -111,14 +125,14 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *BuildReconciler) updateEventFilter(event event.UpdateEvent) bool {
-	newBuild, ok := event.ObjectNew.(*kpackbuild.Build)
+func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
+	newBuild, ok := e.ObjectNew.(*kpackbuild.Build)
 	if !ok {
-		// TODO: log something?
+		// TODO: log something? what log level?
+		r.Log.WithValues("event", e).V(100).Info("Received a build update event that couldn't be deserialized")
 		return false
 	}
-	// TODO: what happens though if we do this, build is actually failed and need to report to CCNG?
-	return newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue()
+	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()
 }
 
 func isBeingDeleted(objectMeta *metav1.ObjectMeta) bool {
@@ -126,11 +140,11 @@ func isBeingDeleted(objectMeta *metav1.ObjectMeta) bool {
 }
 
 // returns true if any container has terminated with a non-zero exit code
-func hasAnyContainerFailed(containerStates []corev1.ContainerState) bool {
+func findAnyFailedContainerState(containerStates []corev1.ContainerState) *corev1.ContainerState {
 	for _, container := range containerStates {
 		if container.Terminated != nil && container.Terminated.ExitCode != 0 {
-			return true
+			return &container
 		}
 	}
-	return false
+	return nil
 }
