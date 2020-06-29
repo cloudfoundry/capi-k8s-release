@@ -99,13 +99,60 @@ var _ = Describe("Controllers/BuildController", func() {
 			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
 		})
 
-		XContext("and there is an error fetching process types from image config", func() {
-			It("successfully marks the CC v3 build as failed to have staged", func() {})
+		Context("and there is an error fetching process types from image config", func() {
+			BeforeEach(func() {
+				mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))
+				mockRestClient.PatchReturns(&http.Response{
+					StatusCode: 200,
+				}, nil)
+			})
+
+			It("successfully marks the CC v3 build as failed to have staged", func() {
+				buildGUID := "here-be-a-guid"
+				subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionTrue,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								ExitCode: 0,
+							},
+						},
+					},
+					LatestImage: "foo.bar/here/be/an/image",
+				})
+
+				// eventually expect CF API/CCNG to receive request to update its "v3 build" object
+				Eventually(func() int {
+					// TODO: figure out how to get rid of this horrible sleep
+					// need an initial sleep because of some suspected weirdness about how `counterfeiter`
+					// takes some time to release some mutexes it uses for counting stub usages
+					time.Sleep(1 * time.Second)
+					return mockRestClient.PatchCallCount()
+				}).Should(Equal(1))
+				url, _, body := mockRestClient.PatchArgsForCall(0)
+				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
+
+				raw, err := ioutil.ReadAll(body)
+				Expect(err).ToNot(HaveOccurred())
+
+				var updateBuildRequest capi_model.Build
+				err = json.Unmarshal(raw, &updateBuildRequest)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildFailedState))
+				Expect(updateBuildRequest.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
+			})
 		})
 
 		Context("and the cloud controller responds with an error", func() {
 			BeforeEach(func() {
-				mockRestClient.PatchReturnsOnCall(0, nil, errors.New("poop"))
+				mockRestClient.PatchReturnsOnCall(0, nil, errors.New("fake error: just didn't feel like working this time, sorry"))
 				mockRestClient.PatchReturnsOnCall(1, &http.Response{
 					StatusCode: 200,
 				}, nil)
