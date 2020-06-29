@@ -38,8 +38,7 @@ func NewBuild(build *kpack_build.Build) Build {
 		Lifecycle: Lifecycle{
 			Type: KpackLifecycleType,
 			Data: LifecycleData{
-				Image:        build.Status.LatestImage,
-				ProcessTypes: map[string]string{"web": "TODO"},
+				Image: build.Status.LatestImage,
 			},
 		},
 	}

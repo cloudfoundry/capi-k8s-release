@@ -12,26 +12,24 @@ type ImageConfigFetcher interface {
 	FetchImageConfig(imageReference, buildServiceAccount, buildNamespace string) (*v1.Config, error)
 }
 
-type OciImageConfigFetcher struct {
+type ociImageConfigFetcher struct {
 	KeychainFactory    registry.KeychainFactory
 	ImageConfigFetcher ImageConfigFetcher
 }
 
-// TODO: supply private registry credentials, defaulting to empty strings
-func NewOciImageConfigFetcher(keychainFactory registry.KeychainFactory) OciImageConfigFetcher {
-	return OciImageConfigFetcher{KeychainFactory: keychainFactory}
+func NewImageConfigFetcher(keychainFactory registry.KeychainFactory) ociImageConfigFetcher {
+	return ociImageConfigFetcher{KeychainFactory: keychainFactory}
 }
 
-func (f OciImageConfigFetcher) FetchImageConfig(imageReference, buildServiceAccount, buildNamespace string) (*v1.Config, error) {
+func (f ociImageConfigFetcher) FetchImageConfig(imageReference, secretServiceAccount, secretNamespace string) (*v1.Config, error) {
 	ref, err := name.ParseReference(imageReference)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: supply registry with credentials if present on fetcher
 	keychain, err := f.KeychainFactory.KeychainForSecretRef(registry.SecretRef{
-		ServiceAccount: buildServiceAccount,
-		Namespace:      buildNamespace,
+		ServiceAccount: secretServiceAccount,
+		Namespace:      secretNamespace,
 	})
 	if err != nil {
 		return nil, err

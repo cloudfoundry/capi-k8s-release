@@ -35,7 +35,7 @@ func TestImageConfigFetcher(t *testing.T) {
 
 				it.Before(func() {
 					keychainFactory.AddKeychainForSecretRef(t, registry.SecretRef{}, &registryfakes.FakeKeychain{})
-					fetcher = NewOciImageConfigFetcher(keychainFactory)
+					fetcher = NewImageConfigFetcher(keychainFactory)
 				})
 
 				it("returns a valid, expected OCI Image Config", func() {
@@ -62,8 +62,7 @@ func TestImageConfigFetcher(t *testing.T) {
 				)
 
 				it.Before(func() {
-					fetcher = NewOciImageConfigFetcher(keychainFactory)
-					// TODO: setup Ginkgo mock HTTP server to return mock Image Config response
+					fetcher = NewImageConfigFetcher(keychainFactory)
 					fakeRegistryServer = ghttp.NewServer()
 					fakeRegistryServer.AppendHandlers(
 						ghttp.CombineHandlers(

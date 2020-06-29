@@ -85,7 +85,7 @@ func main() {
 		Scheme: mgr.GetScheme(),
 		// TODO: use `capi.NewCFAPIClient()` instead
 		CFAPIClient:        capi.NewCAPIClient(),
-		ImageConfigFetcher: image_registry.NewOciImageConfigFetcher(keychainFactory),
+		ImageConfigFetcher: image_registry.NewImageConfigFetcher(keychainFactory),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
 		os.Exit(1)
