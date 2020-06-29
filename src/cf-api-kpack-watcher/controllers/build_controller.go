@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
@@ -77,8 +78,8 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		err := r.CFAPIClient.UpdateBuild(buildGUID, capi_model.NewBuild(&build))
 		if err != nil {
 			logger.Error(err, "Failed to send request to CF API")
-			// TODO: is it safe to always requeue here?
-			return ctrl.Result{Requeue: true}, nil
+			// TODO: should we limit number of requeues? [story: #173573889]
+			return ctrl.Result{Requeue: true}, err
 		}
 
 		return ctrl.Result{}, nil
@@ -91,13 +92,16 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			buildGUID := build.GetLabels()[BuildGUIDLabel]
 			cfAPIBuild := capi_model.Build{
 				State: capi_model.BuildFailedState,
-				Error: failedContainerState.Terminated.Message,
+				Error: fmt.Sprintf(
+					"Kpack build failed. Build failure message: '%s'.",
+					failedContainerState.Terminated.Message,
+				),
 			}
 			err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
 			if err != nil {
 				logger.Error(err, "Failed to send request to CF API")
-				// TODO: is it safe to always requeue here?
-				return ctrl.Result{Requeue: true}, nil
+				// TODO: should we limit number of requeues? [story: #173573889]
+				return ctrl.Result{Requeue: true}, err
 			}
 
 			return ctrl.Result{}, nil

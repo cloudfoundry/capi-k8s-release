@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -57,6 +58,7 @@ var _ = Describe("Controllers/BuildController", func() {
 				LatestImage: "foo.bar/here/be/an/image",
 			})
 
+			// TODO: extract helper for this chunk of assertion stuff?
 			// eventually expect CF API/CCNG to receive request to update its "v3 build" object
 			Eventually(func() int {
 				// TODO: figure out how to get rid of this horrible sleep
@@ -78,9 +80,68 @@ var _ = Describe("Controllers/BuildController", func() {
 			Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 		})
 
-		XContext("and the cloud controller responds with an error", func() {
+		Context("and the cloud controller responds with an error", func() {
+			BeforeEach(func() {
+				mockRestClient.PatchReturnsOnCall(0, nil, errors.New("poop"))
+				mockRestClient.PatchReturnsOnCall(1, &http.Response{
+					StatusCode: 200,
+				}, nil)
+			})
+
 			It("requeues the Build resource and eventually reconciles again", func() {
-				// TODO
+				buildGUID := "here-be-a-guid"
+				subject = createBuildAndUpdateStatus(buildGUID, kpackv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionTrue,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								ExitCode: 0,
+							},
+						},
+					},
+					LatestImage: "foo.bar/here/be/an/image",
+				})
+
+				// assert that an interaction occurs with CCNG that returns a 500
+				// eventually expect CF API/CCNG to receive request to update its "v3 build" object
+				Eventually(func() int {
+					// TODO: figure out how to get rid of this horrible sleep
+					// need an initial sleep because of some suspected weirdness about how `counterfeiter`
+					// takes some time to release some mutexes it uses for counting stub usages
+					time.Sleep(2 * time.Second)
+					return mockRestClient.PatchCallCount()
+				}).Should(Equal(2))
+				url, _, body := mockRestClient.PatchArgsForCall(0)
+				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
+
+				raw, err := ioutil.ReadAll(body)
+				Expect(err).ToNot(HaveOccurred())
+
+				var updateBuildRequest capi_model.Build
+				err = json.Unmarshal(raw, &updateBuildRequest)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
+				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
+
+				// assert that an interaction occurs with CCNG that returns a 200 (indicating build is
+				// updated correctly)
+				url, _, body = mockRestClient.PatchArgsForCall(1)
+				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
+
+				raw, err = ioutil.ReadAll(body)
+				Expect(err).ToNot(HaveOccurred())
+
+				err = json.Unmarshal(raw, &updateBuildRequest)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
+				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			})
 		})
 	})
@@ -140,7 +201,7 @@ var _ = Describe("Controllers/BuildController", func() {
 			err = json.Unmarshal(raw, &updateBuildRequest)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(updateBuildRequest.State).To(Equal(capi_model.BuildFailedState))
-			Expect(updateBuildRequest.Error).To(Equal(subject.Status.StepStates[0].Terminated.Message))
+			Expect(updateBuildRequest.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
 		})
 	})
 })
@@ -188,6 +249,7 @@ func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus kpac
 		}
 		return !updatedBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()
 	}, "5s", "100ms").Should(BeTrue())
+	Expect(updatedBuild).ToNot(BeNil())
 
 	return updatedBuild
 }
