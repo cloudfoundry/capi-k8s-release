@@ -26,7 +26,7 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
 	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
-	kpackbuild "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +58,7 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// TODO: only process builds for a particular namespace
 
 	// fetch build object
-	var build kpackbuild.Build
+	var build buildv1alpha1.Build
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
 		// TODO: should we requeue here?
@@ -127,7 +127,7 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kpackbuild.Build{}).
+		For(&buildv1alpha1.Build{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				// TODO: log self-link or UID for debugging?
@@ -144,7 +144,7 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
 	// TODO: should we filter out builds that are not managed by CF? (i.e. don't have the
 	// `cloudfoundry.org/*` labels on the objects)
-	newBuild, ok := e.ObjectNew.(*kpackbuild.Build)
+	newBuild, ok := e.ObjectNew.(*buildv1alpha1.Build)
 	if !ok {
 		// TODO: log something? what log level?
 		r.Log.WithValues("event", e).V(100).Info("Received a build update event that couldn't be deserialized")
@@ -153,7 +153,7 @@ func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
 	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()
 }
 
-func (r *BuildReconciler) extractProcessTypes(build *kpackbuild.Build) (map[string]string, error) {
+func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[string]string, error) {
 	imageConfig, err := r.FetchImageConfig(build.Status.LatestImage, build.Spec.ServiceAccount, build.Namespace)
 	if err != nil {
 		return nil, err

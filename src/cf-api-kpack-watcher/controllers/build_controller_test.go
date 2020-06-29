@@ -17,7 +17,7 @@ import (
 	ociv1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	kpackv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +26,7 @@ import (
 
 var _ = Describe("Controllers/BuildController", func() {
 	Context("When a Build is completed", func() {
-		var subject *kpackv1alpha1.Build
+		var subject *buildv1alpha1.Build
 
 		BeforeEach(func() {
 			kpackBuildMetadata := lifecycle.BuildMetadata{
@@ -56,7 +56,7 @@ var _ = Describe("Controllers/BuildController", func() {
 
 		It("successfully marks the CC v3 build as staged", func() {
 			buildGUID := "here-be-a-guid"
-			subject = createBuildAndUpdateStatus(buildGUID, kpackv1alpha1.BuildStatus{
+			subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
 				Status: corev1alpha1.Status{
 					Conditions: []corev1alpha1.Condition{
 						corev1alpha1.Condition{
@@ -113,7 +113,7 @@ var _ = Describe("Controllers/BuildController", func() {
 
 			It("requeues the Build resource and eventually reconciles again", func() {
 				buildGUID := "here-be-a-guid"
-				subject = createBuildAndUpdateStatus(buildGUID, kpackv1alpha1.BuildStatus{
+				subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
 					Status: corev1alpha1.Status{
 						Conditions: []corev1alpha1.Condition{
 							corev1alpha1.Condition{
@@ -170,7 +170,7 @@ var _ = Describe("Controllers/BuildController", func() {
 	})
 
 	Context("When a Build has failed", func() {
-		var subject *kpackv1alpha1.Build
+		var subject *buildv1alpha1.Build
 
 		BeforeEach(func() {
 			mockRestClient.PatchReturns(&http.Response{
@@ -188,7 +188,7 @@ var _ = Describe("Controllers/BuildController", func() {
 
 		It("successfully marks the CC v3 build as failed to have staged", func() {
 			buildGUID := "here-be-a-guid"
-			subject = createBuildAndUpdateStatus(buildGUID, kpackv1alpha1.BuildStatus{
+			subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
 				Status: corev1alpha1.Status{
 					Conditions: []corev1alpha1.Condition{
 						corev1alpha1.Condition{
@@ -230,16 +230,16 @@ var _ = Describe("Controllers/BuildController", func() {
 	})
 })
 
-func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus kpackv1alpha1.BuildStatus) *kpackv1alpha1.Build {
+func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
 	key := types.NamespacedName{Name: desiredBuildGUID, Namespace: "default"}
-	completedBuild := &kpackv1alpha1.Build{
+	completedBuild := &buildv1alpha1.Build{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      key.Name,
 			Namespace: key.Namespace,
 			Labels:    map[string]string{BuildGUIDLabel: desiredBuildGUID},
 		},
-		Spec: kpackv1alpha1.BuildSpec{},
-		Status: kpackv1alpha1.BuildStatus{
+		Spec: buildv1alpha1.BuildSpec{},
+		Status: buildv1alpha1.BuildStatus{
 			Status: corev1alpha1.Status{
 				Conditions: []corev1alpha1.Condition{
 					corev1alpha1.Condition{
@@ -257,16 +257,16 @@ func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus kpac
 	// create build (status info isn't persisted to API) and wait for it to propagate
 	Expect(k8sClient.Create(context.Background(), completedBuild)).Should(Succeed())
 	Eventually(func() error {
-		obj := &kpackv1alpha1.Build{}
+		obj := &buildv1alpha1.Build{}
 		return k8sClient.Get(context.Background(), key, obj)
 	}, "5s", "100ms").Should(Succeed())
 
 	// update build to update its status and wait for it to propagate
-	var updatedBuild *kpackv1alpha1.Build
+	var updatedBuild *buildv1alpha1.Build
 	completedBuild.Status = desiredBuildStatus
 	Expect(k8sClient.Status().Update(context.Background(), completedBuild)).Should(Succeed())
 	Eventually(func() bool {
-		updatedBuild = &kpackv1alpha1.Build{}
+		updatedBuild = &buildv1alpha1.Build{}
 		err := k8sClient.Get(context.Background(), key, updatedBuild)
 		if err != nil {
 			panic(err)
@@ -278,10 +278,10 @@ func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus kpac
 	return updatedBuild
 }
 
-func deleteBuild(subject *kpackv1alpha1.Build) {
+func deleteBuild(subject *buildv1alpha1.Build) {
 	Expect(k8sClient.Delete(context.Background(), subject)).To(BeNil())
 	Eventually(func() error {
-		obj := &kpackv1alpha1.Build{}
+		obj := &buildv1alpha1.Build{}
 		return k8sClient.Get(
 			context.Background(),
 			types.NamespacedName{
