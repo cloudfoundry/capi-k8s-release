@@ -22,6 +22,7 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi/capifakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -46,8 +47,9 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 
 var (
-	mockRestClient *capifakes.FakeRest
-	mockUAAClient  *capifakes.FakeTokenFetcher
+	mockRestClient         *capifakes.FakeRest
+	mockUAAClient          *capifakes.FakeTokenFetcher
+	mockImageConfigFetcher *image_registryfakes.FakeImageConfigFetcher
 )
 
 func TestAPIs(t *testing.T) {
@@ -90,6 +92,7 @@ var _ = BeforeSuite(func(done Done) {
 	// initialize mocks
 	mockRestClient = &capifakes.FakeRest{}
 	mockUAAClient = &capifakes.FakeTokenFetcher{}
+	mockImageConfigFetcher = &image_registryfakes.FakeImageConfigFetcher{}
 
 	// start controller with manager
 	// TODO: refactor to remove mocks since this is an integration test
@@ -102,6 +105,7 @@ var _ = BeforeSuite(func(done Done) {
 			mockRestClient,
 			mockUAAClient,
 		),
+		ImageConfigFetcher: mockImageConfigFetcher,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

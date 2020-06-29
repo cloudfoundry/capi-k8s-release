@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,7 +28,9 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/controllers"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -70,12 +73,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	client := kubernetes.NewForConfigOrDie(mgr.GetConfig())
+	keychainFactory, err := k8sdockercreds.NewSecretKeychainFactory(client)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	if err = (&controllers.BuildReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
 		// TODO: use `capi.NewCFAPIClient()` instead
-		CFAPIClient: capi.NewCAPIClient(),
+		CFAPIClient:        capi.NewCAPIClient(),
+		ImageConfigFetcher: image_registry.NewOciImageConfigFetcher(keychainFactory),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
 		os.Exit(1)

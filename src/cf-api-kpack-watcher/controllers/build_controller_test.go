@@ -11,6 +11,10 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi/capifakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
+	"github.com/buildpacks/lifecycle"
+	"github.com/buildpacks/lifecycle/launch"
+	ociv1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	kpackv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
@@ -25,6 +29,18 @@ var _ = Describe("Controllers/BuildController", func() {
 		var subject *kpackv1alpha1.Build
 
 		BeforeEach(func() {
+			kpackBuildMetadata := lifecycle.BuildMetadata{
+				Processes: []launch.Process{{
+					Type:    "baz",
+					Command: "some-start-command",
+				}},
+			}
+			raw, err := json.Marshal(kpackBuildMetadata)
+			Expect(err).To(BeNil())
+			mockImageConfigFetcher.FetchImageConfigReturns(&ociv1.Config{
+				Labels: map[string]string{lifecycle.BuildMetadataLabel: string(raw)},
+			}, nil)
+
 			mockRestClient.PatchReturns(&http.Response{
 				StatusCode: 200,
 			}, nil)
@@ -35,6 +51,7 @@ var _ = Describe("Controllers/BuildController", func() {
 			// clean up mocks
 			*mockRestClient = capifakes.FakeRest{}
 			*mockUAAClient = capifakes.FakeTokenFetcher{}
+			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
 		})
 
 		It("successfully marks the CC v3 build as staged", func() {
@@ -78,6 +95,12 @@ var _ = Describe("Controllers/BuildController", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
 			Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
+			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
+			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
+		})
+
+		XContext("and there is an error fetching process types from image config", func() {
+			It("successfully marks the CC v3 build as failed to have staged", func() {})
 		})
 
 		Context("and the cloud controller responds with an error", func() {
@@ -160,6 +183,7 @@ var _ = Describe("Controllers/BuildController", func() {
 			// clean up mocks
 			*mockRestClient = capifakes.FakeRest{}
 			*mockUAAClient = capifakes.FakeTokenFetcher{}
+			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
 		})
 
 		It("successfully marks the CC v3 build as failed to have staged", func() {

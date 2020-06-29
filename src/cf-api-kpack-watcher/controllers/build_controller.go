@@ -18,10 +18,13 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
+	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
 	kpackbuild "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
@@ -42,6 +45,7 @@ type BuildReconciler struct {
 	Log         logr.Logger
 	Scheme      *runtime.Scheme
 	CFAPIClient *capi.Client
+	image_registry.ImageConfigFetcher
 }
 
 // +kubebuilder:rbac:groups=build.pivotal.io,resources=builds,verbs=get;list;watch;create;update;patch;delete
@@ -74,8 +78,16 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		buildGUID := build.GetLabels()[BuildGUIDLabel]
 		logger.WithValues("guid", buildGUID).V(1).Info("Build completed successfully, marking as staged")
 
+		processTypes, err := r.extractProcessTypes(&build)
+		if err != nil {
+			// TODO: mark CCNG build as failed
+			return ctrl.Result{}, err
+		}
+		updateBuildRequest := capi_model.NewBuild(&build)
+		updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
+
 		// TODO: do the things to determine `processTypes` stuff
-		err := r.CFAPIClient.UpdateBuild(buildGUID, capi_model.NewBuild(&build))
+		err = r.CFAPIClient.UpdateBuild(buildGUID, updateBuildRequest)
 		if err != nil {
 			logger.Error(err, "Failed to send request to CF API")
 			// TODO: should we limit number of requeues? [story: #173573889]
@@ -130,6 +142,8 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
+	// TODO: should we filter out builds that are not managed by CF? (i.e. don't have the
+	// `cloudfoundry.org/*` labels on the objects)
 	newBuild, ok := e.ObjectNew.(*kpackbuild.Build)
 	if !ok {
 		// TODO: log something? what log level?
@@ -137,6 +151,24 @@ func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
 		return false
 	}
 	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()
+}
+
+func (r *BuildReconciler) extractProcessTypes(build *kpackbuild.Build) (map[string]string, error) {
+	imageConfig, err := r.FetchImageConfig(build.Status.LatestImage, build.Spec.ServiceAccount, build.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	var buildMetadata lifecycle.BuildMetadata
+	if err = json.Unmarshal([]byte(imageConfig.Labels[lifecycle.BuildMetadataLabel]), &buildMetadata); err != nil {
+		return nil, err
+	}
+
+	ret := make(map[string]string)
+	for _, process := range buildMetadata.Processes {
+		ret[process.Type] = process.Command
+	}
+	return ret, nil
 }
 
 func isBeingDeleted(objectMeta *metav1.ObjectMeta) bool {

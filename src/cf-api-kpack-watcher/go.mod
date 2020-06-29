@@ -7,7 +7,9 @@ require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	code.cloudfoundry.org/trace-logger v0.0.0-20170119230301-107ef08a939d // indirect
 	code.cloudfoundry.org/uaa-go-client v0.0.0-20200427231439-19a7eb57a1dc
+	github.com/buildpacks/lifecycle v0.8.0
 	github.com/go-logr/logr v0.1.0
+	github.com/google/go-containerregistry v0.1.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
 	github.com/pivotal/kpack v0.0.9
