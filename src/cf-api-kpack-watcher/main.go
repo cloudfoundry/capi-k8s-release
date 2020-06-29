@@ -56,7 +56,12 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	// TODO: add some startup validation for necessary config to interact with CCNG (e.g. its domain)
+	if os.Getenv("CAPI_HOST") == "" {
+		panic("`CAPI_HOST` environment variable must be set")
+	}
+	if os.Getenv("STAGING_NAMESPACE") == "" {
+		panic("`STAGING_NAMESPACE` environment variable must be set")
+	}
 
 	// TODO: change this to somehow use `lager` for consistency?
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
