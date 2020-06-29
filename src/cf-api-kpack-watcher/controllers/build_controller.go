@@ -29,7 +29,6 @@ import (
 	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,12 +63,6 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// TODO: should we requeue here?
 		// TODO: might need to do `client.IgnoreNotFound(err)` to deal with delete events
 		return ctrl.Result{}, err
-	}
-
-	// handle deletion of kpack Build resource
-	if isBeingDeleted(&build.ObjectMeta) {
-		logger.V(1).Info("TODO: Do we need to do anything if a kpack build is being deleted?")
-		return ctrl.Result{}, nil
 	}
 
 	// handle create/update of a kpack Build resource
@@ -118,8 +111,8 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 			return ctrl.Result{}, nil
 		} else {
-			// else requeue
-			logger.V(1).Info("Build is still progressing, requeueing")
+			// the update event filter in `SetupWithManager` should prevent this from being reached
+			logger.V(1).Info("[Should not have gotten here] Build is still progressing, requeueing")
 			return ctrl.Result{Requeue: true}, nil
 		}
 	}
@@ -169,10 +162,6 @@ func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[s
 		ret[process.Type] = process.Command
 	}
 	return ret, nil
-}
-
-func isBeingDeleted(objectMeta *metav1.ObjectMeta) bool {
-	return !objectMeta.DeletionTimestamp.IsZero()
 }
 
 // returns true if any container has terminated with a non-zero exit code
