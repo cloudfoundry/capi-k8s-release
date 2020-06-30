@@ -66,35 +66,10 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	// handle create/update of a kpack Build resource
+	// handle update of a kpack build resource
 	if build.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue() {
 		// mark build as staged successfully
-		buildGUID := build.GetLabels()[BuildGUIDLabel]
-		logger.WithValues("guid", buildGUID).V(1).Info("Build completed successfully, marking as staged")
-
-		processTypes, err := r.extractProcessTypes(&build)
-		if err != nil {
-			logger.WithValues("error", err).V(1).Info("Failed to fetch image config")
-			return r.reconcileFailedBuild(
-				&build,
-				fmt.Sprintf(
-					"Failed to handle successful kpack build: %s",
-					err,
-				),
-			)
-		}
-		updateBuildRequest := capi_model.NewBuild(&build)
-		updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
-
-		// TODO: do the things to determine `processTypes` stuff
-		err = r.CFAPIClient.UpdateBuild(buildGUID, updateBuildRequest)
-		if err != nil {
-			logger.Error(err, "Failed to send request to CF API")
-			// TODO: should we limit number of requeues? [story: #173573889]
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		return ctrl.Result{}, nil
+		return r.reconcileSuccessfulBuild(&build)
 	} else {
 		// if any steps have explicitly failed, then mark CCNG build as failed
 		failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
@@ -158,6 +133,37 @@ func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[s
 		ret[process.Type] = process.Command
 	}
 	return ret, nil
+}
+
+func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (ctrl.Result, error) {
+	logger := r.Log.WithValues("request", types.NamespacedName{Name: build.Name, Namespace: build.Namespace})
+
+	buildGUID := build.GetLabels()[BuildGUIDLabel]
+	logger.WithValues("guid", buildGUID).V(1).Info("Build completed successfully, marking as staged")
+
+	processTypes, err := r.extractProcessTypes(build)
+	if err != nil {
+		logger.WithValues("error", err).V(1).Info("Failed to fetch image config")
+		return r.reconcileFailedBuild(
+			build,
+			fmt.Sprintf(
+				"Failed to handle successful kpack build: %s",
+				err,
+			),
+		)
+	}
+	updateBuildRequest := capi_model.NewBuild(build)
+	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
+
+	// TODO: do the things to determine `processTypes` stuff
+	err = r.CFAPIClient.UpdateBuild(buildGUID, updateBuildRequest)
+	if err != nil {
+		logger.Error(err, "Failed to send request to CF API")
+		// TODO: should we limit number of requeues? [story: #173573889]
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string) (ctrl.Result, error) {
