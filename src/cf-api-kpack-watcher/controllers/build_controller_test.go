@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi/capifakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/cffakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	"github.com/buildpacks/lifecycle"
 	"github.com/buildpacks/lifecycle/launch"
@@ -49,8 +49,8 @@ var _ = Describe("Controllers/BuildController", func() {
 		AfterEach(func() {
 			deleteBuild(subject)
 			// clean up mocks
-			*mockRestClient = capifakes.FakeRest{}
-			*mockUAAClient = capifakes.FakeTokenFetcher{}
+			*mockRestClient = cffakes.FakeRest{}
+			*mockUAAClient = cffakes.FakeTokenFetcher{}
 			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
 		})
 
@@ -228,8 +228,8 @@ var _ = Describe("Controllers/BuildController", func() {
 		AfterEach(func() {
 			deleteBuild(subject)
 			// clean up mocks
-			*mockRestClient = capifakes.FakeRest{}
-			*mockUAAClient = capifakes.FakeTokenFetcher{}
+			*mockRestClient = cffakes.FakeRest{}
+			*mockUAAClient = cffakes.FakeTokenFetcher{}
 			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
 		})
 

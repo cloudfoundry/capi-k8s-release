@@ -1,4 +1,4 @@
-package capi
+package cf
 
 import (
 	"bytes"
@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi/mocks"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

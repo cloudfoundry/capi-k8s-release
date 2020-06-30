@@ -1,4 +1,4 @@
-package capi
+package cf
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func (r *RestClient) Patch(url, authToken string, body io.Reader) (*http.Respons
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authToken))
 
-	resp, err := r.client.Do(req)
+	resp, err := r.Do(req)
 	if err != nil {
 		return resp, err
 	}
@@ -32,5 +32,5 @@ func (r *RestClient) Patch(url, authToken string, body io.Reader) (*http.Respons
 }
 
 type RestClient struct {
-	client *http.Client
+	*http.Client
 }

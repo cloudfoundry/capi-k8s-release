@@ -1,4 +1,4 @@
-package capi
+package cf
 
 import (
 	"bytes"
@@ -43,7 +43,7 @@ func TestRestClient_PATCH(t *testing.T) {
 			}))
 
 			restClient = RestClient{
-				client: testServer.Client(),
+				testServer.Client(),
 			}
 		})
 

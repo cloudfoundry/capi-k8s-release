@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi/capifakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/cffakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -47,8 +47,8 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 
 var (
-	mockRestClient         *capifakes.FakeRest
-	mockUAAClient          *capifakes.FakeTokenFetcher
+	mockRestClient         *cffakes.FakeRest
+	mockUAAClient          *cffakes.FakeTokenFetcher
 	mockImageConfigFetcher *image_registryfakes.FakeImageConfigFetcher
 )
 
@@ -90,8 +90,8 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// initialize mocks
-	mockRestClient = &capifakes.FakeRest{}
-	mockUAAClient = &capifakes.FakeTokenFetcher{}
+	mockRestClient = &cffakes.FakeRest{}
+	mockUAAClient = &cffakes.FakeTokenFetcher{}
 	mockImageConfigFetcher = &image_registryfakes.FakeImageConfigFetcher{}
 
 	// start controller with manager
@@ -100,7 +100,7 @@ var _ = BeforeSuite(func(done Done) {
 		Client: k8sManager.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: k8sManager.GetScheme(),
-		CFAPIClient: capi.NewCFAPIClient(
+		CFClient: cf.NewClient(
 			"https://cf.api",
 			mockRestClient,
 			mockUAAClient,

@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
 	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
@@ -44,7 +44,7 @@ type BuildReconciler struct {
 	client.Client
 	Log         logr.Logger
 	Scheme      *runtime.Scheme
-	CFAPIClient *capi.Client
+	CFClient *cf.Client
 	image_registry.ImageConfigFetcher
 }
 
@@ -156,7 +156,7 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
 
 	// TODO: do the things to determine `processTypes` stuff
-	err = r.CFAPIClient.UpdateBuild(buildGUID, updateBuildRequest)
+	err = r.CFClient.UpdateBuild(buildGUID, updateBuildRequest)
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")
 		// TODO: should we limit number of requeues? [story: #173573889]
@@ -176,7 +176,7 @@ func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, error
 		State: capi_model.BuildFailedState,
 		Error: errorMessage,
 	}
-	err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
+	err := r.CFClient.UpdateBuild(buildGUID, cfAPIBuild)
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")
 		// TODO: should we limit number of requeues? [story: #173573889]

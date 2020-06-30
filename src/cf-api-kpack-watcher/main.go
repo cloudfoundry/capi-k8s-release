@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
+	"net/http"
 	"os"
 
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +28,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/auth"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/controllers"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
@@ -88,8 +91,16 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
-		// TODO: use `capi.NewCFAPIClient()` instead
-		CFAPIClient:        capi.NewCAPIClient(),
+		// TODO: use `cf.NewCFAPIClient()` instead
+		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+			Client: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true,
+					},
+				},
+			},
+		}, auth.NewUAAClient()),
 		ImageConfigFetcher: image_registry.NewImageConfigFetcher(keychainFactory),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
