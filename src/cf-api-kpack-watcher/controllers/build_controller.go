@@ -30,6 +30,7 @@ import (
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -73,23 +74,14 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 		processTypes, err := r.extractProcessTypes(&build)
 		if err != nil {
-			logger.WithValues("err", err).V(1).Info("Failed to fetch image config")
-
-			cfAPIBuild := capi_model.Build{
-				State: capi_model.BuildFailedState,
-				Error: fmt.Sprintf(
+			logger.WithValues("error", err).V(1).Info("Failed to fetch image config")
+			return r.reconcileFailedBuild(
+				&build,
+				fmt.Sprintf(
 					"Failed to handle successful kpack build: %s",
 					err,
 				),
-			}
-			err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
-			if err != nil {
-				logger.Error(err, "Failed to send request to CF API")
-				// TODO: should we limit number of requeues? [story: #173573889]
-				return ctrl.Result{Requeue: true}, err
-			}
-
-			return ctrl.Result{}, nil
+			)
 		}
 		updateBuildRequest := capi_model.NewBuild(&build)
 		updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
@@ -107,24 +99,13 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// if any steps have explicitly failed, then mark CCNG build as failed
 		failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
 		if failedContainerState != nil {
-			logger.V(1).Info("Build terminated because of failure, marking as failed staging")
-
-			buildGUID := build.GetLabels()[BuildGUIDLabel]
-			cfAPIBuild := capi_model.Build{
-				State: capi_model.BuildFailedState,
-				Error: fmt.Sprintf(
+			return r.reconcileFailedBuild(
+				&build,
+				fmt.Sprintf(
 					"Kpack build failed. Build failure message: '%s'.",
 					failedContainerState.Terminated.Message,
 				),
-			}
-			err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
-			if err != nil {
-				logger.Error(err, "Failed to send request to CF API")
-				// TODO: should we limit number of requeues? [story: #173573889]
-				return ctrl.Result{Requeue: true}, err
-			}
-
-			return ctrl.Result{}, nil
+			)
 		} else {
 			// the update event filter in `SetupWithManager` should prevent this from being reached
 			logger.V(1).Info("[Should not have gotten here] Build is still progressing, requeueing")
@@ -139,7 +120,7 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				// TODO: log self-link or UID for debugging?
-				r.Log.WithValues("request", e.Meta.GetSelfLink()).V(1).Info("Build created, watching for updates...")
+				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).V(1).Info("Build created, watching for updates...")
 				return false
 			},
 			UpdateFunc:  r.updateEventFilter,
@@ -177,6 +158,26 @@ func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[s
 		ret[process.Type] = process.Command
 	}
 	return ret, nil
+}
+
+func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string) (ctrl.Result, error) {
+	logger := r.Log.WithValues("request", types.NamespacedName{Name: build.Name, Namespace: build.Namespace})
+
+	logger.V(1).Info("Build terminated because of failure, marking as failed staging")
+
+	buildGUID := build.GetLabels()[BuildGUIDLabel]
+	cfAPIBuild := capi_model.Build{
+		State: capi_model.BuildFailedState,
+		Error: errorMessage,
+	}
+	err := r.CFAPIClient.UpdateBuild(buildGUID, cfAPIBuild)
+	if err != nil {
+		logger.Error(err, "Failed to send request to CF API")
+		// TODO: should we limit number of requeues? [story: #173573889]
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 // returns true if any container has terminated with a non-zero exit code
