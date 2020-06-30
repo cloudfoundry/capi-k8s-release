@@ -56,8 +56,8 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	if os.Getenv("CAPI_HOST") == "" {
-		panic("`CAPI_HOST` environment variable must be set")
+	if os.Getenv("CF_API_HOST") == "" {
+		panic("`CF_API_HOST` environment variable must be set")
 	}
 	if os.Getenv("STAGING_NAMESPACE") == "" {
 		panic("`STAGING_NAMESPACE` environment variable must be set")

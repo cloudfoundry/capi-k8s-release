@@ -14,15 +14,15 @@ import (
 )
 
 // TODO: stop using this constructor (to much implicitness/side effects)
-// NewCAPIClient creates a client to be used to communicate with CAPI.
+// NewCAPIClient creates a client to be used to communicate with CF API.
 // The following environment variables must be set:
-//   CAPI_HOST: Hostname of where CAPI is deployed (e.g. katniss.capi.land). If CAPI is deployed into Kubernetes, it
+//   CF_API_HOST: Hostname of where CF API is deployed (e.g. katniss.capi.land). If CF API is deployed into Kubernetes, it
 //              will be bound to a Kubernetes Service. You can then use that Service name here.
 func NewCAPIClient() *Client {
 	// TODO: We may want to consider using cloudfoundry/tlsconfig for using
 	// standard TLS configs in Golang.
 	return &Client{
-		host: os.Getenv("CAPI_HOST"),
+		host: os.Getenv("CF_API_HOST"),
 		restClient: &RestClient{
 			&http.Client{
 				Transport: &http.Transport{
@@ -83,8 +83,8 @@ func (c *Client) UpdateBuild(guid string, build capi_model.Build) error {
 		return err
 	}
 
-	log.Printf("[CAPI/UpdateBuild] Sent payload: %s\n", json)
-	log.Printf("[CAPI/UpdateBuild] Response build: %d\n", resp.StatusCode)
+	log.Printf("[CF API/UpdateBuild] Sent payload: %s\n", json)
+	log.Printf("[CF API/UpdateBuild] Response build: %d\n", resp.StatusCode)
 
 	return nil
 }

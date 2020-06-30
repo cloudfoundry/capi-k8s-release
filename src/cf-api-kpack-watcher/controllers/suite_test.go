@@ -67,7 +67,7 @@ var _ = BeforeSuite(func(done Done) {
 	// TODO: this is garbage, clean it up pls pls pls for the love of god
 	testEnv = &envtest.Environment{
 		ErrorIfCRDPathMissing: true,
-		CRDDirectoryPaths:     []string{filepath.Join("..", "tmp")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd")},
 	}
 
 	var err error

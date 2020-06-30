@@ -45,7 +45,7 @@ func TestClientUpdateBuild(t *testing.T) {
 					Return(&http.Response{StatusCode: 200}, nil)
 			})
 
-			it("fetches a token and updates capi", func() {
+			it("fetches a token and updates CF API server", func() {
 				assert.NoError(t, client.UpdateBuild(guid, status))
 				client.uaaClient.(*mocks.TokenFetcher).AssertCalled(t, "Fetch")
 				client.restClient.(*mocks.Rest).AssertCalled(t, "Patch",
@@ -66,7 +66,7 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 		})
 
-		when("capi client fails to Patch", func() {
+		when("CF API server client fails to Patch", func() {
 			it.Before(func() {
 				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				client.restClient.(*mocks.Rest).

@@ -10,7 +10,7 @@ const BuildStagedState = "STAGED"
 const BuildFailedState = "FAILED"
 const KpackLifecycleType = "kpack"
 
-// Build represents the payload that will be sent to CAPI when a kpack
+// Build represents the payload that will be sent to CF API server when a kpack
 // Build has been updated.
 type Build struct {
 	State     string    `json:"state"`
