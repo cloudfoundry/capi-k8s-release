@@ -14,7 +14,6 @@ COPY main.go main.go
 COPY controllers/ controllers/
 COPY cf/ cf/
 COPY auth/ auth/
-COPY capi_model/ capi_model/
 COPY image_registry/ image_registry/
 
 # Build

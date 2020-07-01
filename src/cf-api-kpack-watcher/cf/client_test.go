@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/mocks"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestClientUpdateBuild(t *testing.T) {
 		)
 		var (
 			client *Client
-			build  capi_model.Build
+			build  api_model.Build
 		)
 
 		it.Before(func() {
@@ -39,7 +39,7 @@ func TestClientUpdateBuild(t *testing.T) {
 
 		when("successfully updates", func() {
 			it.Before(func() {
-				build = capi_model.Build{State: "SUCCESS"}
+				build = api_model.Build{State: "SUCCESS"}
 				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				client.restClient.(*mocks.Rest).
 					On("Patch", mock.Anything, mock.Anything, mock.Anything).

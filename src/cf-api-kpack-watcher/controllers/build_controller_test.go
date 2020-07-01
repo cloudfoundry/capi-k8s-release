@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/cffakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	"github.com/buildpacks/lifecycle"
@@ -90,10 +90,10 @@ var _ = Describe("Controllers/BuildController", func() {
 			raw, err := ioutil.ReadAll(body)
 			Expect(err).ToNot(HaveOccurred())
 
-			var updateBuildRequest capi_model.Build
+			var updateBuildRequest api_model.Build
 			err = json.Unmarshal(raw, &updateBuildRequest)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
+			Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
 			Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
 			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
@@ -142,10 +142,10 @@ var _ = Describe("Controllers/BuildController", func() {
 				raw, err := ioutil.ReadAll(body)
 				Expect(err).ToNot(HaveOccurred())
 
-				var updateBuildRequest capi_model.Build
+				var updateBuildRequest api_model.Build
 				err = json.Unmarshal(raw, &updateBuildRequest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildFailedState))
+				Expect(updateBuildRequest.State).To(Equal(api_model.BuildFailedState))
 				Expect(updateBuildRequest.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
 			})
 		})
@@ -194,10 +194,10 @@ var _ = Describe("Controllers/BuildController", func() {
 				raw, err := ioutil.ReadAll(body)
 				Expect(err).ToNot(HaveOccurred())
 
-				var updateBuildRequest capi_model.Build
+				var updateBuildRequest api_model.Build
 				err = json.Unmarshal(raw, &updateBuildRequest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
+				Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
 				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 
 				// assert that an interaction occurs with CCNG that returns a 200 (indicating build is
@@ -210,7 +210,7 @@ var _ = Describe("Controllers/BuildController", func() {
 
 				err = json.Unmarshal(raw, &updateBuildRequest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(capi_model.BuildStagedState))
+				Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
 				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			})
 		})
@@ -268,10 +268,10 @@ var _ = Describe("Controllers/BuildController", func() {
 			raw, err := ioutil.ReadAll(body)
 			Expect(err).ToNot(HaveOccurred())
 
-			var updateBuildRequest capi_model.Build
+			var updateBuildRequest api_model.Build
 			err = json.Unmarshal(raw, &updateBuildRequest)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(updateBuildRequest.State).To(Equal(capi_model.BuildFailedState))
+			Expect(updateBuildRequest.State).To(Equal(api_model.BuildFailedState))
 			Expect(updateBuildRequest.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
 		})
 	})

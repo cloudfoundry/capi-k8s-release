@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher
 
-go 1.13
+go 1.14
 
 require (
 	code.cloudfoundry.org/clock v1.0.0

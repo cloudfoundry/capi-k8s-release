@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
 	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
@@ -152,7 +152,7 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (
 			),
 		)
 	}
-	updateBuildRequest := capi_model.NewBuild(build)
+	updateBuildRequest := api_model.NewBuild(build)
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
 
 	// TODO: do the things to determine `processTypes` stuff
@@ -172,8 +172,8 @@ func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, error
 	logger.V(1).Info("Build terminated because of failure, marking as failed staging")
 
 	buildGUID := build.GetLabels()[BuildGUIDLabel]
-	cfAPIBuild := capi_model.Build{
-		State: capi_model.BuildFailedState,
+	cfAPIBuild := api_model.Build{
+		State: api_model.BuildFailedState,
 		Error: errorMessage,
 	}
 	err := r.CFClient.UpdateBuild(buildGUID, cfAPIBuild)

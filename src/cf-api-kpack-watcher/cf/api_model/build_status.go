@@ -1,4 +1,4 @@
-package capi_model
+package api_model
 
 import (
 	kpack_build "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"

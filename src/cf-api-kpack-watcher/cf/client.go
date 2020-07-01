@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/capi_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
 )
 
 func NewClient(host string, restClient Rest, uaaClient TokenFetcher) *Client {
@@ -41,7 +41,7 @@ type Client struct {
 	uaaClient  TokenFetcher
 }
 
-func (c *Client) UpdateBuild(guid string, build capi_model.Build) error {
+func (c *Client) UpdateBuild(guid string, build api_model.Build) error {
 	token, err := c.uaaClient.Fetch()
 	if err != nil {
 		return err
