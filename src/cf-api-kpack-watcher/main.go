@@ -28,7 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/auth"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/auth"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/controllers"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"

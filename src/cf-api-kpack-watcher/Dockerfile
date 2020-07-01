@@ -13,7 +13,6 @@ RUN go mod download
 COPY main.go main.go
 COPY controllers/ controllers/
 COPY cf/ cf/
-COPY auth/ auth/
 COPY image_registry/ image_registry/
 
 # Build
