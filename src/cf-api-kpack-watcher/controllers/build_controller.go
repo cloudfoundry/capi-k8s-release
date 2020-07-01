@@ -42,8 +42,8 @@ const BuildGUIDLabel = "cloudfoundry.org/build_guid"
 // BuildReconciler reconciles a Build object
 type BuildReconciler struct {
 	client.Client
-	Log         logr.Logger
-	Scheme      *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
 	CFClient *cf.Client
 	image_registry.ImageConfigFetcher
 }

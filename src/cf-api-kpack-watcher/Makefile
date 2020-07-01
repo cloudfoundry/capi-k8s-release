@@ -1,8 +1,11 @@
-
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+# if kubebuilder isn't present in /usr/local/kubebuilder , install this version
+KUBEBUILDER_VERSION ?= 2.3.1
+GOOS=$(shell go env GOOS)
+GOARCH=$(shell go env GOARCH)
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -14,7 +17,7 @@ endif
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
+test: generate fmt vet manifests /usr/local/kubebuilder/
 	go test ./... -coverprofile cover.out
 
 # Build manager binary
@@ -61,6 +64,14 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+/usr/local/kubebuilder/:
+	# download kubebuilder and extract it to tmp
+	curl -L https://go.kubebuilder.io/dl/${KUBEBUILDER_VERSION}/${GOOS}/${GOARCH} | tar -xz -C /tmp/
+
+	# move to a long-term location and put it on your path
+	# (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+	sudo mv /tmp/kubebuilder_${KUBEBUILDER_VERSION}_${GOOS}_${GOARCH} /usr/local/kubebuilder
 
 # find or download controller-gen
 # download controller-gen if necessary

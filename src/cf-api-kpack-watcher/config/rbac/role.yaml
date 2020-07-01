@@ -7,9 +7,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - build.pivotal.io.build.pivotal.io
+  - build.pivotal.io
   resources:
-  - buildren
+  - builds
   verbs:
   - create
   - delete
@@ -19,9 +19,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - build.pivotal.io.build.pivotal.io
+  - build.pivotal.io
   resources:
-  - buildren/status
+  - builds/status
   verbs:
   - get
   - patch
