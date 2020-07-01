@@ -1,8 +1,6 @@
 package capi_model
 
 import (
-	"encoding/json"
-
 	kpack_build "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 )
 
@@ -25,11 +23,6 @@ type Lifecycle struct {
 type LifecycleData struct {
 	Image        string            `json:"image"`
 	ProcessTypes map[string]string `json:"processTypes"`
-}
-
-func (b *Build) ToJSON() []byte {
-	j, _ := json.Marshal(b)
-	return j
 }
 
 func NewBuild(build *kpack_build.Build) Build {

@@ -2,6 +2,7 @@ package cf
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
@@ -22,7 +23,7 @@ func TestClientUpdateBuild(t *testing.T) {
 		)
 		var (
 			client *Client
-			status capi_model.Build
+			build  capi_model.Build
 		)
 
 		it.Before(func() {
@@ -38,7 +39,7 @@ func TestClientUpdateBuild(t *testing.T) {
 
 		when("successfully updates", func() {
 			it.Before(func() {
-				status = capi_model.Build{State: "SUCCESS"}
+				build = capi_model.Build{State: "SUCCESS"}
 				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				client.restClient.(*mocks.Rest).
 					On("Patch", mock.Anything, mock.Anything, mock.Anything).
@@ -46,12 +47,15 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 
 			it("fetches a token and updates CF API server", func() {
-				assert.NoError(t, client.UpdateBuild(guid, status))
+				assert.NoError(t, client.UpdateBuild(guid, build))
 				client.uaaClient.(*mocks.TokenFetcher).AssertCalled(t, "Fetch")
+
+				raw, err := json.Marshal(build)
+				assert.Empty(t, err)
 				client.restClient.(*mocks.Rest).AssertCalled(t, "Patch",
 					"http://capi.host/v3/builds/guid",
 					"valid-token",
-					bytes.NewReader(status.ToJSON()),
+					bytes.NewReader(raw),
 				)
 			})
 		})
@@ -62,7 +66,7 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 
 			it("errors", func() {
-				assert.Error(t, client.UpdateBuild(guid, status))
+				assert.Error(t, client.UpdateBuild(guid, build))
 			})
 		})
 
@@ -75,7 +79,7 @@ func TestClientUpdateBuild(t *testing.T) {
 			})
 
 			it("errors", func() {
-				assert.Error(t, client.UpdateBuild(guid, status))
+				assert.Error(t, client.UpdateBuild(guid, build))
 			})
 		})
 	})

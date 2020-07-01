@@ -2,6 +2,7 @@ package cf
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -46,18 +47,21 @@ func (c *Client) UpdateBuild(guid string, build capi_model.Build) error {
 		return err
 	}
 
-	json := build.ToJSON()
+	raw, err := json.Marshal(build)
+	if err != nil {
+		return err
+	}
 
 	resp, err := c.restClient.Patch(
 		fmt.Sprintf("%s/v3/builds/%s", c.host, guid),
 		token,
-		bytes.NewReader(json),
+		bytes.NewReader(raw),
 	)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[CF API/UpdateBuild] Sent payload: %s\n", json)
+	log.Printf("[CF API/UpdateBuild] Sent payload: %s\n", raw)
 	log.Printf("[CF API/UpdateBuild] Response build: %d\n", resp.StatusCode)
 
 	return nil
