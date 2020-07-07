@@ -17,6 +17,8 @@ limitations under the License.
 package controllers
 
 import (
+	"crypto/tls"
+	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -25,6 +27,7 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,16 +43,17 @@ import (
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-
-var cfg *rest.Config
-var k8sManager ctrl.Manager
-var k8sClient client.Client
-var testEnv *envtest.Environment
-
 var (
-	mockRestClient         *cffakes.FakeRest
-	mockUAAClient          *cffakes.FakeTokenFetcher
-	mockImageConfigFetcher *image_registryfakes.FakeImageConfigFetcher
+	cfg             *rest.Config
+	k8sManager      ctrl.Manager
+	managerStopChan chan struct{}
+	k8sClient       client.Client
+	testEnv         *envtest.Environment
+
+	fakeCFAPIServer        *ghttp.Server
+	cfClient               cf.Client
+	mockUAAClient          cffakes.FakeTokenFetcher
+	mockImageConfigFetcher image_registryfakes.FakeImageConfigFetcher
 )
 
 func TestAPIs(t *testing.T) {
@@ -85,32 +89,40 @@ var _ = BeforeSuite(func(done Done) {
 	// +kubebuilder:scaffold:scheme
 
 	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
+		Scheme:                 scheme.Scheme,
+		HealthProbeBindAddress: "0",
+		MetricsBindAddress:     "0",
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	// initialize mocks
-	mockRestClient = &cffakes.FakeRest{}
-	mockUAAClient = &cffakes.FakeTokenFetcher{}
-	mockImageConfigFetcher = &image_registryfakes.FakeImageConfigFetcher{}
+	// initialize mocks defensively in case cache sync touches them
+	mockUAAClient = cffakes.FakeTokenFetcher{}
+	mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
+	fakeCFAPIServer = ghttp.NewServer()
+	cfClient = *cf.NewClient(fakeCFAPIServer.URL(), &cf.RestClient{
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		},
+	}, &mockUAAClient)
 
 	// start controller with manager
 	// TODO: refactor to remove mocks since this is an integration test
 	err = (&BuildReconciler{
-		Client: k8sManager.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
-		Scheme: k8sManager.GetScheme(),
-		CFClient: cf.NewClient(
-			"https://cf.api",
-			mockRestClient,
-			mockUAAClient,
-		),
-		ImageConfigFetcher: mockImageConfigFetcher,
+		Client:             k8sManager.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("Build"),
+		Scheme:             k8sManager.GetScheme(),
+		CFClient:           &cfClient,
+		ImageConfigFetcher: &mockImageConfigFetcher,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	managerStopChan = make(chan struct{})
 	go func() {
-		err = k8sManager.Start(ctrl.SetupSignalHandler())
+		err = k8sManager.Start(managerStopChan)
 		Expect(err).NotTo(HaveOccurred())
 	}()
 
@@ -120,7 +132,20 @@ var _ = BeforeSuite(func(done Done) {
 	close(done)
 }, 60)
 
+var _ = BeforeEach(func() {
+	mockUAAClient = cffakes.FakeTokenFetcher{}
+	mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
+})
+
 var _ = AfterSuite(func() {
+	By("tearing down the fake CF API Server")
+	fakeCFAPIServer.Close()
+
+	By("tearing down the controller")
+	if managerStopChan != nil {
+		close(managerStopChan)
+	}
+
 	By("tearing down the test environment")
 	// gexec.KillAndWait(5 * time.Second)
 	err := testEnv.Stop()

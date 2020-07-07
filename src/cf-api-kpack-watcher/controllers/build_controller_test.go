@@ -10,13 +10,12 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/cffakes"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
 	"github.com/buildpacks/lifecycle"
 	"github.com/buildpacks/lifecycle/launch"
 	ociv1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
 	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -24,38 +23,113 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = Describe("Controllers/BuildController", func() {
-	Context("When a Build is completed", func() {
-		var subject *buildv1alpha1.Build
+var _ = Describe("BuildController", func() {
+	var (
+		subject            *buildv1alpha1.Build
+		buildGUID          string
+		receivedBuildPatch chan api_model.Build
+	)
 
+	BeforeEach(func() {
+		raw, err := json.Marshal(lifecycle.BuildMetadata{
+			Processes: []launch.Process{{
+				Type:    "baz",
+				Command: "some-start-command",
+			}},
+		})
+		Expect(err).To(BeNil())
+		mockImageConfigFetcher.FetchImageConfigReturns(&ociv1.Config{
+			Labels: map[string]string{lifecycle.BuildMetadataLabel: string(raw)},
+		}, nil)
+
+		buildGUID = fmt.Sprintf("build-guid-%d", GinkgoRandomSeed())
+		receivedBuildPatch = make(chan api_model.Build)
+
+		fakeCFAPIServer.Reset()
+		fakeCFAPIServer.AppendHandlers(ghttp.CombineHandlers(
+			ghttp.VerifyRequest("PATCH", "/v3/builds/"+buildGUID),
+			ghttp.VerifyHeaderKV("Authorization", "Bearer"),
+			func(_ http.ResponseWriter, r *http.Request) {
+				bytes, err := ioutil.ReadAll(r.Body)
+				Expect(err).NotTo(HaveOccurred())
+				var buildPatch api_model.Build
+				json.Unmarshal(bytes, &buildPatch)
+				receivedBuildPatch <- buildPatch
+			},
+		))
+	})
+
+	AfterEach(func() {
+		deleteBuild(subject)
+	})
+
+	It("marks successful builds as successful", func() {
+		subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
+			Status: corev1alpha1.Status{
+				Conditions: []corev1alpha1.Condition{
+					corev1alpha1.Condition{
+						Type:   corev1alpha1.ConditionSucceeded,
+						Status: corev1.ConditionTrue,
+					},
+				},
+			},
+			StepStates: []corev1.ContainerState{
+				corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{
+						ExitCode: 0,
+					},
+				},
+			},
+			LatestImage: "foo.bar/here/be/an/image",
+		})
+
+		Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
+
+		var actualBuildPatch api_model.Build
+		Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
+
+		Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
+		Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
+		Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
+		Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
+	})
+
+	It("marks failed builds as failed", func() {
+		subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
+			Status: corev1alpha1.Status{
+				Conditions: []corev1alpha1.Condition{
+					corev1alpha1.Condition{
+						Type:   corev1alpha1.ConditionSucceeded,
+						Status: corev1.ConditionFalse,
+					},
+				},
+			},
+			StepStates: []corev1.ContainerState{
+				corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{
+						ExitCode: 1,
+						Message:  "what do we say to passing tests? not today",
+					},
+				},
+			},
+		})
+
+		// eventually expect CF API/CCNG to receive request to update its "v3 build" object
+		Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
+
+		var actualBuildPatch api_model.Build
+		Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
+
+		Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+		Expect(actualBuildPatch.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
+	})
+
+	Context("and there is an error fetching process types from image config", func() {
 		BeforeEach(func() {
-			kpackBuildMetadata := lifecycle.BuildMetadata{
-				Processes: []launch.Process{{
-					Type:    "baz",
-					Command: "some-start-command",
-				}},
-			}
-			raw, err := json.Marshal(kpackBuildMetadata)
-			Expect(err).To(BeNil())
-			mockImageConfigFetcher.FetchImageConfigReturns(&ociv1.Config{
-				Labels: map[string]string{lifecycle.BuildMetadataLabel: string(raw)},
-			}, nil)
-
-			mockRestClient.PatchReturns(&http.Response{
-				StatusCode: 200,
-			}, nil)
+			mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))
 		})
 
-		AfterEach(func() {
-			deleteBuild(subject)
-			// clean up mocks
-			*mockRestClient = cffakes.FakeRest{}
-			*mockUAAClient = cffakes.FakeTokenFetcher{}
-			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
-		})
-
-		It("successfully marks the CC v3 build as staged", func() {
-			buildGUID := "here-be-a-guid"
+		It("successfully marks the CC v3 build as failed", func() {
 			subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
 				Status: corev1alpha1.Status{
 					Conditions: []corev1alpha1.Condition{
@@ -75,204 +149,58 @@ var _ = Describe("Controllers/BuildController", func() {
 				LatestImage: "foo.bar/here/be/an/image",
 			})
 
-			// TODO: extract helper for this chunk of assertion stuff?
-			// eventually expect CF API/CCNG to receive request to update its "v3 build" object
-			Eventually(func() int {
-				// TODO: figure out how to get rid of this horrible sleep
-				// need an initial sleep because of some suspected weirdness about how `counterfeiter`
-				// takes some time to release some mutexes it uses for counting stub usages
-				time.Sleep(1 * time.Second)
-				return mockRestClient.PatchCallCount()
-			}).Should(Equal(1))
-			url, _, body := mockRestClient.PatchArgsForCall(0)
-			Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
+			var actualBuildPatch api_model.Build
+			Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
 
-			raw, err := ioutil.ReadAll(body)
-			Expect(err).ToNot(HaveOccurred())
-
-			var updateBuildRequest api_model.Build
-			err = json.Unmarshal(raw, &updateBuildRequest)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
-			Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
-			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
-			Expect(updateBuildRequest.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
-		})
-
-		Context("and there is an error fetching process types from image config", func() {
-			BeforeEach(func() {
-				mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))
-				mockRestClient.PatchReturns(&http.Response{
-					StatusCode: 200,
-				}, nil)
-			})
-
-			It("successfully marks the CC v3 build as failed to have staged", func() {
-				buildGUID := "here-be-a-guid"
-				subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
-					Status: corev1alpha1.Status{
-						Conditions: []corev1alpha1.Condition{
-							corev1alpha1.Condition{
-								Type:   corev1alpha1.ConditionSucceeded,
-								Status: corev1.ConditionTrue,
-							},
-						},
-					},
-					StepStates: []corev1.ContainerState{
-						corev1.ContainerState{
-							Terminated: &corev1.ContainerStateTerminated{
-								ExitCode: 0,
-							},
-						},
-					},
-					LatestImage: "foo.bar/here/be/an/image",
-				})
-
-				// eventually expect CF API/CCNG to receive request to update its "v3 build" object
-				Eventually(func() int {
-					// TODO: figure out how to get rid of this horrible sleep
-					// need an initial sleep because of some suspected weirdness about how `counterfeiter`
-					// takes some time to release some mutexes it uses for counting stub usages
-					time.Sleep(1 * time.Second)
-					return mockRestClient.PatchCallCount()
-				}).Should(Equal(1))
-				url, _, body := mockRestClient.PatchArgsForCall(0)
-				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
-
-				raw, err := ioutil.ReadAll(body)
-				Expect(err).ToNot(HaveOccurred())
-
-				var updateBuildRequest api_model.Build
-				err = json.Unmarshal(raw, &updateBuildRequest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(api_model.BuildFailedState))
-				Expect(updateBuildRequest.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
-			})
-		})
-
-		Context("and the cloud controller responds with an error", func() {
-			BeforeEach(func() {
-				mockRestClient.PatchReturnsOnCall(0, nil, errors.New("fake error: just didn't feel like working this time, sorry"))
-				mockRestClient.PatchReturnsOnCall(1, &http.Response{
-					StatusCode: 200,
-				}, nil)
-			})
-
-			It("requeues the Build resource and eventually reconciles again", func() {
-				buildGUID := "here-be-a-guid"
-				subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
-					Status: corev1alpha1.Status{
-						Conditions: []corev1alpha1.Condition{
-							corev1alpha1.Condition{
-								Type:   corev1alpha1.ConditionSucceeded,
-								Status: corev1.ConditionTrue,
-							},
-						},
-					},
-					StepStates: []corev1.ContainerState{
-						corev1.ContainerState{
-							Terminated: &corev1.ContainerStateTerminated{
-								ExitCode: 0,
-							},
-						},
-					},
-					LatestImage: "foo.bar/here/be/an/image",
-				})
-
-				// assert that an interaction occurs with CCNG that returns a 500
-				// eventually expect CF API/CCNG to receive request to update its "v3 build" object
-				Eventually(func() int {
-					// TODO: figure out how to get rid of this horrible sleep
-					// need an initial sleep because of some suspected weirdness about how `counterfeiter`
-					// takes some time to release some mutexes it uses for counting stub usages
-					time.Sleep(2 * time.Second)
-					return mockRestClient.PatchCallCount()
-				}).Should(Equal(2))
-				url, _, body := mockRestClient.PatchArgsForCall(0)
-				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
-
-				raw, err := ioutil.ReadAll(body)
-				Expect(err).ToNot(HaveOccurred())
-
-				var updateBuildRequest api_model.Build
-				err = json.Unmarshal(raw, &updateBuildRequest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
-				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
-
-				// assert that an interaction occurs with CCNG that returns a 200 (indicating build is
-				// updated correctly)
-				url, _, body = mockRestClient.PatchArgsForCall(1)
-				Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
-
-				raw, err = ioutil.ReadAll(body)
-				Expect(err).ToNot(HaveOccurred())
-
-				err = json.Unmarshal(raw, &updateBuildRequest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(updateBuildRequest.State).To(Equal(api_model.BuildStagedState))
-				Expect(updateBuildRequest.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
-			})
+			Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+			Expect(actualBuildPatch.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
 		})
 	})
 
-	Context("When a Build has failed", func() {
-		var subject *buildv1alpha1.Build
-
+	Context("and the cloud controller responds with an error", func() {
 		BeforeEach(func() {
-			mockRestClient.PatchReturns(&http.Response{
-				StatusCode: 200,
-			}, nil)
+			fakeCFAPIServer.Reset()
+			// fail for the first request, unmarshal the 2nd request to actualBuildPatch
+			fakeCFAPIServer.AppendHandlers(
+				ghttp.RespondWith(500, ""),
+				func(_ http.ResponseWriter, r *http.Request) {
+					bytes, err := ioutil.ReadAll(r.Body)
+					Expect(err).NotTo(HaveOccurred())
+
+					var buildPatch api_model.Build
+					json.Unmarshal(bytes, &buildPatch)
+					receivedBuildPatch <- buildPatch
+				},
+			)
 		})
 
-		AfterEach(func() {
-			deleteBuild(subject)
-			// clean up mocks
-			*mockRestClient = cffakes.FakeRest{}
-			*mockUAAClient = cffakes.FakeTokenFetcher{}
-			*mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
-		})
-
-		It("successfully marks the CC v3 build as failed to have staged", func() {
-			buildGUID := "here-be-a-guid"
+		It("requeues the Build resource and eventually reconciles again", func() {
 			subject = createBuildAndUpdateStatus(buildGUID, buildv1alpha1.BuildStatus{
 				Status: corev1alpha1.Status{
 					Conditions: []corev1alpha1.Condition{
 						corev1alpha1.Condition{
 							Type:   corev1alpha1.ConditionSucceeded,
-							Status: corev1.ConditionFalse,
+							Status: corev1.ConditionTrue,
 						},
 					},
 				},
 				StepStates: []corev1.ContainerState{
 					corev1.ContainerState{
 						Terminated: &corev1.ContainerStateTerminated{
-							ExitCode: 1,
-							Message:  "what do we say to passing tests? not today",
+							ExitCode: 0,
 						},
 					},
 				},
+				LatestImage: "foo.bar/here/be/an/image",
 			})
 
-			// eventually expect CF API/CCNG to receive request to update its "v3 build" object
-			Eventually(func() int {
-				// TODO: figure out how to get rid of this horrible sleep
-				// need an initial sleep because of some suspected weirdness about how `counterfeiter`
-				// takes some time to release some mutexes it uses for counting stub usages
-				time.Sleep(1 * time.Second)
-				return mockRestClient.PatchCallCount()
-			}).Should(Equal(1))
-			url, _, body := mockRestClient.PatchArgsForCall(0)
-			Expect(url).To(Equal(fmt.Sprintf("https://cf.api/v3/builds/%s", buildGUID)))
+			Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*30).Should(HaveLen(2))
 
-			raw, err := ioutil.ReadAll(body)
-			Expect(err).ToNot(HaveOccurred())
+			var actualBuildPatch api_model.Build
+			Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
 
-			var updateBuildRequest api_model.Build
-			err = json.Unmarshal(raw, &updateBuildRequest)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(updateBuildRequest.State).To(Equal(api_model.BuildFailedState))
-			Expect(updateBuildRequest.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
+			Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
+			Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 		})
 	})
 })

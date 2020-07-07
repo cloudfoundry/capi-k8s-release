@@ -3,7 +3,6 @@ package cf
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -16,8 +15,6 @@ func (r *RestClient) Patch(url, authToken string, body io.Reader) (*http.Respons
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("[CF API/Patch] Sending request Patch %s", url)
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authToken))

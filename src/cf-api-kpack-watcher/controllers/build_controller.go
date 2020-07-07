@@ -70,23 +70,23 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if build.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue() {
 		// mark build as staged successfully
 		return r.reconcileSuccessfulBuild(&build)
-	} else {
-		// if any steps have explicitly failed, then mark CCNG build as failed
-		failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
-		if failedContainerState != nil {
-			return r.reconcileFailedBuild(
-				&build,
-				fmt.Sprintf(
-					"Kpack build failed. Build failure message: '%s'.",
-					failedContainerState.Terminated.Message,
-				),
-			)
-		} else {
-			// the update event filter in `SetupWithManager` should prevent this from being reached
-			logger.V(1).Info("[Should not have gotten here] Build is still progressing, requeueing")
-			return ctrl.Result{Requeue: true}, nil
-		}
 	}
+
+	// if any steps have explicitly failed, then mark CCNG build as failed
+	failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
+	if failedContainerState != nil {
+		return r.reconcileFailedBuild(
+			&build,
+			fmt.Sprintf(
+				"Kpack build failed. Build failure message: '%s'.",
+				failedContainerState.Terminated.Message,
+			),
+		)
+	}
+
+	// the update event filter in `SetupWithManager` should prevent this from being reached
+	logger.V(1).Info("[Should not have gotten here] Build is still progressing, requeueing")
+	return ctrl.Result{Requeue: true}, nil
 }
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -169,7 +169,7 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (
 func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string) (ctrl.Result, error) {
 	logger := r.Log.WithValues("request", types.NamespacedName{Name: build.Name, Namespace: build.Namespace})
 
-	logger.V(1).Info("Build terminated because of failure, marking as failed staging")
+	logger.V(1).Info("Build failed, marking as failed staging")
 
 	buildGUID := build.GetLabels()[BuildGUIDLabel]
 	cfAPIBuild := api_model.Build{
@@ -179,7 +179,6 @@ func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, error
 	err := r.CFClient.UpdateBuild(buildGUID, cfAPIBuild)
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")
-		// TODO: should we limit number of requeues? [story: #173573889]
 		return ctrl.Result{Requeue: true}, err
 	}
 

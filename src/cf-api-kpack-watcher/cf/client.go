@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
@@ -60,9 +59,9 @@ func (c *Client) UpdateBuild(guid string, build api_model.Build) error {
 	if err != nil {
 		return err
 	}
-
-	log.Printf("[CF API/UpdateBuild] Sent payload: %s\n", raw)
-	log.Printf("[CF API/UpdateBuild] Response build: %d\n", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to patch build, received status %d", resp.StatusCode)
+	}
 
 	return nil
 }

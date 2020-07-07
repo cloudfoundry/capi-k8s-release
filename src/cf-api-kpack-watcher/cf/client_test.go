@@ -82,5 +82,18 @@ func TestClientUpdateBuild(t *testing.T) {
 				assert.Error(t, client.UpdateBuild(guid, build))
 			})
 		})
+
+		when("a non-400+ status code is received", func() {
+			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
+				client.restClient.(*mocks.Rest).
+					On("Patch", mock.Anything, mock.Anything, mock.Anything).
+					Return(&http.Response{StatusCode: 500}, nil)
+			})
+
+			it("errors", func() {
+				assert.Error(t, client.UpdateBuild(guid, build))
+			})
+		})
 	})
 }
