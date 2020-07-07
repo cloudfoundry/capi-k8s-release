@@ -38,14 +38,14 @@ import (
 )
 
 var (
-	// scheme   = runtime.NewScheme()
+	// TODO: revisit whether we should assemble our own Scheme
+	//scheme   = runtime.NewScheme()
 	scheme   = buildpivotaliov1alpha1.Scheme
 	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-
 	_ = buildpivotaliov1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }

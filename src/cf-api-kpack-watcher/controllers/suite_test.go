@@ -44,7 +44,7 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 var (
-	cfg             *rest.Config
+	config          *rest.Config
 	k8sManager      ctrl.Manager
 	managerStopChan chan struct{}
 	k8sClient       client.Client
@@ -75,9 +75,9 @@ var _ = BeforeSuite(func(done Done) {
 	}
 
 	var err error
-	cfg, err = testEnv.Start()
+	config, err = testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
+	Expect(config).ToNot(BeNil())
 
 	// TODO: is this generic scheme needed?
 	err = scheme.AddToScheme(scheme.Scheme)
@@ -88,7 +88,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	// +kubebuilder:scaffold:scheme
 
-	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
+	k8sManager, err = ctrl.NewManager(config, ctrl.Options{
 		Scheme:                 scheme.Scheme,
 		HealthProbeBindAddress: "0",
 		MetricsBindAddress:     "0",
@@ -98,6 +98,7 @@ var _ = BeforeSuite(func(done Done) {
 	// initialize mocks defensively in case cache sync touches them
 	mockUAAClient = cffakes.FakeTokenFetcher{}
 	mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
+
 	fakeCFAPIServer = ghttp.NewServer()
 	cfClient = *cf.NewClient(fakeCFAPIServer.URL(), &cf.RestClient{
 		Client: &http.Client{
