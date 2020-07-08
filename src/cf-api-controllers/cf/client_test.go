@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/mocks"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -4,7 +4,7 @@ package image_registryfakes
 import (
 	"sync"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
 

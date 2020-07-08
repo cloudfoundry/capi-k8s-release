@@ -4,7 +4,7 @@ package cffakes
 import (
 	"sync"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 )
 
 type FakeTokenFetcher struct {

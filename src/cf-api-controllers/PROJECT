@@ -1,5 +1,5 @@
 domain: build.pivotal.io
-repo: code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher
+repo: code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers
 resources:
 - group: build.pivotal.io
   kind: Build

@@ -22,9 +22,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/cffakes"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry/image_registryfakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/cffakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry/image_registryfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"

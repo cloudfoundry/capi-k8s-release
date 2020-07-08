@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/image_registry"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
 	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"

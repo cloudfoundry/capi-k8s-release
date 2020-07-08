@@ -11,7 +11,7 @@ IMAGE_DESTINATION_KPACK_WATCHER="${IMAGE_DESTINATION_KPACK_WATCHER:-gcr.io/cf-ca
 CF_FOR_K8s_DIR="${CF_FOR_K8s_DIR:-${HOME}/workspace/cf-for-k8s/}"
 CAPI_RELEASE_DIR="${CAPI_RELEASE_DIR:-${HOME}/workspace/capi-release/}"
 CCNG_DIR="${CAPI_RELEASE_DIR}src/cloud_controller_ng"
-CAPI_KPACK_WATCHER_DIR="${CAPI_KPACK_WATCHER_DIR:-${REPO_BASE_DIR}/src/cf-api-kpack-watcher}"
+CAPI_KPACK_WATCHER_DIR="${CAPI_KPACK_WATCHER_DIR:-${REPO_BASE_DIR}/src/cf-api-controllers}"
 
 if [ -z "$1" ]
   then

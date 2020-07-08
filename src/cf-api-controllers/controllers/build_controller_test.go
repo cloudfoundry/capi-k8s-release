@@ -3,13 +3,13 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-	"errors"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
 	"github.com/buildpacks/lifecycle"
 	"github.com/buildpacks/lifecycle/launch"
 	ociv1 "github.com/google/go-containerregistry/pkg/v1"

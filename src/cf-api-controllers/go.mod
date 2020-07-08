@@ -1,4 +1,4 @@
-module code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher
+module code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers
 
 go 1.14
 

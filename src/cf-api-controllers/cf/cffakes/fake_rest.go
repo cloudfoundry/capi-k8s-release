@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 )
 
 type FakeRest struct {
