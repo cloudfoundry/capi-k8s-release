@@ -1,4 +1,4 @@
-[ ] remove `config` directory and any related make directives
+[X] remove `config` directory and any related make directives
 [ ] have CI manage ensuring that version of kpack CRDs matches the version of
 kpack source we use
     - watches github releases of kpack: new release => bump kpack version in

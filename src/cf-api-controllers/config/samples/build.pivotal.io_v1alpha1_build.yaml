@@ -1,7 +1,0 @@
-apiVersion: build.pivotal.io.build.pivotal.io/v1alpha1
-kind: Build
-metadata:
-  name: build-sample
-spec:
-  # Add fields here
-  foo: bar
