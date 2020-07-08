@@ -39,7 +39,6 @@ import (
 
 var (
 	// TODO: revisit whether we should assemble our own Scheme
-	//scheme   = runtime.NewScheme()
 	scheme   = buildpivotaliov1alpha1.Scheme
 	setupLog = ctrl.Log.WithName("setup")
 )

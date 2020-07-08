@@ -55,8 +55,6 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	logger := r.Log.WithValues("request", req.NamespacedName)
 
-	// TODO: only process builds for a particular namespace
-
 	// fetch build object
 	var build buildv1alpha1.Build
 	err := r.Get(ctx, req.NamespacedName, &build)
