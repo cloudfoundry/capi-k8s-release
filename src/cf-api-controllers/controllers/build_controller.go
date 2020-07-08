@@ -62,7 +62,6 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
 		// TODO: should we requeue here?
-		// TODO: might need to do `client.IgnoreNotFound(err)` to deal with delete events
 		return ctrl.Result{}, err
 	}
 
@@ -156,7 +155,6 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (
 	updateBuildRequest := api_model.NewBuild(build)
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
 
-	// TODO: do the things to determine `processTypes` stuff
 	err = r.CFClient.UpdateBuild(buildGUID, updateBuildRequest)
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")

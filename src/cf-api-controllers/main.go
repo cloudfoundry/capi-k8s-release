@@ -91,7 +91,6 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
-		// TODO: use `cf.NewCFAPIClient()` instead
 		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
 			Client: &http.Client{
 				Transport: &http.Transport{

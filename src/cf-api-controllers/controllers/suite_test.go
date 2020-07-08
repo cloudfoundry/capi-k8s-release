@@ -68,7 +68,7 @@ var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
 
 	By("bootstrapping test environment")
-	// TODO: this is garbage, clean it up pls pls pls for the love of god
+	// TODO: we need to correctly version the kpack go module and the kpack CRD file we bring in
 	testEnv = &envtest.Environment{
 		ErrorIfCRDPathMissing: true,
 		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd")},

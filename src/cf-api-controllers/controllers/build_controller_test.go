@@ -25,10 +25,10 @@ import (
 
 var _ = Describe("BuildController", func() {
 	var (
-		subject            *buildv1alpha1.Build
-		buildGUID          string
-		receivedApiBuildPatch      chan api_model.Build
-		updatedBuildStatus buildv1alpha1.BuildStatus
+		subject               *buildv1alpha1.Build
+		buildGUID             string
+		receivedApiBuildPatch chan api_model.Build
+		updatedBuildStatus    buildv1alpha1.BuildStatus
 	)
 	BeforeEach(func() {
 		raw, err := json.Marshal(lifecycle.BuildMetadata{
@@ -248,33 +248,6 @@ func updateBuildStatus(existingBuild *buildv1alpha1.Build, desiredBuildStatus *b
 	Expect(updatedBuild).ToNot(BeNil())
 
 	return &updatedBuild
-}
-
-// TODO get rid of this function it's too big
-func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
-	createdBuild := createBuild(&buildv1alpha1.Build{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      desiredBuildGUID,
-			Namespace: "default",
-			Labels:    map[string]string{BuildGUIDLabel: desiredBuildGUID},
-		},
-		Spec: buildv1alpha1.BuildSpec{},
-		Status: buildv1alpha1.BuildStatus{
-			Status: corev1alpha1.Status{
-				Conditions: []corev1alpha1.Condition{
-					corev1alpha1.Condition{
-						Type:   corev1alpha1.ConditionSucceeded,
-						Status: corev1.ConditionUnknown,
-					},
-				},
-			},
-			StepStates: []corev1.ContainerState{
-				corev1.ContainerState{},
-			},
-		},
-	})
-
-	return updateBuildStatus(createdBuild, &desiredBuildStatus)
 }
 
 func namespacedName(build *buildv1alpha1.Build) types.NamespacedName {
