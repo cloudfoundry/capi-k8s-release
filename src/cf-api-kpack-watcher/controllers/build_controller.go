@@ -106,12 +106,13 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
-	// TODO: should we filter out builds that are not managed by CF? (i.e. don't have the
-	// `cloudfoundry.org/*` labels on the objects)
 	newBuild, ok := e.ObjectNew.(*buildv1alpha1.Build)
 	if !ok {
 		// TODO: log something? what log level?
 		r.Log.WithValues("event", e).V(100).Info("Received a build update event that couldn't be deserialized")
+		return false
+	}
+	if _, isGuidPresent := newBuild.ObjectMeta.Labels[BuildGUIDLabel]; !isGuidPresent {
 		return false
 	}
 	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()

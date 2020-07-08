@@ -3,11 +3,11 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+	"errors"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-kpack-watcher/cf/api_model"
 	"github.com/buildpacks/lifecycle"
@@ -27,10 +27,9 @@ var _ = Describe("BuildController", func() {
 	var (
 		subject            *buildv1alpha1.Build
 		buildGUID          string
-		receivedBuildPatch chan api_model.Build
+		receivedApiBuildPatch      chan api_model.Build
 		updatedBuildStatus buildv1alpha1.BuildStatus
 	)
-
 	BeforeEach(func() {
 		raw, err := json.Marshal(lifecycle.BuildMetadata{
 			Processes: []launch.Process{{
@@ -44,7 +43,7 @@ var _ = Describe("BuildController", func() {
 		}, nil)
 
 		buildGUID = fmt.Sprintf("build-guid-%d", GinkgoRandomSeed())
-		receivedBuildPatch = make(chan api_model.Build)
+		receivedApiBuildPatch = make(chan api_model.Build)
 
 		fakeCFAPIServer.Reset()
 		fakeCFAPIServer.AppendHandlers(ghttp.CombineHandlers(
@@ -53,12 +52,16 @@ var _ = Describe("BuildController", func() {
 			func(_ http.ResponseWriter, r *http.Request) {
 				bytes, err := ioutil.ReadAll(r.Body)
 				Expect(err).NotTo(HaveOccurred())
-				var buildPatch api_model.Build
-				json.Unmarshal(bytes, &buildPatch)
-				receivedBuildPatch <- buildPatch
+				// outout of the server request param (apiBuildPatch) getting
+				// written to receivedApiBuildPatch
+				//(param captured in receivedApiBuildPatch_
+
+				var apiBuildPatch api_model.Build
+				err = json.Unmarshal(bytes, &apiBuildPatch)
+				Expect(err).NotTo(HaveOccurred())
+				receivedApiBuildPatch <- apiBuildPatch
 			},
 		))
-
 		updatedBuildStatus = buildv1alpha1.BuildStatus{
 			Status: corev1alpha1.Status{
 				Conditions: []corev1alpha1.Condition{
@@ -83,108 +86,154 @@ var _ = Describe("BuildController", func() {
 		deleteBuild(subject)
 	})
 
-	It("marks successful builds as successful", func() {
-		subject = createBuildAndUpdateStatus(buildGUID, updatedBuildStatus)
-
-		Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
-
-		var actualBuildPatch api_model.Build
-		Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
-
-		Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
-		Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
-		Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
-		Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
-	})
-
-	Context("when the build fails", func() {
+	Context("when the kpack build is valid", func() {
 		BeforeEach(func() {
-			updatedBuildStatus.Status.Conditions[0].Status = corev1.ConditionFalse
-			updatedBuildStatus.StepStates[0].Terminated = &corev1.ContainerStateTerminated{
-				ExitCode: 1,
-				Message:  "what do we say to passing tests? not today",
-			}
+			subject = createBuild(&buildv1alpha1.Build{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      buildGUID,
+					Namespace: "default",
+					Labels:    map[string]string{BuildGUIDLabel: buildGUID},
+				},
+				Spec: buildv1alpha1.BuildSpec{},
+				Status: buildv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionUnknown,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{},
+					},
+				},
+			})
 		})
-
-		It("marks failed builds as failed", func() {
-			subject = createBuildAndUpdateStatus(buildGUID, updatedBuildStatus)
-			// eventually expect CF API/CCNG to receive request to update its "v3 build" object
+		It("marks successful builds as successful", func() {
+			subject = updateBuildStatus(subject, &updatedBuildStatus)
 			Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
 
 			var actualBuildPatch api_model.Build
-			Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
-
-			Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
-			Expect(actualBuildPatch.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
-		})
-	})
-
-	Context("and there is an error fetching process types from image config", func() {
-		BeforeEach(func() {
-			mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))
-		})
-
-		It("successfully marks the CC v3 build as failed", func() {
-			subject = createBuildAndUpdateStatus(buildGUID, updatedBuildStatus)
-
-			var actualBuildPatch api_model.Build
-			Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
-
-			Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
-			Expect(actualBuildPatch.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
-		})
-	})
-
-	Context("and the cloud controller responds with an error", func() {
-		BeforeEach(func() {
-			fakeCFAPIServer.Reset()
-			fakeCFAPIServer.AppendHandlers(
-				ghttp.RespondWith(500, ""),
-				// fail for the first request, unmarshal the 2nd request to our buildpack channel
-				func(_ http.ResponseWriter, r *http.Request) {
-					bytes, err := ioutil.ReadAll(r.Body)
-					Expect(err).NotTo(HaveOccurred())
-
-					var buildPatch api_model.Build
-					json.Unmarshal(bytes, &buildPatch)
-					receivedBuildPatch <- buildPatch
-				},
-			)
-		})
-
-		It("requeues the Build resource and eventually reconciles again", func() {
-			subject = createBuildAndUpdateStatus(buildGUID, updatedBuildStatus)
-
-			Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*30).Should(HaveLen(2))
-
-			var actualBuildPatch api_model.Build
-			Eventually(receivedBuildPatch).Should(Receive(&actualBuildPatch))
+			Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
 
 			Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
 			Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
+			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
+			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
+		})
+
+		Context("when the build fails", func() {
+			BeforeEach(func() {
+				updatedBuildStatus.Status.Conditions[0].Status = corev1.ConditionFalse
+				updatedBuildStatus.StepStates[0].Terminated = &corev1.ContainerStateTerminated{
+					ExitCode: 1,
+					Message:  "what do we say to passing tests? not today",
+				}
+			})
+
+			It("marks failed builds as failed", func() {
+				subject = updateBuildStatus(subject, &updatedBuildStatus)
+				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
+
+				var actualBuildPatch api_model.Build
+				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
+
+				Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+				Expect(actualBuildPatch.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
+			})
+		})
+
+		Context("and there is an error fetching process types from image config", func() {
+			BeforeEach(func() {
+				mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))
+			})
+
+			It("successfully marks the CC v3 build as failed", func() {
+				subject = updateBuildStatus(subject, &updatedBuildStatus)
+
+				var actualBuildPatch api_model.Build
+				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
+
+				Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+				Expect(actualBuildPatch.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
+			})
+		})
+
+		Context("and the cloud controller responds with an error", func() {
+			BeforeEach(func() {
+				fakeCFAPIServer.Reset()
+				fakeCFAPIServer.AppendHandlers(
+					ghttp.RespondWith(500, ""),
+					// fail for the first request, unmarshal the 2nd request to our buildpack channel
+					func(_ http.ResponseWriter, r *http.Request) {
+						bytes, err := ioutil.ReadAll(r.Body)
+						Expect(err).NotTo(HaveOccurred())
+
+						var buildPatch api_model.Build
+						json.Unmarshal(bytes, &buildPatch)
+						receivedApiBuildPatch <- buildPatch
+					},
+				)
+			})
+
+			It("requeues the Build resource and eventually reconciles again", func() {
+				subject = updateBuildStatus(subject, &updatedBuildStatus)
+				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*30).Should(HaveLen(2))
+
+				var actualBuildPatch api_model.Build
+				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
+
+				Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
+				Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
+			})
 		})
 	})
 
 	Context("when there is a kpack build without a CF build guid", func() {
-		PIt("ignores the build", func() {
+		BeforeEach(func() {
+			subject = createBuild(&buildv1alpha1.Build{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      buildGUID,
+					Namespace: "default",
+					Labels:    map[string]string{},
+				},
+				Spec: buildv1alpha1.BuildSpec{},
+				Status: buildv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionUnknown,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{},
+					},
+				},
+			})
+		})
+
+		It("ignores the build", func() {
+			subject = updateBuildStatus(subject, &updatedBuildStatus)
+			Consistently(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(0))
 		})
 	})
 })
 
 // can be used in top level beforeach
-func createBuild(desiredBuildGUID string, build *buildv1alpha1.Build) *buildv1alpha1.Build {
+func createBuild(build *buildv1alpha1.Build) *buildv1alpha1.Build {
 	Expect(k8sClient.Create(context.Background(), build)).Should(Succeed())
-
 	var createdBuild buildv1alpha1.Build
 	Eventually(func() error {
 		return k8sClient.Get(context.Background(), namespacedName(build), &createdBuild)
 	}, "5s", "100ms").Should(Succeed())
-
 	return &createdBuild
 }
 
 // can be used in Its as subject
-func updatedBuildStatus(existingBuild *buildv1alpha1.Build, desiredBuildStatus *buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
+func updateBuildStatus(existingBuild *buildv1alpha1.Build, desiredBuildStatus *buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
 	// update build to update its status and wait for it to propagate
 	var updatedBuild buildv1alpha1.Build
 	existingBuild.Status = *desiredBuildStatus
@@ -203,7 +252,7 @@ func updatedBuildStatus(existingBuild *buildv1alpha1.Build, desiredBuildStatus *
 
 // TODO get rid of this function it's too big
 func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
-	createdBuild := createBuild(desiredBuildGUID, &buildv1alpha1.Build{
+	createdBuild := createBuild(&buildv1alpha1.Build{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      desiredBuildGUID,
 			Namespace: "default",
@@ -225,7 +274,7 @@ func createBuildAndUpdateStatus(desiredBuildGUID string, desiredBuildStatus buil
 		},
 	})
 
-	return updatedBuildStatus(createdBuild, &desiredBuildStatus)
+	return updateBuildStatus(createdBuild, &desiredBuildStatus)
 }
 
 func namespacedName(build *buildv1alpha1.Build) types.NamespacedName {
