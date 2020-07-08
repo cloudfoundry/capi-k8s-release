@@ -9,8 +9,14 @@ sources:
     path: #@ data.values.src_dirs.ccng
   - imageRepo: cloudfoundry/capi-kpack-watcher
     path: #@ data.values.src_dirs.capi_kpack_watcher
+    pack:
+      build:
+        builder: cloudfoundry/cnb:bionic
   - imageRepo: #@ data.values.kbld.destination.capi_kpack_watcher
     path: #@ data.values.src_dirs.capi_kpack_watcher
+    pack:
+      build:
+        builder: cloudfoundry/cnb:bionic
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
