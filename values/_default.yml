@@ -92,6 +92,11 @@ kpack:
     password: ""
     repository_prefix: ""
     username: ""
+metric_proxy:
+  ca:
+    secret_name: null
+  cert:
+    secret_name: null
 replicaCount: 1
 staging_namespace: cf-workloads-staging
 system_domain: cf-system.svc.cluster.local
