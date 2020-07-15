@@ -62,6 +62,7 @@ var _ = Describe("BuildController", func() {
 				receivedApiBuildPatch <- apiBuildPatch
 			},
 		))
+
 		updatedBuildStatus = buildv1alpha1.BuildStatus{
 			Status: corev1alpha1.Status{
 				Conditions: []corev1alpha1.Condition{
@@ -110,6 +111,7 @@ var _ = Describe("BuildController", func() {
 				},
 			})
 		})
+
 		It("marks successful builds as successful", func() {
 			subject = updateBuildStatus(subject, &updatedBuildStatus)
 			Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
@@ -235,9 +237,10 @@ func createBuild(build *buildv1alpha1.Build) *buildv1alpha1.Build {
 // can be used in Its as subject
 func updateBuildStatus(existingBuild *buildv1alpha1.Build, desiredBuildStatus *buildv1alpha1.BuildStatus) *buildv1alpha1.Build {
 	// update build to update its status and wait for it to propagate
-	var updatedBuild buildv1alpha1.Build
 	existingBuild.Status = *desiredBuildStatus
 	Expect(k8sClient.Status().Update(context.Background(), existingBuild)).Should(Succeed())
+
+	var updatedBuild buildv1alpha1.Build
 	Eventually(func() bool {
 		err := k8sClient.Get(context.Background(), namespacedName(existingBuild), &updatedBuild)
 		if err != nil {

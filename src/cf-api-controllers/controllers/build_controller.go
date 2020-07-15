@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
@@ -91,24 +92,30 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&buildv1alpha1.Build{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
-				// TODO: log self-link or UID for debugging?
-				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).V(1).Info("Build created, watching for updates...")
-				return false
+				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).WithValues("event", e).
+					V(1).Info("Build created, watching for updates...")
+				return r.buildFilter(e.Object)
 			},
-			UpdateFunc:  r.updateEventFilter,
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				r.Log.WithValues("requestLink", e.MetaNew.GetSelfLink()).WithValues("event", e).
+					V(1).Info("Received update, processing")
+				return r.buildFilter(e.ObjectNew)
+			},
 			DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
 			GenericFunc: func(_ event.GenericEvent) bool { return false },
 		}).
 		Complete(r)
 }
 
-func (r *BuildReconciler) updateEventFilter(e event.UpdateEvent) bool {
-	newBuild, ok := e.ObjectNew.(*buildv1alpha1.Build)
+var BuildFilterError = errors.New("Received a build event with a non-build runtime.Object")
+
+func (r *BuildReconciler) buildFilter(e runtime.Object) bool {
+	newBuild, ok := e.(*buildv1alpha1.Build)
 	if !ok {
-		// TODO: log something? what log level?
-		r.Log.WithValues("event", e).V(100).Info("Received a build update event that couldn't be deserialized")
+		r.Log.WithValues("event", e).Error(BuildFilterError, BuildFilterError.Error())
 		return false
 	}
+
 	if _, isGuidPresent := newBuild.ObjectMeta.Labels[BuildGUIDLabel]; !isGuidPresent {
 		return false
 	}
