@@ -54,22 +54,24 @@ type BuildReconciler struct {
 
 func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	logger := r.Log.WithValues("request", req.NamespacedName)
 
-	// fetch build object
 	var build buildv1alpha1.Build
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
+		r.Log.WithValues("request", req.NamespacedName).Error(err, "failed initial build fetch")
 		return ctrl.Result{}, err
 	}
 
-	// handle update of a kpack build resource
+	logger := r.Log.WithValues(
+		"buildName", types.NamespacedName{Name: build.Name, Namespace: build.Namespace},
+		BuildGUIDLabel, build.GetLabels()[BuildGUIDLabel],
+		"status", build.Status,
+	)
+
 	if build.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue() {
-		// mark build as staged successfully
-		return r.reconcileSuccessfulBuild(&build)
+		return r.reconcileSuccessfulBuild(&build, logger)
 	}
 
-	// if any steps have explicitly failed, then mark CCNG build as failed
 	failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
 	if failedContainerState != nil {
 		return r.reconcileFailedBuild(
@@ -78,12 +80,12 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				"Kpack build failed. Build failure message: '%s'.",
 				failedContainerState.Terminated.Message,
 			),
+			logger,
 		)
 	}
 
-	// the update event filter in `SetupWithManager` should prevent this from being reached
-	logger.V(1).Info("[Should not have gotten here] Build is still progressing, requeueing")
-	return ctrl.Result{Requeue: true}, nil
+	logger.V(1).Info("Build is not complete, took no action")
+	return ctrl.Result{}, nil
 }
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -91,13 +93,13 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&buildv1alpha1.Build{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
-				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).WithValues("event", e).
-					V(1).Info("Build created, watching for updates...")
+				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).
+					V(1).Info("Build created, reconciling")
 				return r.buildFilter(e.Object)
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				r.Log.WithValues("requestLink", e.MetaNew.GetSelfLink()).WithValues("event", e).
-					V(1).Info("Received update, processing")
+				r.Log.WithValues("requestLink", e.MetaNew.GetSelfLink()).
+					V(1).Info("Build updated, reconciling")
 				return r.buildFilter(e.ObjectNew)
 			},
 			DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
@@ -111,7 +113,7 @@ var BuildFilterError = errors.New("Received a build event with a non-build runti
 func (r *BuildReconciler) buildFilter(e runtime.Object) bool {
 	newBuild, ok := e.(*buildv1alpha1.Build)
 	if !ok {
-		r.Log.WithValues("event", e).Error(BuildFilterError, BuildFilterError.Error())
+		r.Log.WithValues("event", e).Error(BuildFilterError, "ignoring event")
 		return false
 	}
 
@@ -139,27 +141,25 @@ func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[s
 	return ret, nil
 }
 
-func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (ctrl.Result, error) {
-	logger := r.Log.WithValues("request", types.NamespacedName{Name: build.Name, Namespace: build.Namespace})
-
-	buildGUID := build.GetLabels()[BuildGUIDLabel]
-	logger.WithValues("guid", buildGUID).V(1).Info("Build completed successfully, marking as staged")
+func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build, logger logr.Logger) (ctrl.Result, error) {
+	logger.V(1).Info("Build completed successfully, marking as staged")
 
 	processTypes, err := r.extractProcessTypes(build)
 	if err != nil {
-		logger.WithValues("error", err).V(1).Info("Failed to fetch image config")
+		logger.Error(err, "Failed to fetch image config")
 		return r.reconcileFailedBuild(
 			build,
 			fmt.Sprintf(
 				"Failed to handle successful kpack build: %s",
 				err,
 			),
+			logger,
 		)
 	}
+
 	updateBuildRequest := api_model.NewBuild(build)
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
-
-	err = r.CFClient.UpdateBuild(buildGUID, updateBuildRequest)
+	err = r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], updateBuildRequest)
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")
 		// TODO: should we limit number of requeues? [story: #173573889]
@@ -169,17 +169,13 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build) (
 	return ctrl.Result{}, nil
 }
 
-func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string) (ctrl.Result, error) {
-	logger := r.Log.WithValues("request", types.NamespacedName{Name: build.Name, Namespace: build.Namespace})
-
+func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string, logger logr.Logger) (ctrl.Result, error) {
 	logger.V(1).Info("Build failed, marking as failed staging")
 
-	buildGUID := build.GetLabels()[BuildGUIDLabel]
-	cfAPIBuild := api_model.Build{
+	err := r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], api_model.Build{
 		State: api_model.BuildFailedState,
 		Error: errorMessage,
-	}
-	err := r.CFClient.UpdateBuild(buildGUID, cfAPIBuild)
+	})
 	if err != nil {
 		logger.Error(err, "Failed to send request to CF API")
 		return ctrl.Result{Requeue: true}, err
