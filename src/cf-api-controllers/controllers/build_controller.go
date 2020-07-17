@@ -60,7 +60,6 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var build buildv1alpha1.Build
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
-		// TODO: should we requeue here?
 		return ctrl.Result{}, err
 	}
 
