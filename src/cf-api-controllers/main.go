@@ -24,16 +24,18 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/controllers"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
-	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
-	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -63,6 +65,9 @@ func main() {
 	}
 	if os.Getenv("STAGING_NAMESPACE") == "" {
 		panic("`STAGING_NAMESPACE` environment variable must be set")
+	}
+	if os.Getenv("WORKLOADS_NAMESPACE") == "" {
+		panic("`WORKLOADS_NAMESPACE` environment variable must be set")
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -101,6 +106,22 @@ func main() {
 		ImageConfigFetcher: image_registry.NewImageConfigFetcher(keychainFactory),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
+		os.Exit(1)
+	}
+
+	clientset, err := appsv1.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		// TODO: something better?
+		panic(err.Error())
+	}
+	if err = (&controllers.ImageReconciler{
+		Client:             mgr.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
+		Scheme:             mgr.GetScheme(),
+		AppsClientSet:      clientset,
+		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Image")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

@@ -87,13 +87,14 @@ var _ = Describe("BuildController", func() {
 		deleteBuild(subject)
 	})
 
-	Context("when the kpack build is valid", func() {
+	Context("when the kpack build triggered by app update is valid", func() {
 		BeforeEach(func() {
 			subject = createBuild(&buildv1alpha1.Build{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      buildGUID,
-					Namespace: "default",
-					Labels:    map[string]string{BuildGUIDLabel: buildGUID},
+					Name:        buildGUID,
+					Namespace:   "default",
+					Labels:      map[string]string{BuildGUIDLabel: buildGUID},
+					Annotations: map[string]string{BuildReasonAnnotation: "src"},
 				},
 				Spec: buildv1alpha1.BuildSpec{},
 				Status: buildv1alpha1.BuildStatus{
@@ -196,9 +197,74 @@ var _ = Describe("BuildController", func() {
 		BeforeEach(func() {
 			subject = createBuild(&buildv1alpha1.Build{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        buildGUID,
+					Namespace:   "default",
+					Labels:      map[string]string{},
+					Annotations: map[string]string{BuildReasonAnnotation: "src"},
+				},
+				Spec: buildv1alpha1.BuildSpec{},
+				Status: buildv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionUnknown,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{},
+					},
+				},
+			})
+		})
+
+		It("ignores the build", func() {
+			subject = updateBuildStatus(subject, &updatedBuildStatus)
+			Consistently(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(0))
+		})
+	})
+
+	Context("when there is a kpack build without a build reason", func() {
+		BeforeEach(func() {
+			subject = createBuild(&buildv1alpha1.Build{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      buildGUID,
 					Namespace: "default",
-					Labels:    map[string]string{},
+					Labels:    map[string]string{BuildGUIDLabel: buildGUID},
+				},
+				Spec: buildv1alpha1.BuildSpec{},
+				Status: buildv1alpha1.BuildStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							corev1alpha1.Condition{
+								Type:   corev1alpha1.ConditionSucceeded,
+								Status: corev1.ConditionUnknown,
+							},
+						},
+					},
+					StepStates: []corev1.ContainerState{
+						corev1.ContainerState{},
+					},
+				},
+			})
+		})
+
+		It("ignores the build", func() {
+			subject = updateBuildStatus(subject, &updatedBuildStatus)
+			Consistently(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(0))
+		})
+	})
+
+	// this is so the image controller picks this change up instead
+	Context("when there is a kpack build with a build reason indicating a stack update", func() {
+		BeforeEach(func() {
+			subject = createBuild(&buildv1alpha1.Build{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        buildGUID,
+					Namespace:   "default",
+					Labels:      map[string]string{BuildGUIDLabel: buildGUID},
+					Annotations: map[string]string{BuildReasonAnnotation: "STACK"},
 				},
 				Spec: buildv1alpha1.BuildSpec{},
 				Status: buildv1alpha1.BuildStatus{

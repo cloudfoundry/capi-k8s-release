@@ -39,6 +39,7 @@ import (
 )
 
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
+const BuildReasonAnnotation = "image.build.pivotal.io/reason"
 
 // BuildReconciler reconciles a Build object
 type BuildReconciler struct {
@@ -118,9 +119,15 @@ func (r *BuildReconciler) buildFilter(e runtime.Object) bool {
 	}
 
 	if _, isGuidPresent := newBuild.ObjectMeta.Labels[BuildGUIDLabel]; !isGuidPresent {
+		r.Log.WithValues("build", newBuild).Info("received update event for a non-CF Build resource, ignoring event")
 		return false
 	}
-	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown()
+	buildReason, ok := newBuild.ObjectMeta.Annotations[BuildReasonAnnotation]
+	if !ok {
+		r.Log.WithValues("build", newBuild).Info("received update event that was missing the build reason, ignoring event")
+		return false
+	}
+	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown() && buildReason != "STACK"
 }
 
 func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[string]string, error) {

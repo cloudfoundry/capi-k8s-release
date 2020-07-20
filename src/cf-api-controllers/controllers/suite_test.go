@@ -22,13 +22,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/cffakes"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry/image_registryfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 	"k8s.io/client-go/kubernetes/scheme"
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +34,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/cffakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry/image_registryfakes"
 
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
@@ -114,6 +116,17 @@ var _ = BeforeSuite(func(done Done) {
 		Scheme:             k8sManager.GetScheme(),
 		CFClient:           &cfClient,
 		ImageConfigFetcher: &mockImageConfigFetcher,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	clientset, err := appsv1.NewForConfig(k8sManager.GetConfig())
+	Expect(err).ToNot(HaveOccurred())
+	err = (&ImageReconciler{
+		Client:             k8sManager.GetClient(),
+		AppsClientSet:      clientset,
+		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
+		Scheme:             k8sManager.GetScheme(),
+		WorkloadsNamespace: "cf-workloads",
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
