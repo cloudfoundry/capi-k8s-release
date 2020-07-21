@@ -52,13 +52,13 @@ var _ = Describe("BuildController", func() {
 			func(_ http.ResponseWriter, r *http.Request) {
 				bytes, err := ioutil.ReadAll(r.Body)
 				Expect(err).NotTo(HaveOccurred())
-				// outout of the server request param (apiBuildPatch) getting
-				// written to receivedApiBuildPatch
-				//(param captured in receivedApiBuildPatch_
 
 				var apiBuildPatch api_model.Build
 				err = json.Unmarshal(bytes, &apiBuildPatch)
 				Expect(err).NotTo(HaveOccurred())
+
+				// send the build patch back to the test thread
+				// so we can assert against it without sharing memory
 				receivedApiBuildPatch <- apiBuildPatch
 			},
 		))
