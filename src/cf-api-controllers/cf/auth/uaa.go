@@ -28,7 +28,7 @@ func (u *UAAClient) Fetch() (string, error) {
 //	 UAA_CLIENT_SECRET: Secret generated for the client in UAA, similar to above.
 //	 UAA_ENDPOINT: The FQDN of UAA (e.g. https://uaa.katniss.capi.land)
 func NewUAAClient() *UAAClient {
-	logger := lager.NewLogger("")
+	logger := lager.NewLogger("uaa")
 	clock := clock.NewClock()
 
 	client, err := uaaClient.NewClient(

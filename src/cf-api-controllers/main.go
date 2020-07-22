@@ -65,7 +65,6 @@ func main() {
 		panic("`STAGING_NAMESPACE` environment variable must be set")
 	}
 
-	// TODO: change this to somehow use `lager` for consistency?
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

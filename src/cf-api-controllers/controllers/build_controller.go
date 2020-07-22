@@ -94,12 +94,12 @@ func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).
-					V(1).Info("Build created, reconciling")
+					V(1).Info("Build create event received")
 				return r.buildFilter(e.Object)
 			},
 			UpdateFunc: func(e event.UpdateEvent) bool {
 				r.Log.WithValues("requestLink", e.MetaNew.GetSelfLink()).
-					V(1).Info("Build updated, reconciling")
+					V(1).Info("Build update event received")
 				return r.buildFilter(e.ObjectNew)
 			},
 			DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
