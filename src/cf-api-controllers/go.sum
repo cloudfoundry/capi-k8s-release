@@ -39,7 +39,6 @@ cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiy
 cloud.google.com/go/storage v1.5.0/go.mod h1:tpKbwo567HUNpVclU5sGELwQWBDZ8gh0ZeosJ0Rtdos=
 cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohlUTyfDhBk=
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
-code.cloudfoundry.org/capi-k8s-release v0.2.0 h1:xjYO7XKzaC7pCarV61St/YHFn50g80dTg0DJlRIpU1E=
 code.cloudfoundry.org/clock v1.0.0 h1:kFXWQM4bxYvdBw2X8BbBeXwQNgfoWv1vqAk2ZZyBN2o=
 code.cloudfoundry.org/clock v1.0.0/go.mod h1:QD9Lzhd/ux6eNQVUDVRJX/RKTigpewimNYBi7ivZKY8=
 code.cloudfoundry.org/lager v2.0.0+incompatible h1:WZwDKDB2PLd/oL+USK4b4aEjUymIej9My2nUQ9oWEwQ=
@@ -234,8 +233,6 @@ github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b/go.mod h1:obH5gd0Bsq
 github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
 github.com/buildpacks/imgutil v0.0.0-20200528211046-5c4cfa56bb24 h1:5JJD0uW/I2yfYyFqZZdZ4upgonr6q20WWvR1R53c7ec=
 github.com/buildpacks/imgutil v0.0.0-20200528211046-5c4cfa56bb24/go.mod h1:rkRDOGpntpFhgj0gIUhQnEt5DYvi7xUTHkZWSxbWJP0=
-github.com/buildpacks/lifecycle v0.8.0 h1:hQ7UkImyZ/TDcOYC7+TBKWiV5e9XgK5orOh7BzeR9uQ=
-github.com/buildpacks/lifecycle v0.8.0/go.mod h1:Spd3VyskOqUNXx76FKMRU3L3PLHxVGQBJ/JqXlFeLh8=
 github.com/buildpacks/lifecycle v0.8.1 h1:sRyb9281MrrJNfuaQBTI8hu1ERz9iiYtaDmp5xm6VyQ=
 github.com/buildpacks/lifecycle v0.8.1/go.mod h1:Spd3VyskOqUNXx76FKMRU3L3PLHxVGQBJ/JqXlFeLh8=
 github.com/bwmarrin/snowflake v0.0.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
@@ -575,8 +572,6 @@ github.com/google/go-containerregistry v0.0.0-20191010200024-a3d713f9b7f8/go.mod
 github.com/google/go-containerregistry v0.0.0-20200115214256-379933c9c22b/go.mod h1:Wtl/v6YdQxv397EREtzwgd9+Ud7Q5D8XMbi3Zazgkrs=
 github.com/google/go-containerregistry v0.0.0-20200123184029-53ce695e4179/go.mod h1:Wtl/v6YdQxv397EREtzwgd9+Ud7Q5D8XMbi3Zazgkrs=
 github.com/google/go-containerregistry v0.0.0-20200311163244-4b1985e5ea21/go.mod h1:m8YvHwSOuBCq25yrj1DaX/fIMrv6ec3CNg8jY8+5PEA=
-github.com/google/go-containerregistry v0.1.0 h1:hL5mVw7cTX3SBr64Arpv+cJH93L+Z9Q6WjckImYLB3g=
-github.com/google/go-containerregistry v0.1.0/go.mod h1:npTSyywOeILcgWqd+rvtzGWflIPPcBQhYoOONaY4ltM=
 github.com/google/go-containerregistry v0.1.1 h1:AG8FSAfXglim2l5qSrqp5VK2Xl03PiBf25NiTGGamws=
 github.com/google/go-containerregistry v0.1.1/go.mod h1:npTSyywOeILcgWqd+rvtzGWflIPPcBQhYoOONaY4ltM=
 github.com/google/go-github v17.0.0+incompatible/go.mod h1:zLgOLi98H3fifZn+44m+umXrS52loVEgC2AApnigrVQ=
@@ -935,8 +930,6 @@ github.com/pierrec/lz4 v0.0.0-20190327172049-315a67e90e41/go.mod h1:3/3N9NVKO0je
 github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0jef7pBehbT1qWhCMrIgbYNnFAZCqQ5LRc=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pierrec/lz4 v2.2.6+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
-github.com/pivotal/kpack v0.0.9 h1:RrIrXTBeShwzSOzBbPA1TEDj3njXxgeka5BMY9vhqJ4=
-github.com/pivotal/kpack v0.0.9/go.mod h1:3UNc25NshqQAvly/4slOBbuSzKhXrGQWRC9ssZSc2Vg=
 github.com/pivotal/kpack v0.0.10-0.20200715191345-68925eaca94b h1:t6Fo4aC7cO4OAALMMcxX2mOJcDpP7OEynllC/Oc3xFw=
 github.com/pivotal/kpack v0.0.10-0.20200715191345-68925eaca94b/go.mod h1:eoBIQBtLjN8C8swUaGB+xFIAUPUQ3WLBu2KjxAiH0W8=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -1099,8 +1092,6 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
-github.com/stretchr/testify v1.6.0 h1:jlIyCplCJFULU/01vCkhKuTyc3OorI3bJFuw6obfgho=
-github.com/stretchr/testify v1.6.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=

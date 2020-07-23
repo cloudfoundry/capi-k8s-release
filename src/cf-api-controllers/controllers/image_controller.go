@@ -63,16 +63,22 @@ func (r *ImageReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("image", req.NamespacedName)
 
 	if image.Status.GetCondition(corev1alpha1.ConditionReady).IsTrue() && image.Status.LatestBuildReason == "STACK" {
-		// TODO: safely access labels hash on the image object
 		labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{AppGUIDLabel: image.ObjectMeta.Labels[AppGUIDLabel]}}
-		statefulsets, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).List(v1.ListOptions{LabelSelector: labels.Set(labelSelector.MatchLabels).String()})
+		statefulsets, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).
+			List(v1.ListOptions{LabelSelector: labels.Set(labelSelector.MatchLabels).String()})
 		if err != nil {
 			logger.Error(err, "Could not find statefulsets for an app")
 			return ctrl.Result{}, err
 		}
-		if len(statefulsets.Items) < 1 {
-			logger.WithValues("appGUID", image.ObjectMeta.Labels[AppGUIDLabel]).Info("No statefulsets found for the app")
+		if len(statefulsets.Items) == 0 {
+			logger.WithValues("appGUID", image.ObjectMeta.Labels[AppGUIDLabel]).
+				Info("No statefulsets found for the app")
 			return ctrl.Result{}, nil
+		}
+		if len(statefulsets.Items) > 1 {
+			logger.WithValues("NumberOfStatefulSets", len(statefulsets.Items)).
+				Info("Multiple statefulsets found for the app, requeueing image update event.")
+			return ctrl.Result{Requeue: true}, nil
 		}
 		statefulset := statefulsets.Items[0]
 
@@ -98,7 +104,7 @@ func (r *ImageReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *ImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&buildv1alpha1.Image{}).
+		For(new(buildv1alpha1.Image)).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).

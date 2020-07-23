@@ -91,7 +91,7 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&buildv1alpha1.Build{}).
+		For(new(buildv1alpha1.Build)).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				r.Log.WithValues("requestLink", e.Meta.GetSelfLink()).

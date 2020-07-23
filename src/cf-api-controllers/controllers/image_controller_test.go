@@ -19,11 +19,16 @@ var _ = Describe("ImageController", func() {
 		appStatefulSet     *appsv1.StatefulSet
 		updatedImageStatus buildv1alpha1.ImageStatus
 	)
+	const (
+		postStackUpdateImageReference = "post-stack-update-image-reference"
+		preStackUpdateImageReference  = "pre-stack-update-image-reference"
+	)
+
 	BeforeEach(func() {
 		appStatefulSet = createStatefulSet(&appsv1.StatefulSet{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "statefulset-name",
-				Namespace: "cf-workloads",
+				Namespace: workloadsNamespace,
 				Labels:    map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
 			},
 			Spec: appsv1.StatefulSetSpec{
@@ -36,9 +41,9 @@ var _ = Describe("ImageController", func() {
 					},
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
-							corev1.Container{
+							{
 								Name:  "opi",
-								Image: "pre-stack-update-image-reference",
+								Image: preStackUpdateImageReference,
 							},
 						},
 					},
@@ -48,57 +53,153 @@ var _ = Describe("ImageController", func() {
 		updatedImageStatus = buildv1alpha1.ImageStatus{
 			Status: corev1alpha1.Status{
 				Conditions: []corev1alpha1.Condition{
-					corev1alpha1.Condition{
+					{
 						Type:   corev1alpha1.ConditionReady,
 						Status: corev1.ConditionTrue,
 					},
 				},
 			},
 			LatestBuildReason: "STACK",
-			LatestImage:       "post-stack-update-image-reference",
+			LatestImage:       postStackUpdateImageReference,
 		}
 	})
 
-	AfterEach(func() {
-		deleteImage(subject)
-		deleteStatefulSet(appStatefulSet)
-	})
-
 	Context("when the kpack build triggered by a stack update is valid", func() {
-		BeforeEach(func() {
-			subject = createImage(&buildv1alpha1.Image{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "image",
-					Namespace: "default",
-					Labels:    map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
-				},
-				Spec: buildv1alpha1.ImageSpec{},
-				Status: buildv1alpha1.ImageStatus{
-					Status: corev1alpha1.Status{
-						Conditions: []corev1alpha1.Condition{
-							corev1alpha1.Condition{
-								Type:   corev1alpha1.ConditionReady,
-								Status: corev1.ConditionUnknown,
+		When("there is only one statefulset for the app", func() {
+			BeforeEach(func() {
+				subject = createImage(&buildv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "image",
+						Namespace: stagingNamespace,
+						Labels:    map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
+					},
+					Spec: buildv1alpha1.ImageSpec{},
+					Status: buildv1alpha1.ImageStatus{
+						Status: corev1alpha1.Status{
+							Conditions: []corev1alpha1.Condition{
+								{
+									Type:   corev1alpha1.ConditionReady,
+									Status: corev1.ConditionUnknown,
+								},
 							},
 						},
 					},
-				},
+				})
+			})
+
+			It("updates the associated statefulset with the new image reference", func() {
+				subject = updateImageStatus(subject, &updatedImageStatus)
+
+				Eventually(func() bool {
+					statefulset := appsv1.StatefulSet{}
+					statefulsetNamespacedName := types.NamespacedName{
+						Name:      appStatefulSet.ObjectMeta.Name,
+						Namespace: appStatefulSet.ObjectMeta.Namespace,
+					}
+					Expect(k8sClient.Get(context.Background(), statefulsetNamespacedName, &statefulset)).To(Succeed())
+					return statefulset.Spec.Template.Spec.Containers[0].Image == postStackUpdateImageReference
+				}, "5s", "100ms").Should(BeTrue())
 			})
 		})
 
-		It("updates the associated statefulset with the new image reference", func() {
-			subject = updateImageStatus(subject, &updatedImageStatus)
+		When("there are multiple statefulsets for the app (i.e. during a rolling deployment)", func() {
+			var (
+				anotherAppStatefulSet        *appsv1.StatefulSet
+				updatedSourceCodeImageStatus buildv1alpha1.ImageStatus
+			)
+			const oldStackNewSrc = "old-stack-new-src"
 
-			Eventually(func() bool {
-				statefulset := appsv1.StatefulSet{}
-				statefulsetNamespacedName := types.NamespacedName{
-					Name:      appStatefulSet.ObjectMeta.Name,
-					Namespace: appStatefulSet.ObjectMeta.Namespace,
+			BeforeEach(func() {
+				anotherAppStatefulSet = createStatefulSet(&appsv1.StatefulSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "statefulset-2-name",
+						Namespace: workloadsNamespace,
+						Labels:    map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
+					},
+					Spec: appsv1.StatefulSetSpec{
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
+						},
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "opi",
+										Image: oldStackNewSrc,
+									},
+								},
+							},
+						},
+					},
+				})
+				updatedSourceCodeImageStatus = buildv1alpha1.ImageStatus{
+					Status: corev1alpha1.Status{
+						Conditions: []corev1alpha1.Condition{
+							{
+								Type:   corev1alpha1.ConditionReady,
+								Status: corev1.ConditionTrue,
+							},
+						},
+					},
+					LatestBuildReason: "SRC",
+					LatestImage:       oldStackNewSrc,
 				}
-				Expect(k8sClient.Get(context.Background(), statefulsetNamespacedName, &statefulset)).To(Succeed())
-				return statefulset.Spec.Template.Spec.Containers[0].Image == "post-stack-update-image-reference"
-			}, "5s", "100ms").Should(BeTrue())
+				subject = createImage(&buildv1alpha1.Image{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "image",
+						Namespace: stagingNamespace,
+						Labels:    map[string]string{"cloudfoundry.org/app_guid": "some-app-guid-123"},
+					},
+					Spec: buildv1alpha1.ImageSpec{},
+					Status: buildv1alpha1.ImageStatus{
+						Status: corev1alpha1.Status{
+							Conditions: []corev1alpha1.Condition{
+								{
+									Type:   corev1alpha1.ConditionReady,
+									Status: corev1.ConditionUnknown,
+								},
+							},
+						},
+					},
+				})
+			})
+
+			It("does not update the statefulsets and requeues the update event", func() {
+				subject = updateImageStatus(subject, &updatedSourceCodeImageStatus)
+				subject = updateImageStatus(subject, &updatedImageStatus)
+				Consistently(func() []string {
+					statefulset1 := appsv1.StatefulSet{}
+					statefulset1NamespacedName := types.NamespacedName{
+						Name:      appStatefulSet.ObjectMeta.Name,
+						Namespace: appStatefulSet.ObjectMeta.Namespace,
+					}
+					Expect(k8sClient.Get(context.Background(), statefulset1NamespacedName, &statefulset1)).To(Succeed())
+					statefulset2 := appsv1.StatefulSet{}
+					statefulset2NamespacedName := types.NamespacedName{
+						Name:      anotherAppStatefulSet.ObjectMeta.Name,
+						Namespace: anotherAppStatefulSet.ObjectMeta.Namespace,
+					}
+					Expect(k8sClient.Get(context.Background(), statefulset2NamespacedName, &statefulset2)).To(Succeed())
+					return []string{statefulset1.Spec.Template.Spec.Containers[0].Image, statefulset2.Spec.Template.Spec.Containers[0].Image}
+				}, "5s", "100ms").Should(Equal([]string{preStackUpdateImageReference, oldStackNewSrc}))
+
+				deleteStatefulSet(appStatefulSet)
+
+				Eventually(func() string {
+					statefulset2 := appsv1.StatefulSet{}
+					statefulset2NamespacedName := types.NamespacedName{
+						Name:      anotherAppStatefulSet.ObjectMeta.Name,
+						Namespace: anotherAppStatefulSet.ObjectMeta.Namespace,
+					}
+					Expect(k8sClient.Get(context.Background(), statefulset2NamespacedName, &statefulset2)).To(Succeed())
+					return statefulset2.Spec.Template.Spec.Containers[0].Image
+				}, "5s", "100ms").Should(Equal(postStackUpdateImageReference))
+			})
 		})
+
 	})
 
 	Context("when there is a kpack image without a CF image guid", func() {
@@ -106,13 +207,13 @@ var _ = Describe("ImageController", func() {
 			subject = createImage(&buildv1alpha1.Image{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "image",
-					Namespace: "default",
+					Namespace: stagingNamespace,
 				},
 				Spec: buildv1alpha1.ImageSpec{},
 				Status: buildv1alpha1.ImageStatus{
 					Status: corev1alpha1.Status{
 						Conditions: []corev1alpha1.Condition{
-							corev1alpha1.Condition{
+							{
 								Type:   corev1alpha1.ConditionReady,
 								Status: corev1.ConditionUnknown,
 							},
@@ -132,7 +233,7 @@ var _ = Describe("ImageController", func() {
 				Namespace: appStatefulSet.ObjectMeta.Namespace,
 			}
 			Expect(k8sClient.Get(context.Background(), statefulsetNamespacedName, &statefulset)).To(Succeed())
-			Expect(statefulset.Spec.Template.Spec.Containers[0].Image).To(Equal("pre-stack-update-image-reference"))
+			Expect(statefulset.Spec.Template.Spec.Containers[0].Image).To(Equal(preStackUpdateImageReference))
 		})
 	})
 })
@@ -186,23 +287,8 @@ func namespacedImageName(image *buildv1alpha1.Image) types.NamespacedName {
 	}
 }
 
-func deleteImage(subject *buildv1alpha1.Image) {
-	Expect(k8sClient.Delete(context.Background(), subject)).To(BeNil())
-	Eventually(func() error {
-		obj := &buildv1alpha1.Image{}
-		return k8sClient.Get(
-			context.Background(),
-			types.NamespacedName{
-				Name:      subject.ObjectMeta.Name,
-				Namespace: subject.ObjectMeta.Namespace,
-			},
-			obj,
-		)
-	}, "5s", "100ms").ShouldNot(Succeed())
-}
-
 func deleteStatefulSet(subject *appsv1.StatefulSet) {
-	Expect(k8sClient.Delete(context.Background(), subject)).To(BeNil())
+	Expect(k8sClient.Delete(context.Background(), subject)).To(Succeed())
 	Eventually(func() error {
 		obj := &appsv1.StatefulSet{}
 		return k8sClient.Get(

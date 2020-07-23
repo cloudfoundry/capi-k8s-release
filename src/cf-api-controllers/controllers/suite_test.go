@@ -17,21 +17,24 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"crypto/tls"
+	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 	"k8s.io/client-go/kubernetes/scheme"
-	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
+	clientappsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -41,6 +44,11 @@ import (
 
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
+)
+
+const (
+	stagingNamespace   = "cf-workloads-staging"
+	workloadsNamespace = "cf-workloads"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -119,7 +127,7 @@ var _ = BeforeSuite(func(done Done) {
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	clientset, err := appsv1.NewForConfig(k8sManager.GetConfig())
+	clientset, err := clientappsv1.NewForConfig(k8sManager.GetConfig())
 	Expect(err).ToNot(HaveOccurred())
 	err = (&ImageReconciler{
 		Client:             k8sManager.GetClient(),
@@ -145,6 +153,29 @@ var _ = BeforeSuite(func(done Done) {
 var _ = BeforeEach(func() {
 	mockUAAClient = cffakes.FakeTokenFetcher{}
 	mockImageConfigFetcher = image_registryfakes.FakeImageConfigFetcher{}
+})
+
+var _ = AfterEach(func() {
+	ctx := context.Background()
+
+	// Avoid test pollution for k8s objects
+	imageList := new(buildv1alpha1.ImageList)
+	Expect(k8sClient.List(ctx, imageList, client.InNamespace(stagingNamespace))).To(Succeed())
+	if len(imageList.Items) > 0 {
+		Expect(k8sClient.DeleteAllOf(ctx, new(buildv1alpha1.Image), client.InNamespace(stagingNamespace))).To(Succeed())
+	}
+
+	buildList := new(buildv1alpha1.BuildList)
+	Expect(k8sClient.List(ctx, buildList, client.InNamespace(stagingNamespace))).To(Succeed())
+	if len(buildList.Items) > 0 {
+		Expect(k8sClient.DeleteAllOf(ctx, new(buildv1alpha1.Build), client.InNamespace(stagingNamespace))).To(Succeed())
+	}
+
+	ssList := new(appsv1.StatefulSetList)
+	Expect(k8sClient.List(ctx, ssList, client.InNamespace(workloadsNamespace))).To(Succeed())
+	if len(ssList.Items) > 0 {
+		Expect(k8sClient.DeleteAllOf(ctx, new(appsv1.StatefulSet), client.InNamespace(workloadsNamespace))).To(Succeed())
+	}
 })
 
 var _ = AfterSuite(func() {
