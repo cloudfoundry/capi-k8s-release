@@ -28,11 +28,11 @@ spec:
         image: #@ data.values.images.cf_api_controllers
         env:
         - name: UAA_CLIENT_SECRET
-          value: #@ data.values.uaa.clients.capi_kpack_watcher.secret
+          value: #@ data.values.uaa.clients.cf_api_controllers.secret
         - name: UAA_ENDPOINT
           value: #@ "http://uaa.{}.svc.cluster.local:8080".format(data.values.system_namespace)
         - name: UAA_CLIENT_NAME
-          value: capi_kpack_watcher
+          value: cf_api_controllers
         - name: CF_API_HOST
           value: #@ "http://capi.{}.svc.cluster.local".format(data.values.system_namespace)
         - name: STAGING_NAMESPACE
