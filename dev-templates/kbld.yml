@@ -8,15 +8,15 @@ sources:
   - imageRepo: #@ data.values.kbld.destination.ccng
     path: #@ data.values.src_dirs.ccng
   - imageRepo: cloudfoundry/capi-kpack-watcher
-    path: #@ data.values.src_dirs.capi_kpack_watcher
+    path: #@ data.values.src_dirs.cf_api_controllers
     pack:
       build:
-        builder: cloudfoundry/cnb:bionic
-  - imageRepo: #@ data.values.kbld.destination.capi_kpack_watcher
-    path: #@ data.values.src_dirs.capi_kpack_watcher
+        builder: gcr.io/paketo-buildpacks/builder:full-cf
+  - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
+    path: #@ data.values.src_dirs.cf_api_controllers
     pack:
       build:
-        builder: cloudfoundry/cnb:bionic
+        builder: gcr.io/paketo-buildpacks/builder:full-cf
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
@@ -26,15 +26,15 @@ destinations:
   - imageRepo: #@ data.values.kbld.destination.ccng
     newImage: #@ data.values.kbld.destination.ccng
   - imageRepo: cloudfoundry/capi-kpack-watcher
-    newImage: #@ data.values.kbld.destination.capi_kpack_watcher
-  - imageRepo: #@ data.values.kbld.destination.capi_kpack_watcher
-    newImage: #@ data.values.kbld.destination.capi_kpack_watcher
+    newImage: #@ data.values.kbld.destination.cf_api_controllers
+  - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
+    newImage: #@ data.values.kbld.destination.cf_api_controllers
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageKeys
 keys:
 - ccng
-- capi_kpack_watcher
+- cf_api_controllers
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
