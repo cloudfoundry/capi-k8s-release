@@ -85,8 +85,8 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		)
 	}
 
-	logger.V(1).Info("Build is not complete, took no action")
-	return ctrl.Result{}, nil
+	logger.V(1).Info("Build is in invalid state, requeuing event")
+	return ctrl.Result{Requeue: true}, nil // untested code path
 }
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {

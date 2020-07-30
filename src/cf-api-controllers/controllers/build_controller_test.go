@@ -126,7 +126,7 @@ var _ = Describe("BuildController", func() {
 			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
 		})
 
-		Context("when the build fails", func() {
+		Context("when the build fails with a failed container", func() {
 			BeforeEach(func() {
 				updatedBuildStatus.Status.Conditions[0].Status = corev1.ConditionFalse
 				updatedBuildStatus.StepStates[0].Terminated = &corev1.ContainerStateTerminated{
@@ -135,7 +135,7 @@ var _ = Describe("BuildController", func() {
 				}
 			})
 
-			It("marks failed builds as failed", func() {
+			It("marks the CC build as failed", func() {
 				subject = updateBuildStatus(subject, &updatedBuildStatus)
 				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
 
