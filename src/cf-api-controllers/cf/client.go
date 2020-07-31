@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 )
 
 func NewClient(host string, restClient Rest, uaaClient TokenFetcher) *Client {
@@ -40,7 +40,7 @@ type Client struct {
 	uaaClient  TokenFetcher
 }
 
-func (c *Client) UpdateBuild(guid string, build api_model.Build) error {
+func (c *Client) UpdateBuild(guid string, build model.Build) error {
 	token, err := c.uaaClient.Fetch()
 	if err != nil {
 		return err

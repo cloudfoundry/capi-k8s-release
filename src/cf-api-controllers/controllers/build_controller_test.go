@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"github.com/buildpacks/lifecycle"
 	"github.com/buildpacks/lifecycle/launch"
 	ociv1 "github.com/google/go-containerregistry/pkg/v1"
@@ -27,7 +27,7 @@ var _ = Describe("BuildController", func() {
 	var (
 		subject               *buildv1alpha1.Build
 		buildGUID             string
-		receivedApiBuildPatch chan api_model.Build
+		receivedApiBuildPatch chan model.Build
 		updatedBuildStatus    buildv1alpha1.BuildStatus
 	)
 	BeforeEach(func() {
@@ -43,7 +43,7 @@ var _ = Describe("BuildController", func() {
 		}, nil)
 
 		buildGUID = fmt.Sprintf("build-guid-%d", GinkgoRandomSeed())
-		receivedApiBuildPatch = make(chan api_model.Build)
+		receivedApiBuildPatch = make(chan model.Build)
 
 		fakeCFAPIServer.Reset()
 		fakeCFAPIServer.AppendHandlers(ghttp.CombineHandlers(
@@ -53,7 +53,7 @@ var _ = Describe("BuildController", func() {
 				bytes, err := ioutil.ReadAll(r.Body)
 				Expect(err).NotTo(HaveOccurred())
 
-				var apiBuildPatch api_model.Build
+				var apiBuildPatch model.Build
 				err = json.Unmarshal(bytes, &apiBuildPatch)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -117,10 +117,10 @@ var _ = Describe("BuildController", func() {
 			subject = updateBuildStatus(subject, &updatedBuildStatus)
 			Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
 
-			var actualBuildPatch api_model.Build
+			var actualBuildPatch model.Build
 			Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
 
-			Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
+			Expect(actualBuildPatch.State).To(Equal(model.BuildStagedState))
 			Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
 			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
@@ -139,10 +139,10 @@ var _ = Describe("BuildController", func() {
 				subject = updateBuildStatus(subject, &updatedBuildStatus)
 				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
 
-				var actualBuildPatch api_model.Build
+				var actualBuildPatch model.Build
 				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
 
-				Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+				Expect(actualBuildPatch.State).To(Equal(model.BuildFailedState))
 				Expect(actualBuildPatch.Error).To(ContainSubstring(subject.Status.StepStates[0].Terminated.Message))
 			})
 		})
@@ -155,10 +155,10 @@ var _ = Describe("BuildController", func() {
 			It("successfully marks the CC v3 build as failed", func() {
 				subject = updateBuildStatus(subject, &updatedBuildStatus)
 
-				var actualBuildPatch api_model.Build
+				var actualBuildPatch model.Build
 				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
 
-				Expect(actualBuildPatch.State).To(Equal(api_model.BuildFailedState))
+				Expect(actualBuildPatch.State).To(Equal(model.BuildFailedState))
 				Expect(actualBuildPatch.Error).To(Equal("Failed to handle successful kpack build: fake error: couldn't fetch image config"))
 			})
 		})
@@ -173,7 +173,7 @@ var _ = Describe("BuildController", func() {
 						bytes, err := ioutil.ReadAll(r.Body)
 						Expect(err).NotTo(HaveOccurred())
 
-						var buildPatch api_model.Build
+						var buildPatch model.Build
 						json.Unmarshal(bytes, &buildPatch)
 						receivedApiBuildPatch <- buildPatch
 					},
@@ -184,10 +184,10 @@ var _ = Describe("BuildController", func() {
 				subject = updateBuildStatus(subject, &updatedBuildStatus)
 				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*30).Should(HaveLen(2))
 
-				var actualBuildPatch api_model.Build
+				var actualBuildPatch model.Build
 				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
 
-				Expect(actualBuildPatch.State).To(Equal(api_model.BuildStagedState))
+				Expect(actualBuildPatch.State).To(Equal(model.BuildStagedState))
 				Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			})
 		})

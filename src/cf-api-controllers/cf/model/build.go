@@ -1,11 +1,14 @@
-package api_model
+package model
 
 import (
-	kpack_build "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 )
 
-const BuildStagedState = "STAGED"
-const BuildFailedState = "FAILED"
+// build states
+const (
+	BuildStagedState = "STAGED"
+	BuildFailedState = "FAILED"
+)
 const KpackLifecycleType = "kpack"
 
 // Build represents the payload that will be sent to CF API server when a kpack
@@ -25,7 +28,7 @@ type LifecycleData struct {
 	ProcessTypes map[string]string `json:"processTypes"`
 }
 
-func NewBuild(build *kpack_build.Build) Build {
+func NewBuild(build *buildv1alpha1.Build) Build {
 	return Build{
 		State: BuildStagedState,
 		Lifecycle: Lifecycle{

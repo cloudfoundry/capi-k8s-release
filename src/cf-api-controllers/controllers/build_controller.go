@@ -23,7 +23,7 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/api_model"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"github.com/buildpacks/lifecycle"
 	"github.com/go-logr/logr"
@@ -164,7 +164,7 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build, l
 		)
 	}
 
-	updateBuildRequest := api_model.NewBuild(build)
+	updateBuildRequest := model.NewBuild(build)
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
 	err = r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], updateBuildRequest)
 	if err != nil {
@@ -179,8 +179,8 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build, l
 func (r *BuildReconciler) reconcileFailedBuild(build *buildv1alpha1.Build, errorMessage string, logger logr.Logger) (ctrl.Result, error) {
 	logger.V(1).Info("Build failed, marking as failed staging")
 
-	err := r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], api_model.Build{
-		State: api_model.BuildFailedState,
+	err := r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], model.Build{
+		State: model.BuildFailedState,
 		Error: errorMessage,
 	})
 	if err != nil {
