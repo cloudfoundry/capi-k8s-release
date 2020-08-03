@@ -28,13 +28,13 @@ type LifecycleData struct {
 	ProcessTypes map[string]string `json:"processTypes"`
 }
 
-func NewBuild(build *buildv1alpha1.Build) Build {
+func NewBuildFromKpackBuild(kpackBuild *buildv1alpha1.Build) Build {
 	return Build{
 		State: BuildStagedState,
 		Lifecycle: Lifecycle{
 			Type: KpackLifecycleType,
 			Data: LifecycleData{
-				Image: build.Status.LatestImage,
+				Image: kpackBuild.Status.LatestImage,
 			},
 		},
 	}

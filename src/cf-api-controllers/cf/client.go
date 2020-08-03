@@ -34,13 +34,14 @@ type TokenFetcher interface {
 	Fetch() (string, error)
 }
 
+// TODO: replace this with the client the cf-cli uses?
 type Client struct {
 	host       string
 	restClient Rest
 	uaaClient  TokenFetcher
 }
 
-func (c *Client) UpdateBuild(guid string, build model.Build) error {
+func (c *Client) UpdateBuild(buildGUID string, build model.Build) error {
 	token, err := c.uaaClient.Fetch()
 	if err != nil {
 		return err
@@ -52,7 +53,7 @@ func (c *Client) UpdateBuild(guid string, build model.Build) error {
 	}
 
 	resp, err := c.restClient.Patch(
-		fmt.Sprintf("%s/v3/builds/%s", c.host, guid),
+		fmt.Sprintf("%s/v3/builds/%s", c.host, buildGUID),
 		token,
 		bytes.NewReader(raw),
 	)

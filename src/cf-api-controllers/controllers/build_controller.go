@@ -164,7 +164,7 @@ func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build, l
 		)
 	}
 
-	updateBuildRequest := model.NewBuild(build)
+	updateBuildRequest := model.NewBuildFromKpackBuild(build)
 	updateBuildRequest.Lifecycle.Data.ProcessTypes = processTypes
 	err = r.CFClient.UpdateBuild(build.GetLabels()[BuildGUIDLabel], updateBuildRequest)
 	if err != nil {
