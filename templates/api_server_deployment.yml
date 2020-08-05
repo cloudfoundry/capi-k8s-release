@@ -28,6 +28,12 @@ spec:
       containers:
         - name: cf-api-server
           image: #@ data.values.images.ccng
+          command:
+          - /cloud_controller_ng/bin/cloud_controller
+          - -c
+          - /config/cloud_controller_ng.yml
+          - -s
+          - /config/secrets.yml
           imagePullPolicy: Always
           resources:
             requests:
@@ -38,7 +44,11 @@ spec:
           - name: server-sock
             mountPath: /data/cloud_controller_ng
           - name: cloud-controller-ng-yaml
-            mountPath: /config/
+            mountPath: /config/cloud_controller_ng.yml
+            subPath: cloud_controller_ng.yml
+          - name: cloud-controller-ng-secrets-yaml
+            mountPath: /config/secrets.yml
+            subPath: secrets.yml
           #@ if/end data.values.uaa.serverCerts.secretName:
           - name: uaa-certs
             mountPath: /config/uaa/certs
@@ -54,6 +64,9 @@ spec:
           #@ if/end data.values.metric_proxy.ca.secret_name:
           - name: metric-proxy-ca
             mountPath: /config/metric_proxy/ca
+          #@ if/end data.values.ccdb.password_secret_name:
+          - name: capi-db-password
+            mountPath: /etc/capi/ccdb
         - name: cf-api-local-worker
           image: #@ data.values.images.ccng
           imagePullPolicy: Always
@@ -128,4 +141,10 @@ spec:
           secretName: #@ data.values.metric_proxy.ca.secret_name
       - name: nginx-uploads
         emptyDir: {}
+      - name: cloud-controller-ng-secrets-yaml
+        configMap:
+          name: cloud-controller-ng-secrets-yaml
+      - name: capi-db-password
+        secret:
+          secretName: #@ data.values.ccdb.password_secret_name
 
