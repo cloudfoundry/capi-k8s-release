@@ -147,6 +147,25 @@ var _ = Describe("BuildController", func() {
 			})
 		})
 
+		Context("when the build fails before there's any failed container", func() {
+			BeforeEach(func() {
+				updatedBuildStatus.Status.Conditions[0].Status = corev1.ConditionFalse
+				updatedBuildStatus.Status.Conditions[0].Message = "pod already exists or whatever"
+				updatedBuildStatus.StepStates = nil
+			})
+
+			It("marks the CC build as failed", func() {
+				subject = updateBuildStatus(subject, &updatedBuildStatus)
+				Eventually(fakeCFAPIServer.ReceivedRequests, time.Second*15).Should(HaveLen(1))
+
+				var actualBuildPatch model.Build
+				Eventually(receivedApiBuildPatch).Should(Receive(&actualBuildPatch))
+
+				Expect(actualBuildPatch.State).To(Equal(model.BuildFailedState))
+				Expect(actualBuildPatch.Error).To(ContainSubstring("pod already exists or whatever"))
+			})
+		})
+
 		Context("and there is an error fetching process types from image config", func() {
 			BeforeEach(func() {
 				mockImageConfigFetcher.FetchImageConfigReturns(nil, errors.New("fake error: couldn't fetch image config"))

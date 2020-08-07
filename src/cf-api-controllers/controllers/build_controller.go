@@ -69,24 +69,27 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		"status", build.Status,
 	)
 
-	if build.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsTrue() {
+	condition := build.Status.GetCondition(corev1alpha1.ConditionSucceeded)
+	if condition.IsTrue() {
 		return r.reconcileSuccessfulBuild(&build, logger)
 	}
 
+	failureMessage := fmt.Sprintf(
+		"Kpack build unsuccessful: Build failure reason: '%s', message: '%s'.",
+		condition.Reason,
+		condition.Message,
+	)
+
 	failedContainerState := findAnyFailedContainerState(build.Status.StepStates)
 	if failedContainerState != nil {
-		return r.reconcileFailedBuild(
-			&build,
-			fmt.Sprintf(
-				"Kpack build failed. Build failure message: '%s'.",
-				failedContainerState.Terminated.Message,
-			),
-			logger,
+		failureMessage = fmt.Sprintf(
+			"Kpack build failed during container execution: Step failure reason: '%s', message: '%s'.",
+			failedContainerState.Terminated.Reason,
+			failedContainerState.Terminated.Message,
 		)
 	}
 
-	logger.V(1).Info("Build is in invalid state, requeuing event")
-	return ctrl.Result{Requeue: true}, nil // untested code path
+	return r.reconcileFailedBuild(&build, failureMessage, logger)
 }
 
 func (r *BuildReconciler) SetupWithManager(mgr ctrl.Manager) error {
