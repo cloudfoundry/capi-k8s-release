@@ -17,6 +17,8 @@ limitations under the License.
 package controllers
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"context"
 	"errors"
 
@@ -36,6 +38,7 @@ import (
 )
 
 const AppGUIDLabel = "cloudfoundry.org/app_guid"
+const DropletGUIDLabel = "cloudfoundry.org/droplet_guid"
 
 var ImageFilterError = errors.New("Received an image event with a non-image runtime.Object")
 
@@ -44,6 +47,7 @@ type ImageReconciler struct {
 	client.Client
 	Log                logr.Logger
 	Scheme             *runtime.Scheme
+	CFClient *cf.Client
 	AppsClientSet      *appsv1.AppsV1Client
 	WorkloadsNamespace string
 }
@@ -63,42 +67,56 @@ func (r *ImageReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("image", req.NamespacedName)
 
 	if image.Status.GetCondition(corev1alpha1.ConditionReady).IsTrue() && image.Status.LatestBuildReason == "STACK" {
-		labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{AppGUIDLabel: image.ObjectMeta.Labels[AppGUIDLabel]}}
-		statefulsets, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).
-			List(v1.ListOptions{LabelSelector: labels.Set(labelSelector.MatchLabels).String()})
-		if err != nil {
-			logger.Error(err, "Could not find statefulsets for an app")
-			return ctrl.Result{}, err
-		}
-		if len(statefulsets.Items) == 0 {
-			logger.WithValues("appGUID", image.ObjectMeta.Labels[AppGUIDLabel]).
-				Info("No statefulsets found for the app")
-			return ctrl.Result{}, nil
-		}
-		if len(statefulsets.Items) > 1 {
-			logger.WithValues("NumberOfStatefulSets", len(statefulsets.Items)).
-				Info("Multiple statefulsets found for the app, requeueing image update event.")
-			return ctrl.Result{Requeue: true}, nil
-		}
-		statefulset := statefulsets.Items[0]
-
-		containers := statefulset.Spec.Template.Spec.Containers
-		for i, container := range containers {
-			if container.Name == "opi" {
-				containers[i].Image = image.Status.LatestImage
-
-				_, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).Update(&statefulset)
-				if err != nil {
-					logger.Error(err, "Could not update statefulset")
-					return ctrl.Result{}, err
-				}
-				logger.WithValues("newImage", image.Status.LatestImage).Info("Successfully updated app's StatefulSet with new image based off new stack")
-				return ctrl.Result{}, nil
-			}
-		}
+		return r.handleRebasedImage(image, logger)
 	}
 
 	logger.Info("Image status indicates either a failure or non-stack related updated, took no action")
+	return ctrl.Result{}, nil
+}
+
+func (r *ImageReconciler) handleRebasedImage(image buildv1alpha1.Image, logger logr.Logger) (ctrl.Result, error) {
+	labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{AppGUIDLabel: image.ObjectMeta.Labels[AppGUIDLabel]}}
+	statefulsets, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).
+		List(v1.ListOptions{LabelSelector: labels.Set(labelSelector.MatchLabels).String()})
+	if err != nil {
+		logger.Error(err, "Could not find statefulsets for an app")
+		return ctrl.Result{}, err
+	}
+	if len(statefulsets.Items) == 0 {
+		logger.WithValues("appGUID", image.ObjectMeta.Labels[AppGUIDLabel]).
+			Info("No statefulsets found for the app")
+		return ctrl.Result{}, nil
+	}
+	if len(statefulsets.Items) > 1 {
+		logger.WithValues("NumberOfStatefulSets", len(statefulsets.Items)).
+			Info("Multiple statefulsets found for the app, requeueing image update event.")
+		return ctrl.Result{Requeue: true}, nil
+	}
+	statefulset := statefulsets.Items[0]
+
+	containers := statefulset.Spec.Template.Spec.Containers
+	for i, container := range containers {
+		if container.Name != "opi" {
+			continue
+		}
+		containers[i].Image = image.Status.LatestImage
+
+		_, err := r.AppsClientSet.StatefulSets(r.WorkloadsNamespace).Update(&statefulset)
+		if err != nil {
+			logger.Error(err, "Could not update statefulset")
+			return ctrl.Result{}, err
+		}
+		logger.WithValues("newImage", image.Status.LatestImage).Info("Successfully updated app's StatefulSet with new image based off new stack")
+		updateDropletRequest := model.Droplet{Image: image.Status.LatestImage}
+		err = r.CFClient.UpdateDroplet(image.GetLabels()[DropletGUIDLabel], updateDropletRequest)
+		if err != nil {
+			logger.Error(err, "Failed to send request to CF API")
+			// TODO: should we limit number of requeues? [story: #173573889]
+			return ctrl.Result{Requeue: true}, err
+		}
+	}
+	// Update associated droplet with new image reference
+
 	return ctrl.Result{}, nil
 }
 

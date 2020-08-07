@@ -134,6 +134,7 @@ var _ = BeforeSuite(func(done Done) {
 		AppsClientSet:      clientset,
 		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
 		Scheme:             k8sManager.GetScheme(),
+		CFClient: &cfClient,
 		WorkloadsNamespace: "cf-workloads",
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

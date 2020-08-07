@@ -66,3 +66,29 @@ func (c *Client) UpdateBuild(buildGUID string, build model.Build) error {
 
 	return nil
 }
+
+func (c *Client) UpdateDroplet(dropletGUID string, droplet model.Droplet) error {
+	token, err := c.uaaClient.Fetch()
+	if err != nil {
+		return err
+	}
+
+	raw, err := json.Marshal(droplet)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.restClient.Patch(
+		fmt.Sprintf("%s/v3/droplets/%s", c.host, dropletGUID),
+		token,
+		bytes.NewReader(raw),
+	)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to patch droplet, received status %d", resp.StatusCode)
+	}
+
+	return nil
+}
