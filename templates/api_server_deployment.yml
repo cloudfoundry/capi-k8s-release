@@ -1,6 +1,6 @@
 #@ load("@ytt:data", "data")
 #@ load("@ytt:template", "template")
-#@ load("secrets.lib.yml","shared_config_volumes", "shared_config_volume_mounts")
+#@ load("secrets.lib.yml","shared_config_volumes", "shared_config_volume_mounts", "ccng_config_mount_path", "ccng_secrets_mount_path")
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -33,9 +33,9 @@ spec:
           command:
           - /cloud_controller_ng/bin/cloud_controller
           - -c
-          - /config/cloud_controller_ng.yml
+          - #@ ccng_config_mount_path
           - -s
-          - /config/secrets.yml
+          - #@ ccng_secrets_mount_path
           imagePullPolicy: Always
           resources:
             requests:
@@ -67,8 +67,10 @@ spec:
           command: ["/usr/local/bin/bundle"]
           args: ["exec", "rake", "jobs:local"]
           env:
+          - name: CLOUD_CONTROLLER_NG_CONFIG
+            value: #@ ccng_config_mount_path
           - name: CLOUD_CONTROLLER_NG_SECRETS
-            value: /config/secrets.yml
+            value: #@ ccng_secrets_mount_path
           resources:
             requests:
               memory: 300Mi

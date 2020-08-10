@@ -1,6 +1,6 @@
 #@ load("@ytt:data","data")
 #@ load("@ytt:template", "template")
-#@ load("secrets.lib.yml","shared_config_volumes", "shared_config_volume_mounts")
+#@ load("secrets.lib.yml","shared_config_volumes", "shared_config_volume_mounts", "ccng_config_mount_path", "ccng_secrets_mount_path")
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,8 +27,10 @@ spec:
           command: ["/usr/local/bin/bundle"]
           args: ["exec", "rake", "jobs:generic"]
           env:
+          - name: CLOUD_CONTROLLER_NG_CONFIG
+            value: #@ ccng_config_mount_path
           - name: CLOUD_CONTROLLER_NG_SECRETS
-            value: /config/secrets.yml
+            value: #@ ccng_secrets_mount_path
           resources:
             requests:
               memory: 300Mi
