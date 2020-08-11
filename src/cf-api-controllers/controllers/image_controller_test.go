@@ -93,7 +93,7 @@ var _ = Describe("ImageController", func() {
 		}
 	})
 
-	FContext("when the kpack build triggered by a stack update is valid", func() {
+	Context("when the kpack build triggered by a stack update is valid", func() {
 		BeforeEach(func() {
 			subject = createImage(&buildv1alpha1.Image{
 				ObjectMeta: metav1.ObjectMeta{
