@@ -85,6 +85,8 @@ func (r *ImageReconciler) handleRebasedImage(image buildv1alpha1.Image, logger l
 	if len(statefulsets.Items) == 0 {
 		logger.WithValues("appGUID", image.ObjectMeta.Labels[AppGUIDLabel]).
 			Info("No statefulsets found for the app")
+		// it's possible to miss statefulsets that have been rebased but are not yet started
+		// an eventually-consistent reconciliation loop might allow us to fix this after-the-fact
 		return ctrl.Result{}, nil
 	}
 	if len(statefulsets.Items) > 1 {
@@ -111,12 +113,9 @@ func (r *ImageReconciler) handleRebasedImage(image buildv1alpha1.Image, logger l
 		err = r.CFClient.UpdateDroplet(image.GetLabels()[DropletGUIDLabel], updateDropletRequest)
 		if err != nil {
 			logger.Error(err, "Failed to send request to CF API")
-			// TODO: should we limit number of requeues? [story: #173573889]
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err
 		}
 	}
-	// Update associated droplet with new image reference
-
 	return ctrl.Result{}, nil
 }
 

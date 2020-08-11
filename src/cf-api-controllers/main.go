@@ -90,19 +90,21 @@ func main() {
 		panic(err.Error())
 	}
 
+	uaaClient := auth.NewUAAClient()
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	if err = (&controllers.BuildReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
 		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
-			Client: &http.Client{
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: true,
-					},
-				},
-			},
-		}, auth.NewUAAClient()),
+			Client: httpClient,
+		}, uaaClient),
 		ImageConfigFetcher: image_registry.NewImageConfigFetcher(keychainFactory),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Build")
@@ -118,6 +120,9 @@ func main() {
 		Client:             mgr.GetClient(),
 		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
 		Scheme:             mgr.GetScheme(),
+		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+			Client: httpClient,
+		}, uaaClient),
 		AppsClientSet:      clientset,
 		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
 	}).SetupWithManager(mgr); err != nil {
