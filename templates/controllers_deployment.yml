@@ -28,7 +28,10 @@ spec:
         image: #@ data.values.images.cf_api_controllers
         env:
         - name: UAA_CLIENT_SECRET
-          value: #@ data.values.uaa.clients.cf_api_controllers.secret
+          valueFrom:
+            secretKeyRef:
+              name: #@ data.values.uaa.clients.cf_api_controllers.secret_name
+              key: password
         - name: UAA_ENDPOINT
           value: #@ "http://uaa.{}.svc.cluster.local:8080".format(data.values.system_namespace)
         - name: UAA_CLIENT_NAME
