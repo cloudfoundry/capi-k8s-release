@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"io/ioutil"
 	"os"
 
 	"code.cloudfoundry.org/clock"
@@ -35,7 +36,7 @@ func NewUAAClient() *UAAClient {
 		logger,
 		&uaaConfig.Config{
 			ClientName:       os.Getenv("UAA_CLIENT_NAME"),
-			ClientSecret:     os.Getenv("UAA_CLIENT_SECRET"),
+			ClientSecret:     uaaClientSecret(),
 			UaaEndpoint:      os.Getenv("UAA_ENDPOINT"),
 			SkipVerification: true, // TODO: actually verify in the future
 		},
@@ -46,6 +47,18 @@ func NewUAAClient() *UAAClient {
 	}
 
 	return &UAAClient{client}
+}
+
+func uaaClientSecret() string {
+	if os.Getenv("UAA_CLIENT_SECRET_FILE") != "" {
+		contents, err := ioutil.ReadFile(os.Getenv("UAA_CLIENT_SECRET_FILE"))
+		if err != nil {
+			panic(err)
+		}
+		return string(contents)
+	}
+
+	return os.Getenv("UAA_CLIENT_SECRET")
 }
 
 // UAAClient wraps over the official UAA client implementation.
