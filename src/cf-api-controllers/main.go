@@ -117,9 +117,9 @@ func main() {
 		panic(err.Error())
 	}
 	if err = (&controllers.ImageReconciler{
-		Client:             mgr.GetClient(),
-		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
-		Scheme:             mgr.GetScheme(),
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Image"),
+		Scheme: mgr.GetScheme(),
 		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
