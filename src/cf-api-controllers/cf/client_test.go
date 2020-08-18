@@ -104,8 +104,8 @@ func TestClientUpdateDroplet(t *testing.T) {
 			guid = "guid"
 		)
 		var (
-			client *Client
-			droplet  model.Droplet
+			client  *Client
+			droplet model.Droplet
 		)
 
 		it.Before(func() {

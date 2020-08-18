@@ -22,11 +22,11 @@ import (
 
 var _ = Describe("ImageController", func() {
 	var (
-		subject            *buildv1alpha1.Image
-		appStatefulSet     *appsv1.StatefulSet
-		dropletGUID string
+		subject                 *buildv1alpha1.Image
+		appStatefulSet          *appsv1.StatefulSet
+		dropletGUID             string
 		receivedApiDropletPatch chan model.Droplet
-		updatedImageStatus buildv1alpha1.ImageStatus
+		updatedImageStatus      buildv1alpha1.ImageStatus
 	)
 	const (
 		postStackUpdateImageReference = "post-stack-update-image-reference"

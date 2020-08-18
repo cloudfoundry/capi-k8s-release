@@ -47,7 +47,7 @@ type ImageReconciler struct {
 	client.Client
 	Log                logr.Logger
 	Scheme             *runtime.Scheme
-	CFClient *cf.Client
+	CFClient           *cf.Client
 	AppsClientSet      *appsv1.AppsV1Client
 	WorkloadsNamespace string
 }
