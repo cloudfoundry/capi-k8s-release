@@ -114,7 +114,7 @@ db: &db
     port: #@ data.values.ccdb.port
     user: #@ data.values.ccdb.user
     database: #@ data.values.ccdb.database
-  max_connections: 25
+  max_connections: 10
   pool_timeout: 10
   log_level: "debug2"
   log_db_queries: false

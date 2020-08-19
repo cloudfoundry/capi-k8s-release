@@ -1,0 +1,14 @@
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cf-api-server
+  namespace: cf-system
+spec:
+  maxReplicas: 8 #! should be configurable
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cf-api-server
+  targetCPUUtilizationPercentage: 70

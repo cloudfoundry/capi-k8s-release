@@ -40,8 +40,10 @@ spec:
           resources:
             requests:
               memory: 300Mi
+              cpu: 800m
             limits:
               memory: 1.2Gi
+              cpu: 1
           volumeMounts:
           - #@ template.replace(shared_config_volume_mounts())
           - name: server-sock
@@ -74,6 +76,7 @@ spec:
           resources:
             requests:
               memory: 300Mi
+              cpu: 1m
             limits:
               memory: 1.2Gi
           volumeMounts:
@@ -92,6 +95,9 @@ spec:
             httpGet:
               port: 80
               path: "/healthz"
+          resources:
+            requests:
+              cpu: 1m
           volumeMounts:
           - name: nginx
             mountPath: /etc/nginx
@@ -107,6 +113,9 @@ spec:
           - containerPort: 9102
           image: #@ data.values.images.statsd_exporter
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 1m
       serviceAccountName: cf-api-server-service-account
       volumes:
       - #@ template.replace(shared_config_volumes())
