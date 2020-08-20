@@ -8,4 +8,4 @@ CF_FOR_K8S_DIR="${SCRIPT_DIR}/../../cf-for-k8s"
 
 ${SCRIPT_DIR}/bump-cf-for-k8s.sh
 
-kapp deploy -a cf -f <(ytt -f "${CF_FOR_K8S_DIR}/config" -f "$@") -y
+kapp deploy -a cf -f <(ytt -f "${CF_FOR_K8S_DIR}/config" -f ${HOME}/workspace/cf-k8s-prometheus/config/0-prometheus-server.yml -f "$@") -y
