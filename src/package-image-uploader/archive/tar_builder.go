@@ -1,3 +1,6 @@
+// NOTICE: This file was modified from its original source:
+// https://github.com/buildpacks/pack/blob/10f5f0a357ccc0b8cc4cabf7ee9a70814386f0cd/internal/archive/tar_builder.go
+
 package archive
 
 import (
