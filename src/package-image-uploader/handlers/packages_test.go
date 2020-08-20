@@ -1,27 +1,30 @@
 package handlers_test
 
 import (
-	. "code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers/fakes"
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
 	"encoding/json"
 	"errors"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
+	. "code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers/fakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"github.com/google/go-containerregistry/pkg/authn"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("PostPackageHandler", func() {
 	var (
-		uploaderFunc *fakes.UploaderFunc
-		handler      http.HandlerFunc
-		response     *httptest.ResponseRecorder
-		jsonBody string
+		uploaderFunc  *fakes.UploaderFunc
+		handler       http.HandlerFunc
+		response      *httptest.ResponseRecorder
+		authenticator authn.Authenticator
+		jsonBody      string
 	)
 
 	const (
@@ -33,7 +36,11 @@ var _ = Describe("PostPackageHandler", func() {
 	BeforeEach(func() {
 		uploaderFunc = new(fakes.UploaderFunc)
 		logger := log.New(GinkgoWriter, "", 0)
-		handler = PostPackageHandler(uploaderFunc.Spy, logger)
+		authenticator = authn.FromConfig(authn.AuthConfig{
+			Username: "some-user",
+			Password: "some-password",
+		})
+		handler = PostPackageHandler(uploaderFunc.Spy, logger, authenticator)
 		response = httptest.NewRecorder()
 	})
 
@@ -60,9 +67,10 @@ var _ = Describe("PostPackageHandler", func() {
 
 			Expect(uploaderFunc.CallCount()).To(Equal(1))
 
-			zipPath, registryPath := uploaderFunc.ArgsForCall(0)
+			zipPath, registryPath, actualAuthenticator := uploaderFunc.ArgsForCall(0)
 			Expect(zipPath).To(Equal(packageZipPath))
 			Expect(registryPath).To(Equal(registryBasePath + "/" + packageGuid))
+			Expect(actualAuthenticator).To(Equal(authenticator))
 
 			Expect(response.Code).To(Equal(200))
 
@@ -73,7 +81,7 @@ var _ = Describe("PostPackageHandler", func() {
 			Expect(parsedBody).To(Equal(PostPackageResponse{
 				Hash: HashResponse{
 					Algorithm: algorithm,
-					Hex: hex,
+					Hex:       hex,
 				},
 			}))
 		})

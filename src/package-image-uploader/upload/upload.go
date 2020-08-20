@@ -13,7 +13,7 @@ import (
 
 type Hash v1.Hash
 
-func Upload(zipPath, registryPath string) (Hash, error) {
+func Upload(zipPath, registryPath string, authenticator authn.Authenticator) (Hash, error) {
 	image, err := random.Image(0, 0)
 	if err != nil {
 		return Hash{}, err
@@ -35,7 +35,7 @@ func Upload(zipPath, registryPath string) (Hash, error) {
 		return Hash{}, err
 	}
 
-	err = remote.Write(ref, image, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	err = remote.Write(ref, image, remote.WithAuth(authenticator))
 	if err != nil {
 		return Hash{}, err
 	}
