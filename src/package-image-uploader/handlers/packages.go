@@ -1,15 +1,17 @@
 package handlers
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"github.com/google/go-containerregistry/pkg/authn"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/uploader_func.go --fake-name UploaderFunc . UploaderFunc
-type UploaderFunc func(zipPath, registryPath string) (upload.Hash, error)
+type UploaderFunc func(zipPath, registryPath string, authenticator authn.Authenticator) (upload.Hash, error)
 
 type postPackageBody struct {
 	PackageZipPath   string `json:"package_zip_path"`
@@ -26,7 +28,7 @@ type HashResponse struct {
 	Hex       string `json:"hex"`
 }
 
-func PostPackageHandler(uploadFunc UploaderFunc, logger *log.Logger) http.HandlerFunc {
+func PostPackageHandler(uploadFunc UploaderFunc, logger *log.Logger, authenticator authn.Authenticator) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		parsedBody := postPackageBody{}
 		err := json.NewDecoder(request.Body).Decode(&parsedBody)
@@ -46,7 +48,7 @@ func PostPackageHandler(uploadFunc UploaderFunc, logger *log.Logger) http.Handle
 		}
 
 		fullRegistryPath := fmt.Sprintf("%s/%s", parsedBody.RegistryBasePath, parsedBody.PackageGuid)
-		hash, err := uploadFunc(parsedBody.PackageZipPath, fullRegistryPath)
+		hash, err := uploadFunc(parsedBody.PackageZipPath, fullRegistryPath, authenticator)
 		if err != nil {
 			logger.Printf("Error from uploadFunc(%s, %s): %v\n", parsedBody.PackageZipPath, fullRegistryPath, err)
 			writer.WriteHeader(500)

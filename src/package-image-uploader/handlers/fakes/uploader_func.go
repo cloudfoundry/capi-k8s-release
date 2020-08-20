@@ -6,14 +6,16 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"github.com/google/go-containerregistry/pkg/authn"
 )
 
 type UploaderFunc struct {
-	Stub        func(string, string) (upload.Hash, error)
+	Stub        func(string, string, authn.Authenticator) (upload.Hash, error)
 	mutex       sync.RWMutex
 	argsForCall []struct {
 		arg1 string
 		arg2 string
+		arg3 authn.Authenticator
 	}
 	returns struct {
 		result1 upload.Hash
@@ -27,17 +29,18 @@ type UploaderFunc struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *UploaderFunc) Spy(arg1 string, arg2 string) (upload.Hash, error) {
+func (fake *UploaderFunc) Spy(arg1 string, arg2 string, arg3 authn.Authenticator) (upload.Hash, error) {
 	fake.mutex.Lock()
 	ret, specificReturn := fake.returnsOnCall[len(fake.argsForCall)]
 	fake.argsForCall = append(fake.argsForCall, struct {
 		arg1 string
 		arg2 string
-	}{arg1, arg2})
-	fake.recordInvocation("UploaderFunc", []interface{}{arg1, arg2})
+		arg3 authn.Authenticator
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("UploaderFunc", []interface{}{arg1, arg2, arg3})
 	fake.mutex.Unlock()
 	if fake.Stub != nil {
-		return fake.Stub(arg1, arg2)
+		return fake.Stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -51,16 +54,16 @@ func (fake *UploaderFunc) CallCount() int {
 	return len(fake.argsForCall)
 }
 
-func (fake *UploaderFunc) Calls(stub func(string, string) (upload.Hash, error)) {
+func (fake *UploaderFunc) Calls(stub func(string, string, authn.Authenticator) (upload.Hash, error)) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = stub
 }
 
-func (fake *UploaderFunc) ArgsForCall(i int) (string, string) {
+func (fake *UploaderFunc) ArgsForCall(i int) (string, string, authn.Authenticator) {
 	fake.mutex.RLock()
 	defer fake.mutex.RUnlock()
-	return fake.argsForCall[i].arg1, fake.argsForCall[i].arg2
+	return fake.argsForCall[i].arg1, fake.argsForCall[i].arg2, fake.argsForCall[i].arg3
 }
 
 func (fake *UploaderFunc) Returns(result1 upload.Hash, result2 error) {
