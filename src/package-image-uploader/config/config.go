@@ -27,7 +27,7 @@ func Load() (*Config, error) {
 
 	portStr, exists := os.LookupEnv("PORT")
 	if !exists {
-		return nil, errors.New("PORT not configured")
+		portStr = "8080"
 	}
 
 	var err error

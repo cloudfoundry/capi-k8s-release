@@ -8,7 +8,7 @@ The following environment variables must be configured:
 
 * `REGISTRY_USERNAME`: Container registry username (e.g. DockerHub username or `_json_key` for GCR<sup>1</sup>)
 * `REGISTRY_PASSWORD`: Container registry credentials (e.g. DockerHub password or GCR service account json)
-* `PORT`: Port the server will listen on.
+* `PORT`: Port the server will listen on. Default: `8080`
 
 <sup>1</sup> For more information on GCR authentication [check out these docs](https://cloud.google.com/container-registry/docs/advanced-authentication#json-key).
 

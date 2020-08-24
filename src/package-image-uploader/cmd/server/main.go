@@ -28,7 +28,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/packages", handlers.PostPackageHandler(upload.Upload, logger, authenticator)).Methods("POST")
-	fmt.Println("Starting server...")
-	http.ListenAndServe(fmt.Sprintf("localhost:%d", cfg.Port), r)
+	fmt.Printf("Starting server on port %d...\n", cfg.Port)
+	http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", cfg.Port), r)
 	// TODO: handle signals gracefully
 }

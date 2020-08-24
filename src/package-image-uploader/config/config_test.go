@@ -21,7 +21,7 @@ var _ = Describe("Config", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = os.Setenv("REGISTRY_PASSWORD", regPassword)
 			Expect(err).NotTo(HaveOccurred())
-			err = os.Setenv("PORT", "8081")
+			err = os.Setenv("PORT", "9876")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -31,7 +31,7 @@ var _ = Describe("Config", func() {
 
 			Expect(cfg.RegistryUsername).To(Equal(regUsername))
 			Expect(cfg.RegistryPassword).To(Equal(regPassword))
-			Expect(cfg.Port).To(Equal(8081))
+			Expect(cfg.Port).To(Equal(9876))
 		})
 
 		Context("when the REGISTRY_USERNAME env var is not set", func() {
@@ -64,9 +64,10 @@ var _ = Describe("Config", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("returns an error", func() {
-				_, err := config.Load()
-				Expect(err).To(MatchError("PORT not configured"))
+			It("defaults to 8000", func() {
+				cfg, err := config.Load()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cfg.Port).To(Equal(8080))
 			})
 		})
 
