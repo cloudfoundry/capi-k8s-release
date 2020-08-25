@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"github.com/matt-royal/biloba"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -9,5 +10,5 @@ import (
 
 func TestHandlers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Handlers Suite")
+	RunSpecsWithDefaultAndCustomReporters(t, "Handlers Suite", biloba.GoLandReporter())
 }
