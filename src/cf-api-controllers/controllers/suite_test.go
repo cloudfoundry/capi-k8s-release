@@ -19,13 +19,15 @@ package controllers
 import (
 	"context"
 	"crypto/tls"
-	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	"testing"
 
+	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
+
+	"github.com/matt-royal/biloba"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
@@ -71,7 +73,11 @@ func TestAPIs(t *testing.T) {
 
 	RunSpecsWithDefaultAndCustomReporters(t,
 		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+		append(
+			[]Reporter{printer.NewlineReporter{}},
+			biloba.GoLandReporter()...,
+		),
+	)
 }
 
 var _ = BeforeSuite(func(done Done) {
