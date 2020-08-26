@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"github.com/buildpacks/lifecycle"
@@ -41,12 +40,19 @@ import (
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
 const BuildReasonAnnotation = "image.build.pivotal.io/reason"
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fake/controller_runtime_client.go --fake-name ControllerRuntimeClient sigs.k8s.io/controller-runtime/pkg/client.Client
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fake/cf_build_updater.go --fake-name CFBuildUpdater . CfBuildUpdater
+type CfBuildUpdater interface {
+	UpdateBuild(buildGUID string, build model.Build) error
+}
+
 // BuildReconciler reconciles a Build object
 type BuildReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	CFClient *cf.Client
+	CFClient CfBuildUpdater
 	image_registry.ImageConfigFetcher
 }
 
