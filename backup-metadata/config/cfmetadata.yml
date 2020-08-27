@@ -1,0 +1,44 @@
+#@ load("@ytt:data", "data")
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cf-metadata
+  namespace: #@ data.values.namespace
+  labels:
+    app: cf-metadata
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cf-metadata
+  template:
+    metadata:
+      labels:
+        app: cf-metadata
+      annotations:
+        pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "backup-metadata"]'
+    spec:
+      imagePullSecrets:
+      - name: registry-credentials-cf-metadata
+      containers:
+      - image: dev.registry.pivotal.io/platform_recovery/backup-restore@sha256:c49a09d7c5141f445c94e704f1cfa4f8a5918400bc8c1413ee66b01900a757c4
+        name: cf-metadata
+        command: ["/bin/bash", "-c", "--"]
+        args: ["while true; do sleep 30; done;"]
+        env:
+        - name: CF_API
+          value: #@ data.values.cf.api
+        - name: CF_USER
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: cf-credentials-cf-metadata
+        - name: CF_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: cf-credentials-cf-metadata
+  containers:
+  - image: '@sha256:5e8667152d929ee519a3607c0d6b1189d5e2197817099cb1d9252e86dc4217f6'

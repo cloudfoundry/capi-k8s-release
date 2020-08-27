@@ -1,0 +1,12 @@
+linters:
+  enable:
+    - gofmt
+    - gofumpt
+    - whitespace
+    - gomnd
+    - golint
+    - gocritic
+    - nlreturn
+    - lll
+  disable:
+    - goerr113

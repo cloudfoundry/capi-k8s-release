@@ -1,0 +1,33 @@
+{
+    "resources": [{
+            "entity": {
+                "name": "test-app-1",
+                "space_guid": "space-x-id"
+            }
+        },
+        {
+            "entity": {
+                "name": "test-app-2",
+                "space_guid": "space-x-id"
+            }
+        },
+        {
+            "entity": {
+                "name": "test-app-3",
+                "space_guid": "space-x-id"
+            }
+        },
+        {
+            "entity": {
+                "name": "test-app-4",
+                "space_guid": "space-y-id"
+            }
+        },
+        {
+            "entity": {
+                "name": "test-app-5",
+                "space_guid": "space-z-id"
+            }
+        }
+    ]
+}
