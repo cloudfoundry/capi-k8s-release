@@ -4,6 +4,8 @@ kbld:
   destination:
     ccng: ""
     cf_api_controllers: ""
+    package_image_uploader: ""
 src_dirs:
   ccng: ""
   cf_api_controllers: ""
+  package_image_uploader: ""

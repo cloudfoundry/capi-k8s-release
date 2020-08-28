@@ -5,6 +5,7 @@ images:
   cf_api_controllers: cloudfoundry/capi-kpack-watcher@sha256:e355298ccd930c7075eba9596d29e220a313de822da2fb66730603b0d8f75735
   cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
   nginx: cloudfoundry/capi-nginx@sha256:980f50e190cbff72d23300bc422da23faa888271c2d07ac3abaa65af55a5316a
+  package_image_uploader: gcr.io/cf-capi-arya/dev-package-image-uploader@sha256:4f4383b36abad2d4f43ddf4a987c8692c9982e2a0a9651a57c8b796ce8365942 # TODO: get this in dockerhub
   statsd_exporter: oratos/statsd_exporter:v0.15.0@sha256:10a64dc4ad0a3e3fe88372f0481dea5c02595c38d168617836a99a649d3ac407
 kbld:
   destination: null

@@ -9,14 +9,16 @@ sources:
     path: #@ data.values.src_dirs.ccng
   - imageRepo: cloudfoundry/capi-kpack-watcher
     path: #@ data.values.src_dirs.cf_api_controllers
-    pack:
-      build:
-        builder: gcr.io/paketo-buildpacks/builder:full-cf
+    pack: { build: { builder: gcr.io/paketo-buildpacks/builder:full-cf } }
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     path: #@ data.values.src_dirs.cf_api_controllers
-    pack:
-      build:
-        builder: gcr.io/paketo-buildpacks/builder:full-cf
+    pack: { build: { builder: gcr.io/paketo-buildpacks/builder:full-cf } }
+  - imageRepo: gcr.io/cf-capi-arya/dev-package-image-uploader
+    path: #@ data.values.src_dirs.package_image_uploader
+    pack: { build: { builder: gcr.io/paketo-buildpacks/builder:full-cf } }
+  - imageRepo: #@ data.values.kbld.destination.package_image_uploader
+    path: #@ data.values.src_dirs.package_image_uploader
+    pack: { build: { builder: gcr.io/paketo-buildpacks/builder:full-cf } }
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
@@ -29,12 +31,17 @@ destinations:
     newImage: #@ data.values.kbld.destination.cf_api_controllers
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     newImage: #@ data.values.kbld.destination.cf_api_controllers
+  - imageRepo: cloudfoundry/cf-api-package-image-uploader
+    newImage: #@ data.values.kbld.destination.package_image_uploader
+  - imageRepo: #@ data.values.kbld.destination.package_image_uploader
+    newImage: #@ data.values.kbld.destination.package_image_uploader
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageKeys
 keys:
 - ccng
 - cf_api_controllers
+- package_image_uploader
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
