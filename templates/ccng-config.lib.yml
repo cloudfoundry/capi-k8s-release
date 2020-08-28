@@ -192,13 +192,14 @@ packages:
     path_style: true
   max_valid_packages_stored: 5
   max_package_size: 1073741824
-
-  cdn:
-    uri:
-    key_pair_id:
-    private_key: ""
-
   fog_aws_storage_options: {}
+  image_registry: {
+    base_path: #@ data.values.kpack.registry.repository_prefix
+  }
+
+package_image_uploader:
+  host: 127.0.0.1
+  port: 8080
 
 droplets:
   droplet_directory_key: #@ data.values.blobstore.droplet_directory_key
