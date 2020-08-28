@@ -33,8 +33,10 @@ spec:
             value: #@ ccng_secrets_mount_path
           resources:
             requests:
+              cpu: 100m
               memory: 300Mi
             limits:
+              cpu: 500m
               memory: 1Gi
           readinessProbe:
             tcpSocket:
