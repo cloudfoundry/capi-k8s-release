@@ -1,7 +1,7 @@
 #@data/values
 ---
 images:
-  ccng: cloudfoundry/cloud-controller-ng@sha256:2d7ffd552e235fb201886af06034caedf37e021301b42327d8aacc06051185d2
+  ccng: cloudfoundry/cloud-controller-ng@sha256:2e2cb0976efa8464d92c44890df774d9358ead0c8b4b6e6ebcd29cbf73c268c7
   cf_api_controllers: cloudfoundry/cf-api-controllers@sha256:afe5933b8d97fe91e6aa6f7b8ec79a478df2838d56ac2736982b61b86dafbe25
   cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
   nginx: cloudfoundry/capi-nginx@sha256:980f50e190cbff72d23300bc422da23faa888271c2d07ac3abaa65af55a5316a
