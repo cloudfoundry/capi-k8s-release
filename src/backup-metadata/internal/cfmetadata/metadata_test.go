@@ -1,10 +1,10 @@
 package cfmetadata_test
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata/cfmetadatafakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/cfmetadata"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/cfmetadata/cfmetadatafakes"
 )
 
 var _ = Describe("Metadata", func() {

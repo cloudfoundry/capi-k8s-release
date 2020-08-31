@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/delegate"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/helpers"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/helpers"
 )
 
 func main() {

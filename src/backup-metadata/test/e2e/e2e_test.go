@@ -10,7 +10,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/cfmetadata"
+
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
 )
 
 var _ = Describe("e2e", func() {

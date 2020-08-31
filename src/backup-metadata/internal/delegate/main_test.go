@@ -3,10 +3,10 @@ package delegate_test
 import (
 	"fmt"
 
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate/delegatefakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/delegate"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/delegate/delegatefakes"
 )
 
 var _ = Describe("Main", func() {

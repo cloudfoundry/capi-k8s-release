@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/cfmetadata"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
 )
 
 //go:generate counterfeiter . Reader

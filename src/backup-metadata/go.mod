@@ -1,4 +1,4 @@
-module github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src
+module code.cloudfoundry.org/capi-k8s-release/src/backup-metadata
 
 go 1.14
 

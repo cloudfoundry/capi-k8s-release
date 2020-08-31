@@ -1,9 +1,9 @@
 package helpers_test
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/helpers"
 )
 
 var _ = Describe("Env Helper", func() {

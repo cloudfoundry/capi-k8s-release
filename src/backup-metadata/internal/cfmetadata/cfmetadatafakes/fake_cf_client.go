@@ -4,7 +4,7 @@ package cfmetadatafakes
 import (
 	"sync"
 
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/cfmetadata"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
 )
 
 type FakeCfClient struct {

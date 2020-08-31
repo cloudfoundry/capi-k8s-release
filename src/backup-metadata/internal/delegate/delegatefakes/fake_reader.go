@@ -4,7 +4,7 @@ package delegatefakes
 import (
 	"sync"
 
-	"github.com/pivotal/cf-for-k8s-disaster-recovery/backup-metadata/src/internal/delegate"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate"
 )
 
 type FakeReader struct {
