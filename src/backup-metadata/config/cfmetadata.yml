@@ -41,4 +41,4 @@ spec:
               key: password
               name: cf-credentials-cf-metadata
   containers:
-  - image: '@sha256:5e8667152d929ee519a3607c0d6b1189d5e2197817099cb1d9252e86dc4217f6'
+  - image: '@sha256:d280c3048802b6f068f807924aa680fc8076d16100ecdad87263666b8572721f'
