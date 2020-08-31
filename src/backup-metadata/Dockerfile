@@ -1,28 +1,21 @@
+# Build the backup-metadata binary
+FROM golang:1.13 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
+# Copy the go source
+COPY cmd/main.go cmd/main.go
+COPY internal/ internal/
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o backup-metadata cmd/main.go
+
 FROM cloudfoundry/build:base
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        wget \
-        gnupg \
-        software-properties-common && \
-    # install postgresql-client
-    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bionic-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends postgresql-client && \
-    # install yq
-    add-apt-repository -y ppa:rmescandon/yq && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends yq && \
-    # clean up
-    apt-get purge -y \
-        wget \
-        gnupg \
-        software-properties-common && \
-    apt-get clean && \
-    apt-get autoclean && \
-    rm -rf /var/lib/apt/lists/*
-
-# backup metadata
-ADD backup-metadata /bin/backup-metadata
-
+WORKDIR /
+COPY --from=builder /workspace/backup-metadata .

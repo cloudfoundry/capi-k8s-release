@@ -18,7 +18,7 @@ spec:
       labels:
         app: cf-metadata
       annotations:
-        pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "backup-metadata"]'
+        pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "/backup-metadata"]'
     spec:
       imagePullSecrets:
       - name: registry-credentials-cf-metadata
