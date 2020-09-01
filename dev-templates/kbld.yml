@@ -29,7 +29,7 @@ destinations:
     newImage: #@ data.values.kbld.destination.ccng
   - imageRepo: #@ data.values.kbld.destination.ccng
     newImage: #@ data.values.kbld.destination.ccng
-  - imageRepo: cloudfoundry/capi-kpack-watcher
+  - imageRepo: cloudfoundry/cf-api-controllers
     newImage: #@ data.values.kbld.destination.cf_api_controllers
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     newImage: #@ data.values.kbld.destination.cf_api_controllers
