@@ -23,7 +23,7 @@ spec:
       imagePullSecrets:
       - name: registry-credentials-cf-metadata
       containers:
-      - image: dev.registry.pivotal.io/platform_recovery/backup-restore@sha256:c49a09d7c5141f445c94e704f1cfa4f8a5918400bc8c1413ee66b01900a757c4
+      - image: cfcapidocker/backup-metadata@sha256:c49a09d7c5141f445c94e704f1cfa4f8a5918400bc8c1413ee66b01900a757c4
         name: cf-metadata
         command: ["/bin/bash", "-c", "--"]
         args: ["while true; do sleep 30; done;"]

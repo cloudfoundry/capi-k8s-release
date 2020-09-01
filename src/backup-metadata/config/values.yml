@@ -3,9 +3,9 @@
 namespace: ""
 
 cf:
-    api: ""
-    admin_username: ""
-    admin_password: ""
+  api: ""
+  admin_username: ""
+  admin_password: ""
 
 registry:
   hostname: ""
