@@ -108,6 +108,7 @@ spec:
           imagePullPolicy: Always
           ports:
           - containerPort: 80
+          - containerPort: 9023
           readinessProbe:
             httpGet:
               port: 80
