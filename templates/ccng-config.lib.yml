@@ -15,7 +15,7 @@ fluent:
   port: 24224
 
 internal_service_hostname: #@ "capi.{}.svc.cluster.local".format(data.values.system_namespace)
-internal_service_port: 80
+internal_service_port: 9023
 
 pid_filename: /cloud_controller_ng/cloud_controller_ng.pid
 newrelic_enabled: false
