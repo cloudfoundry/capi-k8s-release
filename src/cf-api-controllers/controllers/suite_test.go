@@ -40,9 +40,12 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/cloudfoundry.org/v1alpha1"
+	cloudfoundryorgv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/cloudfoundry.org/v1alpha1"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/cffakes"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry/image_registryfakes"
+	networkingv1alpha1 "code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
 
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
@@ -64,6 +67,7 @@ var (
 
 	fakeCFAPIServer        *ghttp.Server
 	cfClient               cf.Client
+	fakeCFClient           *cffakes.FakeClientInterface
 	mockUAAClient          cffakes.FakeTokenFetcher
 	mockImageConfigFetcher image_registryfakes.FakeImageConfigFetcher
 )
@@ -96,6 +100,15 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(config).ToNot(BeNil())
 
 	err = buildpivotaliov1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = buildpivotaliov1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = networkingv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = cloudfoundryorgv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
@@ -145,6 +158,16 @@ var _ = BeforeSuite(func(done Done) {
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
+	fakeCFClient = new(cffakes.FakeClientInterface)
+	err = (&RouteSyncReconciler{
+		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
+		CtrClient:          k8sManager.GetClient(),
+		Scheme:             k8sManager.GetScheme(),
+		CFClient:           fakeCFClient,
+		WorkloadsNamespace: workloadsNamespace,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
 	managerStopChan = make(chan struct{})
 	go func() {
 		err = k8sManager.Start(managerStopChan)
@@ -182,6 +205,18 @@ var _ = AfterEach(func() {
 	Expect(k8sClient.List(ctx, ssList, client.InNamespace(workloadsNamespace))).To(Succeed())
 	if len(ssList.Items) > 0 {
 		Expect(k8sClient.DeleteAllOf(ctx, new(appsv1.StatefulSet), client.InNamespace(workloadsNamespace))).To(Succeed())
+	}
+
+	rsList := new(v1alpha1.RouteSyncList)
+	Expect(k8sClient.List(ctx, rsList, client.InNamespace(workloadsNamespace))).To(Succeed())
+	if len(rsList.Items) > 0 {
+		Expect(k8sClient.DeleteAllOf(ctx, new(v1alpha1.RouteSync), client.InNamespace(workloadsNamespace))).To(Succeed())
+	}
+
+	rList := new(networkingv1alpha1.RouteList)
+	Expect(k8sClient.List(ctx, rList, client.InNamespace(workloadsNamespace))).To(Succeed())
+	if len(rList.Items) > 0 {
+		Expect(k8sClient.DeleteAllOf(ctx, new(networkingv1alpha1.Route), client.InNamespace(workloadsNamespace))).To(Succeed())
 	}
 })
 

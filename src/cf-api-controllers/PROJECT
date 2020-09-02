@@ -1,7 +1,11 @@
 domain: build.pivotal.io
+multigroup: true
 repo: code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers
 resources:
 - group: build.pivotal.io
   kind: Build
+  version: v1alpha1
+- group: cloudfoundry.org
+  kind: RouteSync
   version: v1alpha1
 version: "2"

@@ -17,25 +17,26 @@ limitations under the License.
 package main
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"crypto/tls"
 	"flag"
+	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
+	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	"net/http"
 	"os"
 
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
-	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
+	cloudfoundryorgv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/cloudfoundry.org/v1alpha1"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/controllers"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -48,6 +49,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = buildpivotaliov1alpha1.AddToScheme(scheme)
+	_ = cloudfoundryorgv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -127,6 +129,15 @@ func main() {
 		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Image")
+		os.Exit(1)
+	}
+	if err = (&controllers.RouteSyncReconciler{
+		CtrClient:          mgr.GetClient(),
+		Log:                ctrl.Log.WithName("controllers").WithName("RouteSync"),
+		Scheme:             mgr.GetScheme(),
+		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "RouteSync")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

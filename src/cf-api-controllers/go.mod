@@ -3,6 +3,7 @@ module code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers
 go 1.14
 
 require (
+	code.cloudfoundry.org/cf-k8s-networking/routecontroller v0.0.0-20200903181459-ab1b32f57e7c
 	github.com/buildpacks/lifecycle v0.8.1
 	github.com/cloudfoundry-community/go-uaa v0.3.1
 	github.com/go-logr/logr v0.1.0
