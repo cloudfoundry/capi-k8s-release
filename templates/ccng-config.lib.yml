@@ -268,7 +268,7 @@ cc_service_key_client_secret: TODO
 allow_app_ssh_access: true
 default_app_ssh_access: true
 
-skip_cert_verify: true
+skip_cert_verify: false
 
 install_buildpacks: []
 
