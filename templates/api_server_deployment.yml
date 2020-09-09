@@ -76,6 +76,8 @@ spec:
           - #@ template.replace(shared_config_volume_mounts())
           - name: nginx-uploads
             mountPath: /tmp/uploads
+          - name: tmp-packages
+            mountPath: /tmp/packages
           #@ if/end data.values.ccdb.ca_cert:
           - name: database-ca-cert
             mountPath: /config/database/certs
@@ -88,8 +90,8 @@ spec:
             tcpSocket:
               port: 8080
           volumeMounts:
-          - name: nginx-uploads
-            mountPath: /tmp/uploads
+          - name: tmp-packages
+            mountPath: /tmp/packages
           env:
           - name: REGISTRY_USERNAME
             valueFrom:
@@ -148,5 +150,7 @@ spec:
         secret:
           secretName: database-ca-cert
       - name: nginx-uploads
+        emptyDir: {}
+      - name: tmp-packages
         emptyDir: {}
 
