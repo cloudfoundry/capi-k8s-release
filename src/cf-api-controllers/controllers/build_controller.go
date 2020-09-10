@@ -38,7 +38,7 @@ import (
 )
 
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
-const BuildReasonAnnotation = "image.build.pivotal.io/reason"
+const BuildReasonAnnotation = "image.kpack.io/reason"
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fake/controller_runtime_client.go --fake-name ControllerRuntimeClient sigs.k8s.io/controller-runtime/pkg/client.Client
 
@@ -56,8 +56,8 @@ type BuildReconciler struct {
 	image_registry.ImageConfigFetcher
 }
 
-// +kubebuilder:rbac:groups=build.pivotal.io,resources=builds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=build.pivotal.io,resources=builds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kpack.io,resources=builds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kpack.io,resources=builds/status,verbs=get;update;patch
 
 func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

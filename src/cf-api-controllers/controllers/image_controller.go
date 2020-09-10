@@ -52,8 +52,8 @@ type ImageReconciler struct {
 	WorkloadsNamespace string
 }
 
-// +kubebuilder:rbac:groups=build.pivotal.io,resources=images,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=build.pivotal.io,resources=images/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kpack.io,resources=images,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kpack.io,resources=images/status,verbs=get;update;patch
 
 func (r *ImageReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()

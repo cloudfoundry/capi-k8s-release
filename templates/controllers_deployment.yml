@@ -58,7 +58,7 @@ kind: ClusterRole
 metadata:
   name: cf-api-controllers
 rules:
-- apiGroups: ["build.pivotal.io"]
+- apiGroups: ["kpack.io"]
   resources: ["images", "builds", "builds/status", "images/status"]
   verbs: ["get", "watch", "list"]
 ---

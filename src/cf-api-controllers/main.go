@@ -17,16 +17,17 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
+	"flag"
+	"net/http"
+	"os"
+
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cfg"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
-	"crypto/tls"
-	"flag"
 	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
-	"net/http"
-	"os"
 
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -35,23 +36,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	appsv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/apps.cloudfoundry.org/v1alpha1"
+	kpackiov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
+
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/controllers"
 	networkingv1alpha1 "code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
-	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
-	// TODO: revisit whether we should assemble our own Scheme
-	scheme   = buildpivotaliov1alpha1.Scheme
+	scheme   = kpackiov1alpha1.Scheme
 	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = buildpivotaliov1alpha1.AddToScheme(scheme)
 	_ = networkingv1alpha1.AddToScheme(scheme)
 	_ = appsv1alpha1.AddToScheme(scheme)
+	_ = kpackiov1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -77,7 +78,7 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "7cba68d7.build.pivotal.io",
+		LeaderElectionID:   "7cba68d7.kpack.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

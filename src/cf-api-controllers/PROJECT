@@ -1,8 +1,8 @@
-domain: build.pivotal.io
+domain: kpack.io
 multigroup: true
 repo: code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers
 resources:
-- group: build.pivotal.io
+- group: kpack.io
   kind: Build
   version: v1alpha1
 - group: cloudfoundry.org

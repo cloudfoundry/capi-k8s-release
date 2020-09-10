@@ -47,7 +47,7 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry/image_registryfakes"
 	networkingv1alpha1 "code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
 
-	buildpivotaliov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
+	kpackiov1alpha1 "github.com/pivotal/kpack/pkg/client/clientset/versioned/scheme"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -102,7 +102,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(config).ToNot(BeNil())
 
-	err = buildpivotaliov1alpha1.AddToScheme(scheme.Scheme)
+	err = kpackiov1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = networkingv1alpha1.AddToScheme(scheme.Scheme)
@@ -170,6 +170,7 @@ var _ = BeforeSuite(func(done Done) {
 
 	managerStopChan = make(chan struct{})
 	go func() {
+		defer GinkgoRecover()
 		err = k8sManager.Start(managerStopChan)
 		Expect(err).NotTo(HaveOccurred())
 	}()
