@@ -2,7 +2,6 @@
 
 set -e
 
-SHORT_MESSAGE="images.yml updated by CI"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_BASE_DIR="${SCRIPT_DIR}/.."
 
@@ -52,7 +51,7 @@ EOF
 }
 
 cat <<- EOF
-${SHORT_MESSAGE}
+images.yml updated by CI
 ---
 EOF
 chunk ccng "${CCNG_DIR}"
