@@ -7,5 +7,3 @@ images:
   nginx: cloudfoundry/capi-nginx@sha256:980f50e190cbff72d23300bc422da23faa888271c2d07ac3abaa65af55a5316a
   package_image_uploader: cloudfoundry/cf-api-package-image-uploader@sha256:aae727a0960d10ce644035dee7041f7e882c7c58a37992252002ce7c95d8804d
   statsd_exporter: oratos/statsd_exporter:v0.15.0@sha256:10a64dc4ad0a3e3fe88372f0481dea5c02595c38d168617836a99a649d3ac407
-kbld:
-  destination: null
