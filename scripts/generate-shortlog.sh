@@ -35,7 +35,7 @@ function get_image() {
 function github_commit_link() {
   local repo=${1}
   # strip "git@github" style urls and .git extensions, then append sha
-  echo "https://github.$(git_remote "${dir}" | cut -f2 -d.)/commit/$(git_sha "${repo}")"
+  echo "https://github.$(git_remote "${dir}" | cut -f2 -d. | sed 's|:|/|g')/commit/$(git_sha "${repo}")"
 }
 
 function image_changed() {
