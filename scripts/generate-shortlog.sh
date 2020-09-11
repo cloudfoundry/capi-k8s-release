@@ -32,6 +32,13 @@ function get_image() {
   popd >/dev/null
 }
 
+function github_commit_link() {
+  local repo=${1}
+  # strip "git@github" style urls and .git extensions
+  base="https://github.$(git_remote "${dir}" | cut -f2 -d.)"
+  echo "${base}/commit/$(git_sha "${repo}")"
+}
+
 function image_changed() {
   local name=${1}
   ! git log -n 1 --grep="^${name}:$" | grep "$(get_image "${name}")" > /dev/null
@@ -46,6 +53,7 @@ ${name}:
   image: $(get_image "${name}")
   sha: $(git_sha "${dir}")
   remote: $(git_remote "${dir}")
+  link: $(github_commit_link "${dir}")
 EOF
   fi
 }
