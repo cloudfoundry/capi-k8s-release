@@ -42,7 +42,9 @@ function image_changed() {
   local name=${1}
   pushd "${REPO_BASE_DIR}" >/dev/null
     ! git log -n 1 --grep="^${name}:$" | grep "$(get_image "${name}")" > /dev/null
+    local result=$?
   popd >/dev/null
+  return ${result}
 }
 
 function chunk() {
