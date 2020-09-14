@@ -47,9 +47,6 @@ spec:
             mountPath: /data/cloud_controller_ng
           - name: nginx-uploads
             mountPath: /tmp/uploads
-          #@ if/end data.values.uaa.serverCerts.secretName:
-          - name: uaa-certs
-            mountPath: /config/uaa/certs
           #@ if/end data.values.eirini.serverCerts.secretName:
           - name: eirini-certs
             mountPath: /config/eirini/certs
@@ -136,10 +133,6 @@ spec:
           name: nginx
       - name: nginx-logs
         emptyDir: {}
-      #@ if/end data.values.uaa.serverCerts.secretName:
-      - name: uaa-certs
-        secret:
-          secretName: #@ data.values.uaa.serverCerts.secretName
       #@ if/end data.values.eirini.serverCerts.secretName:
       - name: eirini-certs
         secret:

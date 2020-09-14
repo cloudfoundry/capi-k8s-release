@@ -130,7 +130,6 @@ uaa:
   internal_url: #@ "http://uaa.{}.svc.cluster.local:8080".format(data.values.system_namespace)
   resource_id: cloud_controller,cloud_controller_service_permissions
   client_timeout: 60
-  ca_file: /config/uaa/certs/uaa.crt
 
 routing_api:
   url: #@ "https://api.{}/routing".format(data.values.system_domain)
