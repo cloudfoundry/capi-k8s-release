@@ -40,7 +40,9 @@ function github_commit_link() {
 
 function image_changed() {
   local name=${1}
-  ! git log -n 1 --grep="^${name}:$" | grep "$(get_image "${name}")" > /dev/null
+  pushd "${REPO_BASE_DIR}" >/dev/null
+    ! git log -n 1 --grep="^${name}:$" | grep "$(get_image "${name}")" > /dev/null
+  popd >/dev/null
 }
 
 function chunk() {
