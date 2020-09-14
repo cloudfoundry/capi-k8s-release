@@ -21,7 +21,6 @@ spec:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '9102'
-        traffic.sidecar.istio.io/excludeInboundPorts: "9102"
       labels:
         app.kubernetes.io/name: cf-api-server
     spec:
