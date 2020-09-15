@@ -7,7 +7,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cloudfoundryorgv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/cloudfoundry.org/v1alpha1"
+	appsv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/apps.cloudfoundry.org/v1alpha1"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	networkingv1alpha1 "code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
 	. "github.com/onsi/ginkgo"
@@ -15,11 +15,56 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = FDescribe("RouteSyncController", func() {
+var _ = Describe("RouteSyncController", func() {
+	const (
+		routeGUID = "route-guid"
+	)
+
+	createRouteInK8s := func() {
+		port := 56789
+
+		Expect(
+			k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      routeGUID,
+					Namespace: workloadsNamespace,
+				},
+				Spec: networkingv1alpha1.RouteSpec{
+					Host: "a-host",
+					Path: "/path",
+					Url:  "a-host.domain.com/path",
+					Domain: networkingv1alpha1.RouteDomain{
+						Name:     "domain.com",
+						Internal: false,
+					},
+					Destinations: []networkingv1alpha1.RouteDestination{
+						{
+							Guid: "dest-guid",
+							Port: &port,
+							App: networkingv1alpha1.DestinationApp{
+								Guid: "app-guid",
+								Process: networkingv1alpha1.AppProcess{
+									Type: "web",
+								},
+							},
+							Selector: networkingv1alpha1.DestinationSelector{
+								MatchLabels: map[string]string{},
+							},
+						},
+					},
+				},
+			}),
+		).To(Succeed())
+
+		var createdRouteResource networkingv1alpha1.Route
+		Eventually(func() error {
+			return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &createdRouteResource)
+		}, "5s", "1s").Should(Succeed())
+	}
+
 	When("there are routes in the CF API but not in Kubernetes", func() {
 		const (
 			appGUID    = "app-guid"
-			routeGUID  = "route-guid"
 			destGUID   = "dest-guid"
 			spaceGUID  = "space-guid"
 			domainGUID = "domain-guid"
@@ -67,7 +112,7 @@ var _ = FDescribe("RouteSyncController", func() {
 				},
 			}, nil)
 
-			fakeCFClient.GetSpaceReturns(&model.Space{
+			fakeCFClient.GetSpaceReturns(model.Space{
 				GUID: spaceGUID,
 				Relationships: map[string]model.Relationship{
 					"organization": {
@@ -78,18 +123,18 @@ var _ = FDescribe("RouteSyncController", func() {
 				},
 			}, nil)
 
-			fakeCFClient.GetDomainReturns(&model.Domain{
+			fakeCFClient.GetDomainReturns(model.Domain{
 				GUID:     domainGUID,
 				Name:     domainName,
 				Internal: false,
 			}, nil)
 
-			Expect(k8sClient.Create(context.Background(), &cloudfoundryorgv1alpha1.RouteSync{
+			Expect(k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "whatever",
 					Namespace: workloadsNamespace,
 				},
-				Spec: cloudfoundryorgv1alpha1.RouteSyncSpec{
+				Spec: appsv1alpha1.RouteSyncSpec{
 					PeriodSeconds: 1,
 				},
 			})).To(Succeed())
@@ -127,55 +172,19 @@ var _ = FDescribe("RouteSyncController", func() {
 	})
 
 	When("there are routes in Kubernetes that aren't in the CF API", func() {
-		const (
-			routeGUID = "route-guid"
-		)
 
 		BeforeEach(func() {
 			fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
 
-			port := 56789
+			createRouteInK8s()
 
 			Expect(
-				k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      routeGUID,
-						Namespace: workloadsNamespace,
-					},
-					Spec: networkingv1alpha1.RouteSpec{
-						Host: "a-host",
-						Path: "/path",
-						Url:  "a-host.domain.com/path",
-						Domain: networkingv1alpha1.RouteDomain{
-							Name:     "domain.com",
-							Internal: false,
-						},
-						Destinations: []networkingv1alpha1.RouteDestination{
-							{
-								Guid: "dest-guid",
-								Port: &port,
-								App: networkingv1alpha1.DestinationApp{
-									Guid: "app-guid",
-									Process: networkingv1alpha1.AppProcess{
-										Type: "web",
-									},
-								},
-								Selector: networkingv1alpha1.DestinationSelector{
-									MatchLabels: map[string]string{},
-								},
-							},
-						},
-					},
-				}),
-			).To(Succeed())
-
-			Expect(
-				k8sClient.Create(context.Background(), &cloudfoundryorgv1alpha1.RouteSync{
+				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "whatever",
 						Namespace: workloadsNamespace,
 					},
-					Spec: cloudfoundryorgv1alpha1.RouteSyncSpec{
+					Spec: appsv1alpha1.RouteSyncSpec{
 						PeriodSeconds: 1,
 					},
 				}),
@@ -185,7 +194,39 @@ var _ = FDescribe("RouteSyncController", func() {
 		It("deletes the extra Route from kubernetes", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
-			}, "5s", "1s").ShouldNot(BeNil())
+			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
+		})
+	})
+
+	Describe("resync interval", func() {
+		BeforeEach(func() {
+			fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
+
+			createRouteInK8s()
+
+			Expect(
+				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "whatever",
+						Namespace: workloadsNamespace,
+					},
+					Spec: appsv1alpha1.RouteSyncSpec{
+						PeriodSeconds: 1,
+					},
+				}),
+			).To(Succeed())
+		})
+
+		It("synchronizes at the frequency set on the RouteSync resource", func() {
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
+			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
+
+			createRouteInK8s()
+
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
+			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
 		})
 	})
 })

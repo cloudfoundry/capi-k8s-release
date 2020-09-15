@@ -9,30 +9,30 @@ import (
 )
 
 type FakeClientInterface struct {
-	GetDomainStub        func(string) (*model.Domain, error)
+	GetDomainStub        func(string) (model.Domain, error)
 	getDomainMutex       sync.RWMutex
 	getDomainArgsForCall []struct {
 		arg1 string
 	}
 	getDomainReturns struct {
-		result1 *model.Domain
+		result1 model.Domain
 		result2 error
 	}
 	getDomainReturnsOnCall map[int]struct {
-		result1 *model.Domain
+		result1 model.Domain
 		result2 error
 	}
-	GetSpaceStub        func(string) (*model.Space, error)
+	GetSpaceStub        func(string) (model.Space, error)
 	getSpaceMutex       sync.RWMutex
 	getSpaceArgsForCall []struct {
 		arg1 string
 	}
 	getSpaceReturns struct {
-		result1 *model.Space
+		result1 model.Space
 		result2 error
 	}
 	getSpaceReturnsOnCall map[int]struct {
-		result1 *model.Space
+		result1 model.Space
 		result2 error
 	}
 	ListRoutesStub        func() ([]model.Route, error)
@@ -51,7 +51,7 @@ type FakeClientInterface struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeClientInterface) GetDomain(arg1 string) (*model.Domain, error) {
+func (fake *FakeClientInterface) GetDomain(arg1 string) (model.Domain, error) {
 	fake.getDomainMutex.Lock()
 	ret, specificReturn := fake.getDomainReturnsOnCall[len(fake.getDomainArgsForCall)]
 	fake.getDomainArgsForCall = append(fake.getDomainArgsForCall, struct {
@@ -75,7 +75,7 @@ func (fake *FakeClientInterface) GetDomainCallCount() int {
 	return len(fake.getDomainArgsForCall)
 }
 
-func (fake *FakeClientInterface) GetDomainCalls(stub func(string) (*model.Domain, error)) {
+func (fake *FakeClientInterface) GetDomainCalls(stub func(string) (model.Domain, error)) {
 	fake.getDomainMutex.Lock()
 	defer fake.getDomainMutex.Unlock()
 	fake.GetDomainStub = stub
@@ -88,33 +88,33 @@ func (fake *FakeClientInterface) GetDomainArgsForCall(i int) string {
 	return argsForCall.arg1
 }
 
-func (fake *FakeClientInterface) GetDomainReturns(result1 *model.Domain, result2 error) {
+func (fake *FakeClientInterface) GetDomainReturns(result1 model.Domain, result2 error) {
 	fake.getDomainMutex.Lock()
 	defer fake.getDomainMutex.Unlock()
 	fake.GetDomainStub = nil
 	fake.getDomainReturns = struct {
-		result1 *model.Domain
+		result1 model.Domain
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeClientInterface) GetDomainReturnsOnCall(i int, result1 *model.Domain, result2 error) {
+func (fake *FakeClientInterface) GetDomainReturnsOnCall(i int, result1 model.Domain, result2 error) {
 	fake.getDomainMutex.Lock()
 	defer fake.getDomainMutex.Unlock()
 	fake.GetDomainStub = nil
 	if fake.getDomainReturnsOnCall == nil {
 		fake.getDomainReturnsOnCall = make(map[int]struct {
-			result1 *model.Domain
+			result1 model.Domain
 			result2 error
 		})
 	}
 	fake.getDomainReturnsOnCall[i] = struct {
-		result1 *model.Domain
+		result1 model.Domain
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeClientInterface) GetSpace(arg1 string) (*model.Space, error) {
+func (fake *FakeClientInterface) GetSpace(arg1 string) (model.Space, error) {
 	fake.getSpaceMutex.Lock()
 	ret, specificReturn := fake.getSpaceReturnsOnCall[len(fake.getSpaceArgsForCall)]
 	fake.getSpaceArgsForCall = append(fake.getSpaceArgsForCall, struct {
@@ -138,7 +138,7 @@ func (fake *FakeClientInterface) GetSpaceCallCount() int {
 	return len(fake.getSpaceArgsForCall)
 }
 
-func (fake *FakeClientInterface) GetSpaceCalls(stub func(string) (*model.Space, error)) {
+func (fake *FakeClientInterface) GetSpaceCalls(stub func(string) (model.Space, error)) {
 	fake.getSpaceMutex.Lock()
 	defer fake.getSpaceMutex.Unlock()
 	fake.GetSpaceStub = stub
@@ -151,28 +151,28 @@ func (fake *FakeClientInterface) GetSpaceArgsForCall(i int) string {
 	return argsForCall.arg1
 }
 
-func (fake *FakeClientInterface) GetSpaceReturns(result1 *model.Space, result2 error) {
+func (fake *FakeClientInterface) GetSpaceReturns(result1 model.Space, result2 error) {
 	fake.getSpaceMutex.Lock()
 	defer fake.getSpaceMutex.Unlock()
 	fake.GetSpaceStub = nil
 	fake.getSpaceReturns = struct {
-		result1 *model.Space
+		result1 model.Space
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeClientInterface) GetSpaceReturnsOnCall(i int, result1 *model.Space, result2 error) {
+func (fake *FakeClientInterface) GetSpaceReturnsOnCall(i int, result1 model.Space, result2 error) {
 	fake.getSpaceMutex.Lock()
 	defer fake.getSpaceMutex.Unlock()
 	fake.GetSpaceStub = nil
 	if fake.getSpaceReturnsOnCall == nil {
 		fake.getSpaceReturnsOnCall = make(map[int]struct {
-			result1 *model.Space
+			result1 model.Space
 			result2 error
 		})
 	}
 	fake.getSpaceReturnsOnCall[i] = struct {
-		result1 *model.Space
+		result1 model.Space
 		result2 error
 	}{result1, result2}
 }

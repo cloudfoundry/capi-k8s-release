@@ -18,7 +18,9 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -29,11 +31,12 @@ import (
 	networkingv1alpha1 "code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cloudfoundryorgv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/cloudfoundry.org/v1alpha1"
+	appsv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/apps.cloudfoundry.org/v1alpha1"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 )
 
@@ -46,26 +49,35 @@ type RouteSyncReconciler struct {
 	WorkloadsNamespace string
 }
 
-// +kubebuilder:rbac:groups=cloudfoundry.org.build.pivotal.io,resources=routesyncs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cloudfoundry.org.build.pivotal.io,resources=routesyncs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=routesyncs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=routesyncs/status,verbs=get;update;patch
 
 func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	_ = r.Log.WithValues("routesync", req.NamespacedName)
+
+	var routeSync appsv1alpha1.RouteSync
+	err := r.CtrClient.Get(ctx, req.NamespacedName, &routeSync)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			r.Log.WithValues("request", req.NamespacedName).Error(err, "RouteSync resource not found")
+		}
+		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
+	}
 
 	// TODO: confirm that kubebuilder replays all events on startup (i.e. its bookmark of last event doesn't persist somewhere)
 
 	// 1. fetch all routes from CC (done)
 	routesInCC, err := r.CFClient.ListRoutes()
 	if err != nil {
-		panic("banana 1")
+		return ctrl.Result{}, fmt.Errorf("error listing routes in CF API: %w", err) // untested
 	}
 
 	// 2. fetch all route CRs from kubernetes
 	var routesInK8s networkingv1alpha1.RouteList
 	err = r.CtrClient.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
 	if err != nil {
-		panic("banana 2")
+		return ctrl.Result{}, err // untested
 	}
 
 	// 3. map each slice of routes into a slice of strings
@@ -87,26 +99,33 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
+	reconciledSuccessfully := true
+
 	// 5. iterate over all routes to be created and create them (started)
 	for _, ccRoute := range missingInK8s {
 		// 5a. fetch additional information from CC (domain, space)
-		space, err := r.CFClient.GetSpace(ccRoute.Relationships["space"].Data.GUID)
+		spaceGUID := ccRoute.Relationships["space"].Data.GUID
+		space, err := r.CFClient.GetSpace(spaceGUID)
 		if err != nil {
-			panic("banana 3")
+			reconciledSuccessfully = false
+			r.Log.WithValues("request", req.NamespacedName, "space_guid", spaceGUID).Error(err, "errored fetching CF API space")
 		}
 
-		domain, err := r.CFClient.GetDomain(ccRoute.Relationships["domain"].Data.GUID)
+		domainGUID := ccRoute.Relationships["domain"].Data.GUID
+		domain, err := r.CFClient.GetDomain(domainGUID)
 		if err != nil {
-			panic("banana 4")
+			reconciledSuccessfully = false
+			r.Log.WithValues("request", req.NamespacedName, "domain_guid", domainGUID).Error(err, "errored fetching CF API domain")
 		}
 
 		// 5b. translate CC objects into k8s CR
-		newRouteCR := kubernetes.TranslateRoute(*ccRoute, *space, *domain, r.WorkloadsNamespace)
+		newRouteCR := kubernetes.TranslateRoute(*ccRoute, space, domain, r.WorkloadsNamespace)
 
 		// 5c. send CR to k8s for creation
 		err = r.CtrClient.Create(ctx, &newRouteCR)
 		if err != nil {
-			panic(fmt.Sprintf("banana 5: %v", err))
+			reconciledSuccessfully = false
+			r.Log.WithValues("request", req.NamespacedName, "route_guid", ccRoute.GUID).Error(err, "errored creating Route resource in k8s")
 		}
 	}
 
@@ -127,17 +146,20 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			},
 		})
 		if err != nil {
-			panic(fmt.Sprintf("banana 6: %v", err))
+			reconciledSuccessfully = false
+			r.Log.WithValues("request", req.NamespacedName, "route_guid", extraRouteGUID).Error(err, "errored deleting Route resource in k8s")
 		}
 	}
 
-	// 8. maybe requeue event after like 30 seconds or w/e?
+	if !reconciledSuccessfully {
+		return ctrl.Result{}, errors.New("failed to reconcile at least one route") // untested
+	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: time.Duration(routeSync.Spec.PeriodSeconds) * time.Second}, nil
 }
 
 func (r *RouteSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudfoundryorgv1alpha1.RouteSync{}).
+		For(&appsv1alpha1.RouteSync{}).
 		Complete(r)
 }
