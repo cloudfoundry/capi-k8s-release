@@ -23,6 +23,31 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type ConditionStatus string
+
+const (
+	TrueConditionStatus    ConditionStatus = "True"
+	FalseConditionStatus   ConditionStatus = "False"
+	UnknownConditionStatus ConditionStatus = "Unknown"
+)
+
+// Loosely following this KEP:
+// https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/1623-standardize-conditions
+// Eventually we can update to use standard Kubernetes types
+type Condition struct {
+	Type               string          `json:"type"`
+	Status             ConditionStatus `json:"status"`
+	LastTransitionTime metav1.Time     `json:"lastTransitionTime"`
+	Reason             string          `json:"reason"`
+	Message            string          `json:"message"`
+}
+
+const (
+	SyncedConditionType      = "Synced"
+	CompletedConditionReason = "Completed"
+	FailedConditionReason    = "Failed"
+)
+
 // RouteSyncSpec defines the desired state of RouteSync
 type RouteSyncSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -35,10 +60,11 @@ type RouteSyncSpec struct {
 type RouteSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// TODO: what would be useful to put here?
+	Conditions []Condition `json:"conditions"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // RouteSync is the Schema for the routesyncs API
 type RouteSync struct {

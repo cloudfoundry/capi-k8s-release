@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"context"
-
+	"errors"
 	. "github.com/onsi/gomega/gstruct"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appsv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/apps.cloudfoundry.org/v1alpha1"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
@@ -20,12 +20,20 @@ var _ = Describe("RouteSyncController", func() {
 		routeGUID = "route-guid"
 	)
 
+	findSyncCondition := func(conditions []appsv1alpha1.Condition) *appsv1alpha1.Condition {
+		for _, c := range conditions {
+			if c.Type == appsv1alpha1.SyncedConditionType {
+				return &c
+			}
+		}
+		return nil
+	}
 	createRouteInK8s := func() {
 		port := 56789
 
 		Expect(
 			k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      routeGUID,
 					Namespace: workloadsNamespace,
 				},
@@ -130,7 +138,7 @@ var _ = Describe("RouteSyncController", func() {
 			}, nil)
 
 			Expect(k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name:      "whatever",
 					Namespace: workloadsNamespace,
 				},
@@ -180,7 +188,7 @@ var _ = Describe("RouteSyncController", func() {
 
 			Expect(
 				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
-					ObjectMeta: v1.ObjectMeta{
+					ObjectMeta: metav1.ObjectMeta{
 						Name:      "whatever",
 						Namespace: workloadsNamespace,
 					},
@@ -206,7 +214,7 @@ var _ = Describe("RouteSyncController", func() {
 
 			Expect(
 				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
-					ObjectMeta: v1.ObjectMeta{
+					ObjectMeta: metav1.ObjectMeta{
 						Name:      "whatever",
 						Namespace: workloadsNamespace,
 					},
@@ -227,6 +235,104 @@ var _ = Describe("RouteSyncController", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
 			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
+		})
+	})
+
+	Describe("RouteSync Status", func() {
+		Context("when the sync succeeds", func() {
+			const (
+				routeSyncName = "my-route-sync"
+			)
+			var (
+				testStartTime metav1.Time
+			)
+
+			BeforeEach(func() {
+				testStartTime = metav1.Now()
+				fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
+
+				createRouteInK8s()
+
+				Expect(
+					k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      routeSyncName,
+							Namespace: workloadsNamespace,
+						},
+						Spec: appsv1alpha1.RouteSyncSpec{
+							PeriodSeconds: 1,
+						},
+					}),
+				).To(Succeed())
+			})
+
+			It("updates the Synced condition on the RouteSync's Status", func() {
+				routeSync := appsv1alpha1.RouteSync{}
+				Eventually(func() error {
+					return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+				}, "5s", "1s").Should(Succeed())
+
+				var syncCondition *appsv1alpha1.Condition
+				Eventually(func() *appsv1alpha1.Condition {
+					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					Expect(err).NotTo(HaveOccurred())
+					syncCondition = findSyncCondition(routeSync.Status.Conditions)
+					return syncCondition
+				}, "5s", "1s").ShouldNot(BeNil())
+
+				Expect(syncCondition.Status).To(Equal(appsv1alpha1.TrueConditionStatus))
+				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.CompletedConditionReason))
+				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 1))
+			})
+		})
+
+		Context("when the sync fails", func() {
+			const (
+				routeSyncName = "my-route-sync"
+			)
+			var (
+				testStartTime metav1.Time
+				errMsg        = "error fetching routes o no"
+			)
+
+			BeforeEach(func() {
+				testStartTime = metav1.Now()
+				fakeCFClient.ListRoutesReturns([]model.Route{}, errors.New(errMsg))
+
+				createRouteInK8s()
+
+				Expect(
+					k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      routeSyncName,
+							Namespace: workloadsNamespace,
+						},
+						Spec: appsv1alpha1.RouteSyncSpec{
+							PeriodSeconds: 1,
+						},
+					}),
+				).To(Succeed())
+			})
+
+			It("updates the Synced condition on the RouteSync's Status", func() {
+				routeSync := appsv1alpha1.RouteSync{}
+				Eventually(func() error {
+					return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+				}, "5s", "1s").Should(Succeed())
+
+				var syncCondition *appsv1alpha1.Condition
+				Eventually(func() *appsv1alpha1.Condition {
+					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					Expect(err).NotTo(HaveOccurred())
+					syncCondition = findSyncCondition(routeSync.Status.Conditions)
+					return syncCondition
+				}, "5s", "1s").ShouldNot(BeNil())
+
+				Expect(syncCondition.Status).To(Equal(appsv1alpha1.FalseConditionStatus))
+				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.FailedConditionReason))
+				Expect(syncCondition.Message).To(Equal(errMsg))
+				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 1))
+			})
 		})
 	})
 })

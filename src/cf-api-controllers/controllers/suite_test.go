@@ -91,7 +91,10 @@ var _ = BeforeSuite(func(done Done) {
 	// TODO: we need to correctly version the kpack go module and the kpack CRD file we bring in
 	testEnv = &envtest.Environment{
 		ErrorIfCRDPathMissing: true,
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "config", "crd"),
+			filepath.Join("..", "config", "crd", "bases"),
+		},
 	}
 
 	var err error

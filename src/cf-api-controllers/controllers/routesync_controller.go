@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/kubernetes"
 
@@ -61,6 +61,8 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.Log.WithValues("request", req.NamespacedName).Error(err, "RouteSync resource not found")
+		} else {
+			r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
 	}
@@ -70,13 +72,15 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// 1. fetch all routes from CC (done)
 	routesInCC, err := r.CFClient.ListRoutes()
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("error listing routes in CF API: %w", err) // untested
+		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err) // untested
 	}
 
 	// 2. fetch all route CRs from kubernetes
 	var routesInK8s networkingv1alpha1.RouteList
 	err = r.CtrClient.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
 	if err != nil {
+		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
 		return ctrl.Result{}, err // untested
 	}
 
@@ -140,7 +144,7 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// 7. iterate over all routes to be deleted and delete them
 	for _, extraRouteGUID := range extraInK8s {
 		err = r.CtrClient.Delete(ctx, &networkingv1alpha1.Route{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:      extraRouteGUID,
 				Namespace: r.WorkloadsNamespace,
 			},
@@ -152,10 +156,47 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if !reconciledSuccessfully {
-		return ctrl.Result{}, errors.New("failed to reconcile at least one route") // untested
+		err := errors.New("failed to reconcile at least one route")
+		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+		return ctrl.Result{}, err // untested
 	}
 
+	if err := r.updateSyncStatusSuccess(ctx, &routeSync); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{RequeueAfter: time.Duration(routeSync.Spec.PeriodSeconds) * time.Second}, nil
+}
+
+func (r *RouteSyncReconciler) updateSyncStatusSuccess(ctx context.Context, routeSync *appsv1alpha1.RouteSync) error {
+	setRouteSyncStatus(routeSync, appsv1alpha1.TrueConditionStatus, appsv1alpha1.CompletedConditionReason, "")
+
+	if err := r.CtrClient.Status().Update(ctx, routeSync); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *RouteSyncReconciler) updateSyncStatusFailure(ctx context.Context, routeSync *appsv1alpha1.RouteSync, failureMessage string) error {
+	setRouteSyncStatus(routeSync, appsv1alpha1.FalseConditionStatus, appsv1alpha1.FailedConditionReason, failureMessage)
+
+	if err := r.CtrClient.Status().Update(ctx, routeSync); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setRouteSyncStatus(routeSync *appsv1alpha1.RouteSync, status appsv1alpha1.ConditionStatus, reason, message string) {
+	routeSync.Status.Conditions = []appsv1alpha1.Condition{
+		{
+			Type:               appsv1alpha1.SyncedConditionType,
+			Status:             status,
+			LastTransitionTime: metav1.Now(),
+			Reason:             reason,
+			Message:            message,
+		},
+	}
 }
 
 func (r *RouteSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {

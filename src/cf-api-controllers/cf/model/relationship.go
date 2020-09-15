@@ -1,7 +1,7 @@
 package model
 
 type Relationship struct {
-	Data RelationshipData `json:"data`
+	Data RelationshipData `json:"data"`
 }
 
 type RelationshipData struct {
