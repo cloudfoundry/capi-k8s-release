@@ -109,7 +109,7 @@ uaa:
       secret_name:
     cloud_controller_username_lookup:
       secret_name:
-   serverCerts:
+    serverCerts:
       secretName: null
 workloads_namespace: cf-workloads
 images:
