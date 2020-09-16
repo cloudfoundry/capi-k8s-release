@@ -38,8 +38,10 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
+              cpu: 500m
               memory: 300Mi
             limits:
+              cpu: 1000m
               memory: 1.2Gi
           volumeMounts:
           - #@ template.replace(shared_config_volume_mounts())
@@ -65,8 +67,10 @@ spec:
             value: #@ ccng_secrets_mount_path
           resources:
             requests:
+              cpu: 100m
               memory: 300Mi
             limits:
+              cpu: 500m
               memory: 1.2Gi
           volumeMounts:
           - #@ template.replace(shared_config_volume_mounts())
@@ -108,6 +112,13 @@ spec:
             httpGet:
               port: 80
               path: "/healthz"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 300Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           volumeMounts:
           - name: nginx
             mountPath: /etc/nginx
@@ -123,6 +134,13 @@ spec:
           - containerPort: 9102
           image: #@ data.values.images.statsd_exporter
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 300Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
       serviceAccountName: cf-api-server-service-account
       volumes:
       - #@ template.replace(shared_config_volumes())
