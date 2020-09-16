@@ -133,7 +133,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.RouteSyncReconciler{
-		CtrClient:          mgr.GetClient(),
+		CtrClient: mgr.GetClient(),
+		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+			Client: httpClient,
+		}, uaaClient),
 		Log:                ctrl.Log.WithName("controllers").WithName("RouteSync"),
 		Scheme:             mgr.GetScheme(),
 		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),

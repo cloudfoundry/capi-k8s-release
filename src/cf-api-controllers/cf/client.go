@@ -41,13 +41,15 @@ type ClientInterface interface {
 	GetDomain(domainGUID string) (model.Domain, error)
 }
 
-// TODO: replace this with the client the cf-cli uses?
 type Client struct {
 	host       string
 	restClient Rest
 	uaaClient  TokenFetcher
 	httpClient *http.Client
 }
+
+// determined by CC API: https://v3-apidocs.cloudfoundry.org/version/3.76.0/index.html#get-a-route
+const MaxResultsPerPage int = 5000
 
 func (c *Client) UpdateBuild(buildGUID string, build model.Build) error {
 	token, err := c.uaaClient.Fetch()
@@ -102,10 +104,17 @@ func (c *Client) UpdateDroplet(dropletGUID string, droplet model.Droplet) error 
 }
 
 func (c *Client) ListRoutes() ([]model.Route, error) {
-	request, err := http.NewRequest("GET", fmt.Sprintf("%s/v3/routes", c.host), nil)
+	token, err := c.uaaClient.Fetch()
 	if err != nil {
 		return nil, err
 	}
+
+	pathAndQuery := fmt.Sprintf("%s/v3/routes?per_page=%d", c.host, MaxResultsPerPage)
+	request, err := http.NewRequest("GET", pathAndQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Authorization", "bearer "+token)
 
 	resp, err := c.httpClient.Do(request)
 	if err != nil {
@@ -115,20 +124,31 @@ func (c *Client) ListRoutes() ([]model.Route, error) {
 		return nil, fmt.Errorf("failed to list routes, received status: %d", resp.StatusCode)
 	}
 
-	var routes []model.Route
-	err = json.NewDecoder(resp.Body).Decode(&routes)
+	var response struct {
+		Pagination struct {
+			TotalPages int `json:"total_pages"`
+		}
+		Resources []model.Route
+	}
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize response from CF API: %w", err)
 	}
 
-	return routes, nil
+	return response.Resources, nil
 }
 
 func (c *Client) GetSpace(spaceGUID string) (model.Space, error) {
+	token, err := c.uaaClient.Fetch()
+	if err != nil {
+		return model.Space{}, err
+	}
+
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v3/spaces/%s", c.host, spaceGUID), nil)
 	if err != nil {
 		return model.Space{}, err
 	}
+	req.Header.Set("Authorization", "bearer "+token)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -148,10 +168,16 @@ func (c *Client) GetSpace(spaceGUID string) (model.Space, error) {
 }
 
 func (c *Client) GetDomain(domainGUID string) (model.Domain, error) {
+	token, err := c.uaaClient.Fetch()
+	if err != nil {
+		return model.Domain{}, err
+	}
+
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v3/domains/%s", c.host, domainGUID), nil)
 	if err != nil {
 		return model.Domain{}, err
 	}
+	req.Header.Set("Authorization", "bearer "+token)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

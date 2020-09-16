@@ -6,14 +6,24 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const(
+	NameLabel = "app.kubernetes.io/name"
+	CFAppGuidLabel = "cloudfoundry.org/app_guid"
+	CFProcessTypeLabel = "cloudfoundry.org/process_type"
+	CFOrgGuidLabel = "cloudfoundry.org/org_guid"
+	CFSpaceGuidLabel = "cloudfoundry.org/space_guid"
+	CFDomainGuidLabel = "cloudfoundry.org/domain_guid"
+	CFRouteGuidLabel = "cloudfoundry.org/route_guid"
+)
+
 func TranslateRoute(route cfmodel.Route, space cfmodel.Space, domain cfmodel.Domain, namespace string) v1alpha1.Route {
 	var destinations []v1alpha1.RouteDestination
 
 	for _, dest := range route.Destinations {
-		// TODO: populate weight info once it is supported by the networking component(s)
 		destinations = append(destinations, v1alpha1.RouteDestination{
-			Guid: dest.GUID,
-			Port: &dest.Port,
+			Guid:   dest.GUID,
+			Port:   &dest.Port,
+			Weight: dest.Weight,
 			App: v1alpha1.DestinationApp{
 				Guid: dest.App.GUID,
 				Process: v1alpha1.AppProcess{
@@ -22,25 +32,24 @@ func TranslateRoute(route cfmodel.Route, space cfmodel.Space, domain cfmodel.Dom
 			},
 			Selector: v1alpha1.DestinationSelector{
 				MatchLabels: map[string]string{
-					"cloudfoundry.org/app_guid":     dest.App.GUID,
-					"cloudfoundry.org/process_type": dest.App.Process.Type,
+					CFAppGuidLabel:     dest.App.GUID,
+					CFProcessTypeLabel: dest.App.Process.Type,
 				},
 			},
 		})
 	}
 
-	// TODO: create/re-use constants for the label keys
 	routeCR := v1alpha1.Route{
 		TypeMeta: v1.TypeMeta{},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      route.GUID,
 			Namespace: namespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/name":       route.GUID,
-				"cloudfoundry.org/org_guid":    space.Relationships["organization"].Data.GUID,
-				"cloudfoundry.org/space_guid":  space.GUID,
-				"cloudfoundry.org/domain_guid": domain.GUID,
-				"cloudfoundry.org/route_guid":  route.GUID,
+				NameLabel:       route.GUID,
+				CFOrgGuidLabel:    space.Relationships["organization"].Data.GUID,
+				CFSpaceGuidLabel:  space.GUID,
+				CFDomainGuidLabel: domain.GUID,
+				CFRouteGuidLabel:  route.GUID,
 			},
 		},
 		Spec: v1alpha1.RouteSpec{

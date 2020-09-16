@@ -53,7 +53,7 @@ type RouteSyncSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	PeriodSeconds int32 `json:"period"`
+	PeriodSeconds int32 `json:"period_seconds"`
 }
 
 // RouteSyncStatus defines the observed state of RouteSync

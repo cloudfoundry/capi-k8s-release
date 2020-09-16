@@ -204,73 +204,89 @@ func TestClientListRoutes(t *testing.T) {
 
 		when("CF API is operating normally", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/routes"),
-						gg.RespondWith(200, `[{
-  "guid": "cbad697f-cac1-48f4-9017-ac08f39dfb31",
-  "protocol": "tcp",
-  "port": 6666,
-  "created_at": "2019-05-10T17:17:48Z",
-  "updated_at": "2019-05-10T17:17:48Z",
-  "host": "a-hostname",
-  "path": "/some_path",
-  "url": "a-hostname.a-domain.com/some_path",
-  "destinations": [
-    {
-      "guid": "385bf117-17f5-4689-8c5c-08c6cc821fed",
-      "app": {
-	"guid": "0a6636b5-7fc4-44d8-8752-0db3e40b35a5",
-	"process": {
-	  "type": "web"
-	}
-      },
-      "weight": null,
-      "port": 8080
+						gg.RespondWith(200, `{
+  "pagination": {
+    "total_results": 1,
+    "total_pages": 1,
+    "first": {
+      "href": "https://api.example.org/v3/routes?page=1&per_page=5000"
     },
-    {
-      "guid": "27e96a3b-5bcf-49ed-8048-351e0be23e6f",
-      "app": {
-	"guid": "f61e59fa-2121-4217-8c7b-15bfd75baf25",
-	"process": {
-	  "type": "web"
-	}
-      },
-      "weight": null,
-      "port": 8080
-    }
-  ],
-  "metadata": {
-    "labels": { },
-    "annotations": { }
+    "last": {
+      "href": "https://api.example.org/v3/routes?page=1&per_page=5000"
+    },
+    "next": null,
+    "previous": null
   },
-  "relationships": {
-    "space": {
-      "data": {
-	"guid": "885a8cb3-c07b-4856-b448-eeb10bf36236"
-      }
-    },
-    "domain": {
-      "data": {
-	"guid": "0b5f3633-194c-42d2-9408-972366617e0e"
+  "resources": [
+    {
+      "guid": "cbad697f-cac1-48f4-9017-ac08f39dfb31",
+      "protocol": "http",
+      "created_at": "2019-05-10T17:17:48Z",
+      "updated_at": "2019-05-10T17:17:48Z",
+      "host": "a-hostname",
+      "path": "/some_path",
+      "url": "a-hostname.a-domain.com/some_path",
+      "destinations": [
+        {
+          "guid": "385bf117-17f5-4689-8c5c-08c6cc821fed",
+          "app": {
+            "guid": "0a6636b5-7fc4-44d8-8752-0db3e40b35a5",
+            "process": {
+              "type": "web"
+            }
+          },
+          "weight": null,
+          "port": 8080
+        },
+        {
+          "guid": "27e96a3b-5bcf-49ed-8048-351e0be23e6f",
+          "app": {
+            "guid": "f61e59fa-2121-4217-8c7b-15bfd75baf25",
+            "process": {
+              "type": "web"
+            }
+          },
+          "weight": null,
+          "port": 8080
+        }
+      ],
+      "metadata": {
+        "labels": {},
+        "annotations": {}
+      },
+      "relationships": {
+        "space": {
+          "data": {
+            "guid": "885a8cb3-c07b-4856-b448-eeb10bf36236"
+          }
+        },
+        "domain": {
+          "data": {
+            "guid": "0b5f3633-194c-42d2-9408-972366617e0e"
+          }
+        }
+      },
+      "links": {
+        "self": {
+          "href": "https://api.example.org/v3/routes/cbad697f-cac1-48f4-9017-ac08f39dfb31"
+        },
+        "space": {
+          "href": "https://api.example.org/v3/spaces/885a8cb3-c07b-4856-b448-eeb10bf36236"
+        },
+        "domain": {
+          "href": "https://api.example.org/v3/domains/0b5f3633-194c-42d2-9408-972366617e0e"
+        },
+        "destinations": {
+          "href": "https://api.example.org/v3/routes/cbad697f-cac1-48f4-9017-ac08f39dfb31/destinations"
+        }
       }
     }
-  },
-  "links": {
-    "self": {
-      "href": "https://api.example.org/v3/routes/cbad697f-cac1-48f4-9017-ac08f39dfb31"
-    },
-    "space": {
-      "href": "https://api.example.org/v3/spaces/885a8cb3-c07b-4856-b448-eeb10bf36236"
-    },
-    "domain": {
-      "href": "https://api.example.org/v3/domains/0b5f3633-194c-42d2-9408-972366617e0e"
-    },
-    "destinations": {
-      "href": "https://api.example.org/v3/routes/cbad697f-cac1-48f4-9017-ac08f39dfb31/destinations"
-    }
-  }
-}]`),
+  ]
+}`),
 					),
 				)
 			})
@@ -283,7 +299,6 @@ func TestClientListRoutes(t *testing.T) {
 				g.Expect(routes).To(HaveLen(1))
 
 				g.Expect(routes[0].GUID).To(Equal("cbad697f-cac1-48f4-9017-ac08f39dfb31"))
-				g.Expect(routes[0].Port).To(Equal(6666))
 				g.Expect(routes[0].Host).To(Equal("a-hostname"))
 				g.Expect(routes[0].Path).To(Equal("/some_path"))
 				g.Expect(routes[0].URL).To(Equal("a-hostname.a-domain.com/some_path"))
@@ -291,6 +306,7 @@ func TestClientListRoutes(t *testing.T) {
 				g.Expect(routes[0].Destinations).To(HaveLen(2))
 				g.Expect(routes[0].Destinations[0].GUID).To(Equal("385bf117-17f5-4689-8c5c-08c6cc821fed"))
 				g.Expect(routes[0].Destinations[0].Port).To(Equal(8080))
+				g.Expect(routes[0].Destinations[0].Weight).To(BeNil())
 				g.Expect(routes[0].Destinations[0].App.GUID).To(Equal("0a6636b5-7fc4-44d8-8752-0db3e40b35a5"))
 				g.Expect(routes[0].Destinations[0].App.Process.Type).To(Equal("web"))
 
@@ -301,6 +317,7 @@ func TestClientListRoutes(t *testing.T) {
 
 		when("CF API is down", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -314,6 +331,7 @@ func TestClientListRoutes(t *testing.T) {
 
 		when("CF API returns a non-200 status code", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/routes"),
@@ -332,10 +350,11 @@ func TestClientListRoutes(t *testing.T) {
 
 		when("CF API returns an unexpected JSON response", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/routes"),
-						gg.RespondWith(200, `{"foo":"bar"}`),
+						gg.RespondWith(200, `{`),
 					),
 				)
 			})
@@ -345,6 +364,19 @@ func TestClientListRoutes(t *testing.T) {
 
 				g.Expect(err).ToNot(BeNil())
 				g.Expect(err.Error()).To(ContainSubstring("failed to deserialize response from CF API"))
+			})
+		})
+
+		when("uaa client fails to fetch a token", func() {
+			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+			})
+
+			it("errors", func() {
+				_, err := client.ListRoutes()
+
+				g.Expect(err).ToNot(BeNil())
+				g.Expect(err.Error()).To(ContainSubstring("uaa-fail"))
 			})
 		})
 	})
@@ -373,6 +405,7 @@ func TestClientGetSpace(t *testing.T) {
 
 		when("CF API is operating normally", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920"),
@@ -429,6 +462,7 @@ func TestClientGetSpace(t *testing.T) {
 
 		when("CF API is down", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -442,6 +476,7 @@ func TestClientGetSpace(t *testing.T) {
 
 		when("CF API returns a non-200 status code", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/spaces/space-guid"),
@@ -455,6 +490,19 @@ func TestClientGetSpace(t *testing.T) {
 
 				g.Expect(err).ToNot(BeNil())
 				g.Expect(err.Error()).To(ContainSubstring("failed to get space, received status: 418"))
+			})
+		})
+
+		when("uaa client fails to fetch a token", func() {
+			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+			})
+
+			it("errors", func() {
+				_, err := client.GetSpace("space-guid")
+
+				g.Expect(err).ToNot(BeNil())
+				g.Expect(err.Error()).To(ContainSubstring("uaa-fail"))
 			})
 		})
 	})
@@ -483,6 +531,7 @@ func TestClientGetDomain(t *testing.T) {
 
 		when("CF API is operating normally", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5"),
@@ -542,6 +591,7 @@ func TestClientGetDomain(t *testing.T) {
 
 		when("CF API is down", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -555,6 +605,7 @@ func TestClientGetDomain(t *testing.T) {
 
 		when("CF API returns a non-200 status code", func() {
 			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						gg.VerifyRequest("GET", "/v3/domains/domain-guid"),
@@ -568,6 +619,19 @@ func TestClientGetDomain(t *testing.T) {
 
 				g.Expect(err).ToNot(BeNil())
 				g.Expect(err.Error()).To(ContainSubstring("failed to get domain, received status: 418"))
+			})
+		})
+
+		when("uaa client fails to fetch a token", func() {
+			it.Before(func() {
+				client.uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+			})
+
+			it("errors", func() {
+				_, err := client.GetDomain("domain-guid")
+
+				g.Expect(err).ToNot(BeNil())
+				g.Expect(err.Error()).To(ContainSubstring("uaa-fail"))
 			})
 		})
 	})

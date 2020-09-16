@@ -36,11 +36,11 @@ spec:
         spec:
           description: RouteSyncSpec defines the desired state of RouteSync
           properties:
-            period:
+            period_seconds:
               format: int32
               type: integer
           required:
-          - period
+          - period_seconds
           type: object
         status:
           description: RouteSyncStatus defines the observed state of RouteSync
@@ -51,7 +51,7 @@ spec:
                 this file'
               items:
                 description: 'Loosely following this KEP: https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/1623-standardize-conditions
-                  Eventually we can update to use standard types'
+                  Eventually we can update to use standard Kubernetes types'
                 properties:
                   lastTransitionTime:
                     format: date-time

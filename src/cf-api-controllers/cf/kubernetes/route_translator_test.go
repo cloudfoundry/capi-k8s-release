@@ -23,17 +23,21 @@ var _ = Describe("RouteTranslator", func() {
 			namespace = "some-dope-space"
 		)
 
+		intPtr := func(x int) *int {
+			return &x
+		}
+
 		BeforeEach(func() {
 			route = model.Route{
 				GUID: "route-guid",
-				Port: 1234,
 				Host: "host",
 				Path: "/path",
 				URL:  "host.domain.com/path",
 				Destinations: []model.Destination{
 					{
-						GUID: "destination-guid",
-						Port: 8080,
+						GUID:   "destination-guid",
+						Port:   8080,
+						Weight: intPtr(100),
 						App: model.DestinationApp{
 							GUID: "app-guid",
 							Process: model.DestinationProcess{
@@ -90,7 +94,7 @@ var _ = Describe("RouteTranslator", func() {
 			Expect(routeCR.Spec.Destinations).To(HaveLen(1))
 			Expect(routeCR.Spec.Destinations[0].Guid).To(Equal(route.Destinations[0].GUID))
 			Expect(routeCR.Spec.Destinations[0].Port).To(gstruct.PointTo(Equal(8080)))
-			// TODO: assert against weight info once it is supported by the networking component(s)
+			Expect(routeCR.Spec.Destinations[0].Weight).To(gstruct.PointTo(Equal(100)))
 			Expect(routeCR.Spec.Destinations[0].App.Guid).To(Equal(route.Destinations[0].App.GUID))
 			Expect(routeCR.Spec.Destinations[0].App.Process.Type).To(Equal(route.Destinations[0].App.Process.Type))
 

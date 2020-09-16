@@ -3,7 +3,7 @@ package model
 type Destination struct {
 	GUID   string         `json:"guid"`
 	App    DestinationApp `json:"app"`
-	Weight int            `json:"weight"`
+	Weight *int           `json:"weight"`
 	Port   int            `json:"port"`
 }
 

@@ -47,8 +47,9 @@ var _ = Describe("RouteSyncController", func() {
 					},
 					Destinations: []networkingv1alpha1.RouteDestination{
 						{
-							Guid: "dest-guid",
-							Port: &port,
+							Guid:   "dest-guid",
+							Port:   &port,
+							Weight: nil,
 							App: networkingv1alpha1.DestinationApp{
 								Guid: "app-guid",
 								Process: networkingv1alpha1.AppProcess{
