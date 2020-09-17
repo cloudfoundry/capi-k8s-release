@@ -17,7 +17,7 @@ fluent:
 internal_service_hostname: #@ "capi.{}.svc.cluster.local".format(data.values.system_namespace)
 internal_service_port: 80
 
-pid_filename: /cloud_controller_ng/cloud_controller_ng.pid
+pid_filename: cloud_controller_ng.pid
 newrelic_enabled: false
 development_mode: false
 
@@ -55,6 +55,7 @@ internal_api:
 
 nginx:
   use_nginx: true
+  #! TODO: consume this from a variable since it's defined in the pod's mounts
   instance_socket: "/data/cloud_controller_ng/cloud_controller.sock"
 
 index: 0
@@ -153,7 +154,7 @@ default_health_check_timeout: 60
 maximum_health_check_timeout: 180
 
 runtimes_file: "/dev/null"
-stacks_file: "/cloud_controller_ng/config/stacks.yml"
+stacks_file: config/stacks.yml
 
 shared_isolation_segment_name: shared
 

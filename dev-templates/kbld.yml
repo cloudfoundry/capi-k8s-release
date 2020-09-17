@@ -5,8 +5,14 @@ kind: Sources
 sources:
   - imageRepo: cloudfoundry/cloud-controller-ng
     path: #@ data.values.src_dirs.ccng
+    pack: &ccngPackConfig
+      build:
+        builder: paketobuildpacks/builder:full
+        buildpacks:
+          - gcr.io/paketo-community/ruby
   - imageRepo: #@ data.values.kbld.destination.ccng
     path: #@ data.values.src_dirs.ccng
+    pack: *ccngPackConfig
   - imageRepo: cloudfoundry/cf-api-controllers
     path: #@ data.values.src_dirs.cf_api_controllers
     pack: &packConfig
