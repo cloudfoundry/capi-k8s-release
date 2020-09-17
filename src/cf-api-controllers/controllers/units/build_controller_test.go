@@ -1,4 +1,4 @@
-package controllers_test
+package units_test
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-var _ = Describe("BuildReconciler", func() {
+var _ = Describe("BuildController", func() {
 	Describe("Reconcile", func() {
 		When("a build succeeds", func() {
 			var (
