@@ -160,8 +160,8 @@ var _ = BeforeSuite(func(done Done) {
 
 	fakeCFClient = new(cffakes.FakeClientInterface)
 	err = (&RouteSyncReconciler{
+		Client:             k8sManager.GetClient(),
 		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
-		CtrClient:          k8sManager.GetClient(),
 		Scheme:             k8sManager.GetScheme(),
 		CFClient:           fakeCFClient,
 		WorkloadsNamespace: workloadsNamespace,

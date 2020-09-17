@@ -77,7 +77,6 @@ var _ = Describe("RouteTranslator", func() {
 
 			Expect(routeCR.ObjectMeta.Name).To(Equal(route.GUID))
 			Expect(routeCR.ObjectMeta.Namespace).To(Equal(namespace))
-			// TODO: assertions for all the metadata (e.g. labels and annotations)
 			Expect(routeCR.ObjectMeta.Labels).To(HaveKeyWithValue("app.kubernetes.io/name", route.GUID))
 			Expect(routeCR.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/org_guid", space.Relationships["organization"].Data.GUID))
 			Expect(routeCR.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/space_guid", space.GUID))

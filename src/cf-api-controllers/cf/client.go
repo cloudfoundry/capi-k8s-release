@@ -22,12 +22,14 @@ func NewClient(host string, restClient Rest, uaaClient TokenFetcher) *Client {
 }
 
 // TODO: remove mockery usages after refactoring everything to use Ginkgo for consistency
+//go:generate mockery -case snake -name Rest
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Rest
 type Rest interface {
 	Patch(url string, authToken string, body io.Reader) (*http.Response, error)
 }
 
 // TODO: remove mockery usages after refactoring everything to use Ginkgo for consistency
+//go:generate mockery -case snake -name TokenFetcher
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . TokenFetcher
 type TokenFetcher interface {
 	Fetch() (string, error)

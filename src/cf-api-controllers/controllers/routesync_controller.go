@@ -42,7 +42,7 @@ import (
 
 // RouteSyncReconciler reconciles a RouteSync object
 type RouteSyncReconciler struct {
-	CtrClient          client.Client
+	client.Client
 	Log                logr.Logger
 	Scheme             *runtime.Scheme
 	CFClient           cf.ClientInterface
@@ -57,7 +57,7 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("routesync", req.NamespacedName)
 
 	var routeSync appsv1alpha1.RouteSync
-	err := r.CtrClient.Get(ctx, req.NamespacedName, &routeSync)
+	err := r.Get(ctx, req.NamespacedName, &routeSync)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.Log.WithValues("request", req.NamespacedName).Error(err, "RouteSync resource not found")
@@ -67,24 +67,19 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
 	}
 
-	// TODO: confirm that kubebuilder replays all events on startup (i.e. its bookmark of last event doesn't persist somewhere)
-
-	// 1. fetch all routes from CC (done)
 	routesInCC, err := r.CFClient.ListRoutes()
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err) // untested
 	}
 
-	// 2. fetch all route CRs from kubernetes
 	var routesInK8s networkingv1alpha1.RouteList
-	err = r.CtrClient.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
+	err = r.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
 		return ctrl.Result{}, err // untested
 	}
 
-	// 3. map each slice of routes into a slice of strings
 	ccRouteMap := make(map[string]*model.Route)
 	for _, ccRoute := range routesInCC {
 		ccRouteMap[ccRoute.GUID] = &ccRoute
@@ -95,7 +90,7 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		k8sRouteGUIDs[k8sRoute.Name] = struct{}{}
 	}
 
-	// 4. calculate the set of route GUIDs which need to be created in k8s (mostly done)
+	// calculate the set of route GUIDs which need to be created in k8s
 	var missingInK8s []*model.Route
 	for ccRouteGuid, ccRoute := range ccRouteMap {
 		if _, ok := k8sRouteGUIDs[ccRouteGuid]; !ok {
@@ -105,9 +100,9 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	reconciledSuccessfully := true
 
-	// 5. iterate over all routes to be created and create them (started)
+	// iterate over all routes to be created and create them
 	for _, ccRoute := range missingInK8s {
-		// 5a. fetch additional information from CC (domain, space)
+		// fetch additional required information from CC (domain, space)
 		spaceGUID := ccRoute.Relationships["space"].Data.GUID
 		space, err := r.CFClient.GetSpace(spaceGUID)
 		if err != nil {
@@ -122,18 +117,19 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			r.Log.WithValues("request", req.NamespacedName, "domain_guid", domainGUID).Error(err, "errored fetching CF API domain")
 		}
 
-		// 5b. translate CC objects into k8s CR
 		newRouteCR := kubernetes.TranslateRoute(*ccRoute, space, domain, r.WorkloadsNamespace)
 
-		// 5c. send CR to k8s for creation
-		err = r.CtrClient.Create(ctx, &newRouteCR)
+		err = r.Create(ctx, &newRouteCR)
 		if err != nil {
 			reconciledSuccessfully = false
 			r.Log.WithValues("request", req.NamespacedName, "route_guid", ccRoute.GUID).Error(err, "errored creating Route resource in k8s")
+			continue
 		}
+
+		r.Log.WithValues("request", req.NamespacedName, "route_guid", ccRoute.GUID).Error(err, "successfully created Route resource")
 	}
 
-	// 6. calculate the set of route GUIDs which need to be deleted in k8s (mostly done)
+	// calculate the set of route GUIDs which need to be deleted in k8s
 	var extraInK8s []string
 	for k8sRouteGuid, _ := range k8sRouteGUIDs {
 		if _, ok := ccRouteMap[k8sRouteGuid]; !ok {
@@ -141,18 +137,23 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	// 7. iterate over all routes to be deleted and delete them
+	// iterate over all routes to be deleted and delete them
 	for _, extraRouteGUID := range extraInK8s {
-		err = r.CtrClient.Delete(ctx, &networkingv1alpha1.Route{
+		err = r.Delete(ctx, &networkingv1alpha1.Route{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      extraRouteGUID,
 				Namespace: r.WorkloadsNamespace,
 			},
 		})
-		if err != nil {
+
+		// ignoring "not found" errors because the Route is already gone from k8s
+		if err != nil && !apierrors.IsNotFound(err) {
 			reconciledSuccessfully = false
 			r.Log.WithValues("request", req.NamespacedName, "route_guid", extraRouteGUID).Error(err, "errored deleting Route resource in k8s")
+			continue
 		}
+
+		r.Log.WithValues("request", req.NamespacedName, "route_guid", extraRouteGUID).Error(err, "successfully deleted Route resource")
 	}
 
 	if !reconciledSuccessfully {
@@ -170,7 +171,7 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *RouteSyncReconciler) updateSyncStatusSuccess(ctx context.Context, routeSync *appsv1alpha1.RouteSync) error {
 	setRouteSyncStatus(routeSync, appsv1alpha1.TrueConditionStatus, appsv1alpha1.CompletedConditionReason, "")
 
-	if err := r.CtrClient.Status().Update(ctx, routeSync); err != nil {
+	if err := r.Status().Update(ctx, routeSync); err != nil {
 		return err
 	}
 
@@ -180,7 +181,7 @@ func (r *RouteSyncReconciler) updateSyncStatusSuccess(ctx context.Context, route
 func (r *RouteSyncReconciler) updateSyncStatusFailure(ctx context.Context, routeSync *appsv1alpha1.RouteSync, failureMessage string) error {
 	setRouteSyncStatus(routeSync, appsv1alpha1.FalseConditionStatus, appsv1alpha1.FailedConditionReason, failureMessage)
 
-	if err := r.CtrClient.Status().Update(ctx, routeSync); err != nil {
+	if err := r.Status().Update(ctx, routeSync); err != nil {
 		return err
 	}
 

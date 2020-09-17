@@ -283,7 +283,7 @@ var _ = Describe("RouteSyncController", func() {
 
 				Expect(syncCondition.Status).To(Equal(appsv1alpha1.TrueConditionStatus))
 				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.CompletedConditionReason))
-				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 1))
+				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 5))
 			})
 		})
 

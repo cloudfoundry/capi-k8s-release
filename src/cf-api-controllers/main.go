@@ -116,8 +116,7 @@ func main() {
 
 	clientset, err := appsv1.NewForConfig(mgr.GetConfig())
 	if err != nil {
-		// TODO: something better?
-		panic(err.Error())
+		panic(err)
 	}
 	if err = (&controllers.ImageReconciler{
 		Client: mgr.GetClient(),
@@ -133,7 +132,7 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.RouteSyncReconciler{
-		CtrClient: mgr.GetClient(),
+		Client: mgr.GetClient(),
 		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
