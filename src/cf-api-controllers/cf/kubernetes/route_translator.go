@@ -6,14 +6,14 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const(
-	NameLabel = "app.kubernetes.io/name"
-	CFAppGuidLabel = "cloudfoundry.org/app_guid"
+const (
+	NameLabel          = "app.kubernetes.io/name"
+	CFAppGuidLabel     = "cloudfoundry.org/app_guid"
 	CFProcessTypeLabel = "cloudfoundry.org/process_type"
-	CFOrgGuidLabel = "cloudfoundry.org/org_guid"
-	CFSpaceGuidLabel = "cloudfoundry.org/space_guid"
-	CFDomainGuidLabel = "cloudfoundry.org/domain_guid"
-	CFRouteGuidLabel = "cloudfoundry.org/route_guid"
+	CFOrgGuidLabel     = "cloudfoundry.org/org_guid"
+	CFSpaceGuidLabel   = "cloudfoundry.org/space_guid"
+	CFDomainGuidLabel  = "cloudfoundry.org/domain_guid"
+	CFRouteGuidLabel   = "cloudfoundry.org/route_guid"
 )
 
 func TranslateRoute(route cfmodel.Route, space cfmodel.Space, domain cfmodel.Domain, namespace string) v1alpha1.Route {
@@ -45,7 +45,7 @@ func TranslateRoute(route cfmodel.Route, space cfmodel.Space, domain cfmodel.Dom
 			Name:      route.GUID,
 			Namespace: namespace,
 			Labels: map[string]string{
-				NameLabel:       route.GUID,
+				NameLabel:         route.GUID,
 				CFOrgGuidLabel:    space.Relationships["organization"].Data.GUID,
 				CFSpaceGuidLabel:  space.GUID,
 				CFDomainGuidLabel: domain.GUID,

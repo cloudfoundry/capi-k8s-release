@@ -332,7 +332,7 @@ var _ = Describe("RouteSyncController", func() {
 				Expect(syncCondition.Status).To(Equal(appsv1alpha1.FalseConditionStatus))
 				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.FailedConditionReason))
 				Expect(syncCondition.Message).To(Equal(errMsg))
-				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 1))
+				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 5))
 			})
 		})
 	})
