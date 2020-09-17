@@ -159,7 +159,7 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	fakeCFClient = new(cffakes.FakeClientInterface)
-	err = (&RouteSyncReconciler{
+	err = (&PeriodicSyncReconciler{
 		Client:             k8sManager.GetClient(),
 		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
 		Scheme:             k8sManager.GetScheme(),
@@ -207,10 +207,10 @@ var _ = AfterEach(func() {
 		Expect(k8sClient.DeleteAllOf(ctx, new(appsv1.StatefulSet), client.InNamespace(workloadsNamespace))).To(Succeed())
 	}
 
-	rsList := new(v1alpha1.RouteSyncList)
+	rsList := new(v1alpha1.PeriodicSyncList)
 	Expect(k8sClient.List(ctx, rsList, client.InNamespace(workloadsNamespace))).To(Succeed())
 	if len(rsList.Items) > 0 {
-		Expect(k8sClient.DeleteAllOf(ctx, new(v1alpha1.RouteSync), client.InNamespace(workloadsNamespace))).To(Succeed())
+		Expect(k8sClient.DeleteAllOf(ctx, new(v1alpha1.PeriodicSync), client.InNamespace(workloadsNamespace))).To(Succeed())
 	}
 
 	rList := new(networkingv1alpha1.RouteList)

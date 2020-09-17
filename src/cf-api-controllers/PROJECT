@@ -6,6 +6,6 @@ resources:
   kind: Build
   version: v1alpha1
 - group: cloudfoundry.org
-  kind: RouteSync
+  kind: PeriodicSync
   version: v1alpha1
 version: "2"

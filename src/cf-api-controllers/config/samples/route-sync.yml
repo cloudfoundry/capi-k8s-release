@@ -1,7 +1,7 @@
 ---
-# Sample RouteSync
+# Sample PeriodicSync
 apiVersion: apps.cloudfoundry.org/v1alpha1
-kind: RouteSync
+kind: PeriodicSync
 metadata:
   name: periodic-route-sync
   namespace: cf-workloads

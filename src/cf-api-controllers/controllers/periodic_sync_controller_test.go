@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ = Describe("RouteSyncController", func() {
+var _ = Describe("PeriodicSyncController", func() {
 	const (
 		routeGUID = "route-guid"
 	)
@@ -68,7 +68,7 @@ var _ = Describe("RouteSyncController", func() {
 		var createdRouteResource networkingv1alpha1.Route
 		Eventually(func() error {
 			return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &createdRouteResource)
-		}, "5s", "1s").Should(Succeed())
+		}, "8s", "1s").Should(Succeed())
 	}
 
 	When("there are routes in the CF API but not in Kubernetes", func() {
@@ -138,12 +138,12 @@ var _ = Describe("RouteSyncController", func() {
 				Internal: false,
 			}, nil)
 
-			Expect(k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+			Expect(k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "whatever",
 					Namespace: workloadsNamespace,
 				},
-				Spec: appsv1alpha1.RouteSyncSpec{
+				Spec: appsv1alpha1.PeriodicSyncSpec{
 					PeriodSeconds: 1,
 				},
 			})).To(Succeed())
@@ -188,12 +188,12 @@ var _ = Describe("RouteSyncController", func() {
 			createRouteInK8s()
 
 			Expect(
-				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+				k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "whatever",
 						Namespace: workloadsNamespace,
 					},
-					Spec: appsv1alpha1.RouteSyncSpec{
+					Spec: appsv1alpha1.PeriodicSyncSpec{
 						PeriodSeconds: 1,
 					},
 				}),
@@ -214,19 +214,19 @@ var _ = Describe("RouteSyncController", func() {
 			createRouteInK8s()
 
 			Expect(
-				k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+				k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "whatever",
 						Namespace: workloadsNamespace,
 					},
-					Spec: appsv1alpha1.RouteSyncSpec{
+					Spec: appsv1alpha1.PeriodicSyncSpec{
 						PeriodSeconds: 1,
 					},
 				}),
 			).To(Succeed())
 		})
 
-		It("synchronizes at the frequency set on the RouteSync resource", func() {
+		It("synchronizes at the frequency set on the PeriodicSync resource", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
 			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
@@ -239,10 +239,10 @@ var _ = Describe("RouteSyncController", func() {
 		})
 	})
 
-	Describe("RouteSync Status", func() {
+	Describe("PeriodicSync Status", func() {
 		Context("when the sync succeeds", func() {
 			const (
-				routeSyncName = "my-route-sync"
+				periodicSyncName = "my-route-sync"
 			)
 			var (
 				testStartTime metav1.Time
@@ -255,29 +255,29 @@ var _ = Describe("RouteSyncController", func() {
 				createRouteInK8s()
 
 				Expect(
-					k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+					k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      routeSyncName,
+							Name:      periodicSyncName,
 							Namespace: workloadsNamespace,
 						},
-						Spec: appsv1alpha1.RouteSyncSpec{
+						Spec: appsv1alpha1.PeriodicSyncSpec{
 							PeriodSeconds: 1,
 						},
 					}),
 				).To(Succeed())
 			})
 
-			It("updates the Synced condition on the RouteSync's Status", func() {
-				routeSync := appsv1alpha1.RouteSync{}
+			It("updates the Synced condition on the PeriodicSync's Status", func() {
+				periodicSync := appsv1alpha1.PeriodicSync{}
 				Eventually(func() error {
-					return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					return k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
 				}, "5s", "1s").Should(Succeed())
 
 				var syncCondition *appsv1alpha1.Condition
 				Eventually(func() *appsv1alpha1.Condition {
-					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
 					Expect(err).NotTo(HaveOccurred())
-					syncCondition = findSyncCondition(routeSync.Status.Conditions)
+					syncCondition = findSyncCondition(periodicSync.Status.Conditions)
 					return syncCondition
 				}, "5s", "1s").ShouldNot(BeNil())
 
@@ -289,7 +289,7 @@ var _ = Describe("RouteSyncController", func() {
 
 		Context("when the sync fails", func() {
 			const (
-				routeSyncName = "my-route-sync"
+				periodicSyncName = "my-route-sync"
 			)
 			var (
 				testStartTime metav1.Time
@@ -303,29 +303,29 @@ var _ = Describe("RouteSyncController", func() {
 				createRouteInK8s()
 
 				Expect(
-					k8sClient.Create(context.Background(), &appsv1alpha1.RouteSync{
+					k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      routeSyncName,
+							Name:      periodicSyncName,
 							Namespace: workloadsNamespace,
 						},
-						Spec: appsv1alpha1.RouteSyncSpec{
+						Spec: appsv1alpha1.PeriodicSyncSpec{
 							PeriodSeconds: 1,
 						},
 					}),
 				).To(Succeed())
 			})
 
-			It("updates the Synced condition on the RouteSync's Status", func() {
-				routeSync := appsv1alpha1.RouteSync{}
+			It("updates the Synced condition on the PeriodicSync's Status", func() {
+				periodicSync := appsv1alpha1.PeriodicSync{}
 				Eventually(func() error {
-					return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					return k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
 				}, "5s", "1s").Should(Succeed())
 
 				var syncCondition *appsv1alpha1.Condition
 				Eventually(func() *appsv1alpha1.Condition {
-					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: routeSyncName, Namespace: workloadsNamespace}, &routeSync)
+					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
 					Expect(err).NotTo(HaveOccurred())
-					syncCondition = findSyncCondition(routeSync.Status.Conditions)
+					syncCondition = findSyncCondition(periodicSync.Status.Conditions)
 					return syncCondition
 				}, "5s", "1s").ShouldNot(BeNil())
 

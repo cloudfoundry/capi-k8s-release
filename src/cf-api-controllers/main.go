@@ -131,16 +131,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Image")
 		os.Exit(1)
 	}
-	if err = (&controllers.RouteSyncReconciler{
+	if err = (&controllers.PeriodicSyncReconciler{
 		Client: mgr.GetClient(),
 		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
-		Log:                ctrl.Log.WithName("controllers").WithName("RouteSync"),
+		Log:                ctrl.Log.WithName("controllers").WithName("PeriodicSync"),
 		Scheme:             mgr.GetScheme(),
 		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "RouteSync")
+		setupLog.Error(err, "unable to create controller", "controller", "PeriodicSync")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

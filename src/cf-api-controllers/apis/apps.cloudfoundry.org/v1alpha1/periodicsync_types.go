@@ -48,16 +48,16 @@ const (
 	FailedConditionReason    = "Failed"
 )
 
-// RouteSyncSpec defines the desired state of RouteSync
-type RouteSyncSpec struct {
+// PeriodicSyncSpec defines the desired state of PeriodicSync
+type PeriodicSyncSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	PeriodSeconds int32 `json:"period_seconds"`
 }
 
-// RouteSyncStatus defines the observed state of RouteSync
-type RouteSyncStatus struct {
+// PeriodicSyncStatus defines the observed state of PeriodicSync
+type PeriodicSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Conditions []Condition `json:"conditions"`
@@ -66,24 +66,24 @@ type RouteSyncStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// RouteSync is the Schema for the routesyncs API
-type RouteSync struct {
+// PeriodicSync is the Schema for the periodicsyncs API
+type PeriodicSync struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RouteSyncSpec   `json:"spec,omitempty"`
-	Status RouteSyncStatus `json:"status,omitempty"`
+	Spec   PeriodicSyncSpec   `json:"spec,omitempty"`
+	Status PeriodicSyncStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// RouteSyncList contains a list of RouteSync
-type RouteSyncList struct {
+// PeriodicSyncList contains a list of PeriodicSync
+type PeriodicSyncList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RouteSync `json:"items"`
+	Items           []PeriodicSync `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&RouteSync{}, &RouteSyncList{})
+	SchemeBuilder.Register(&PeriodicSync{}, &PeriodicSyncList{})
 }

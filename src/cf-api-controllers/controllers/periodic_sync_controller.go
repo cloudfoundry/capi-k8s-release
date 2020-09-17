@@ -40,8 +40,8 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 )
 
-// RouteSyncReconciler reconciles a RouteSync object
-type RouteSyncReconciler struct {
+// PeriodicSyncReconciler reconciles a PeriodicSync object
+type PeriodicSyncReconciler struct {
 	client.Client
 	Log                logr.Logger
 	Scheme             *runtime.Scheme
@@ -49,34 +49,34 @@ type RouteSyncReconciler struct {
 	WorkloadsNamespace string
 }
 
-// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=routesyncs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=routesyncs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=periodicsyncs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps.cloudfoundry.org,resources=periodicsyncs/status,verbs=get;update;patch
 
-func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	_ = r.Log.WithValues("routesync", req.NamespacedName)
+	_ = r.Log.WithValues("periodicsync", req.NamespacedName)
 
-	var routeSync appsv1alpha1.RouteSync
-	err := r.Get(ctx, req.NamespacedName, &routeSync)
+	var periodicSync appsv1alpha1.PeriodicSync
+	err := r.Get(ctx, req.NamespacedName, &periodicSync)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			r.Log.WithValues("request", req.NamespacedName).Error(err, "RouteSync resource not found")
+			r.Log.WithValues("request", req.NamespacedName).Error(err, "PeriodicSync resource not found")
 		} else {
-			r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+			r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
 	}
 
 	routesInCC, err := r.CFClient.ListRoutes()
 	if err != nil {
-		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err) // untested
 	}
 
 	var routesInK8s networkingv1alpha1.RouteList
 	err = r.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
 	if err != nil {
-		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		return ctrl.Result{}, err // untested
 	}
 
@@ -126,7 +126,7 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			continue
 		}
 
-		r.Log.WithValues("request", req.NamespacedName, "route_guid", ccRoute.GUID).Error(err, "successfully created Route resource")
+		r.Log.WithValues("request", req.NamespacedName, "route_guid", ccRoute.GUID).Info("successfully created Route resource")
 	}
 
 	// calculate the set of route GUIDs which need to be deleted in k8s
@@ -153,43 +153,43 @@ func (r *RouteSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			continue
 		}
 
-		r.Log.WithValues("request", req.NamespacedName, "route_guid", extraRouteGUID).Error(err, "successfully deleted Route resource")
+		r.Log.WithValues("request", req.NamespacedName, "route_guid", extraRouteGUID).Info("successfully deleted Route resource")
 	}
 
 	if !reconciledSuccessfully {
 		err := errors.New("failed to reconcile at least one route")
-		r.updateSyncStatusFailure(ctx, &routeSync, err.Error())
+		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		return ctrl.Result{}, err // untested
 	}
 
-	if err := r.updateSyncStatusSuccess(ctx, &routeSync); err != nil {
+	if err := r.updateSyncStatusSuccess(ctx, &periodicSync); err != nil {
 		return ctrl.Result{}, err
 	}
-	return ctrl.Result{RequeueAfter: time.Duration(routeSync.Spec.PeriodSeconds) * time.Second}, nil
+	return ctrl.Result{RequeueAfter: time.Duration(periodicSync.Spec.PeriodSeconds) * time.Second}, nil
 }
 
-func (r *RouteSyncReconciler) updateSyncStatusSuccess(ctx context.Context, routeSync *appsv1alpha1.RouteSync) error {
-	setRouteSyncStatus(routeSync, appsv1alpha1.TrueConditionStatus, appsv1alpha1.CompletedConditionReason, "")
+func (r *PeriodicSyncReconciler) updateSyncStatusSuccess(ctx context.Context, periodicSync *appsv1alpha1.PeriodicSync) error {
+	setPeriodicSyncStatus(periodicSync, appsv1alpha1.TrueConditionStatus, appsv1alpha1.CompletedConditionReason, "")
 
-	if err := r.Status().Update(ctx, routeSync); err != nil {
+	if err := r.Status().Update(ctx, periodicSync); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *RouteSyncReconciler) updateSyncStatusFailure(ctx context.Context, routeSync *appsv1alpha1.RouteSync, failureMessage string) error {
-	setRouteSyncStatus(routeSync, appsv1alpha1.FalseConditionStatus, appsv1alpha1.FailedConditionReason, failureMessage)
+func (r *PeriodicSyncReconciler) updateSyncStatusFailure(ctx context.Context, periodicSync *appsv1alpha1.PeriodicSync, failureMessage string) error {
+	setPeriodicSyncStatus(periodicSync, appsv1alpha1.FalseConditionStatus, appsv1alpha1.FailedConditionReason, failureMessage)
 
-	if err := r.Status().Update(ctx, routeSync); err != nil {
+	if err := r.Status().Update(ctx, periodicSync); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func setRouteSyncStatus(routeSync *appsv1alpha1.RouteSync, status appsv1alpha1.ConditionStatus, reason, message string) {
-	routeSync.Status.Conditions = []appsv1alpha1.Condition{
+func setPeriodicSyncStatus(periodicSync *appsv1alpha1.PeriodicSync, status appsv1alpha1.ConditionStatus, reason, message string) {
+	periodicSync.Status.Conditions = []appsv1alpha1.Condition{
 		{
 			Type:               appsv1alpha1.SyncedConditionType,
 			Status:             status,
@@ -200,8 +200,8 @@ func setRouteSyncStatus(routeSync *appsv1alpha1.RouteSync, status appsv1alpha1.C
 	}
 }
 
-func (r *RouteSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *PeriodicSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appsv1alpha1.RouteSync{}).
+		For(&appsv1alpha1.PeriodicSync{}).
 		Complete(r)
 }

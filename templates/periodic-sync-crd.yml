@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
-  name: routesyncs.apps.cloudfoundry.org
+  name: periodicsyncs.apps.cloudfoundry.org
 spec:
   group: apps.cloudfoundry.org
   names:
-    kind: RouteSync
-    listKind: RouteSyncList
-    plural: routesyncs
-    singular: routesync
+    kind: PeriodicSync
+    listKind: PeriodicSyncList
+    plural: periodicsyncs
+    singular: periodicsync
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: RouteSync is the Schema for the routesyncs API
+      description: PeriodicSync is the Schema for the periodicsyncs API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -33,7 +33,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: RouteSyncSpec defines the desired state of RouteSync
+          description: PeriodicSyncSpec defines the desired state of PeriodicSync
           properties:
             period_seconds:
               format: int32
@@ -42,7 +42,7 @@ spec:
             - period_seconds
           type: object
         status:
-          description: RouteSyncStatus defines the observed state of RouteSync
+          description: PeriodicSyncStatus defines the observed state of PeriodicSync
           properties:
             conditions:
               description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
