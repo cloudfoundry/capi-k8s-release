@@ -19,6 +19,7 @@ package main
 import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cfg"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"crypto/tls"
 	"flag"
@@ -63,17 +64,13 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	if os.Getenv("CF_API_HOST") == "" {
-		panic("`CF_API_HOST` environment variable must be set")
-	}
-	if os.Getenv("STAGING_NAMESPACE") == "" {
-		panic("`STAGING_NAMESPACE` environment variable must be set")
-	}
-	if os.Getenv("WORKLOADS_NAMESPACE") == "" {
-		panic("`WORKLOADS_NAMESPACE` environment variable must be set")
-	}
-
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	config, err := cfg.Load()
+	if err != nil {
+		setupLog.Error(err, "unable to load required config")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -93,7 +90,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	uaaClient := auth.NewUAAClient()
+	uaaClient := auth.NewUAAClient(config)
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -105,7 +102,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Build"),
 		Scheme: mgr.GetScheme(),
-		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+		CFClient: cf.NewClient(config.CFAPIHost(), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
 		ImageConfigFetcher: image_registry.NewImageConfigFetcher(keychainFactory),
@@ -122,23 +119,23 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Image"),
 		Scheme: mgr.GetScheme(),
-		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+		CFClient: cf.NewClient(config.CFAPIHost(), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
 		AppsClientSet:      clientset,
-		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
+		WorkloadsNamespace: config.WorkloadsNamespace(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Image")
 		os.Exit(1)
 	}
 	if err = (&controllers.PeriodicSyncReconciler{
 		Client: mgr.GetClient(),
-		CFClient: cf.NewClient(os.Getenv("CF_API_HOST"), &cf.RestClient{
+		CFClient: cf.NewClient(config.CFAPIHost(), &cf.RestClient{
 			Client: httpClient,
 		}, uaaClient),
 		Log:                ctrl.Log.WithName("controllers").WithName("PeriodicSync"),
 		Scheme:             mgr.GetScheme(),
-		WorkloadsNamespace: os.Getenv("WORKLOADS_NAMESPACE"),
+		WorkloadsNamespace: config.WorkloadsNamespace(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PeriodicSync")
 		os.Exit(1)
