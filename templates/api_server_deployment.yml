@@ -29,7 +29,10 @@ spec:
       containers:
         - name: cf-api-server
           image: #@ data.values.images.ccng
-          command: [ "/cnb/process/web" ]
+          #! TODO: temporary override while CI is backed up
+          command: [ "/cnb/lifecycle/launcher", "bin/cloud_controller",
+                     "-c", "/config/cloud_controller_ng.yml",
+                     "-s", "/config/secrets.yml" ]
           env:
           - name: CLOUD_CONTROLLER_NG_CONFIG
             value: #@ ccng_config_mount_path
