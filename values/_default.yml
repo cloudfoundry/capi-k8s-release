@@ -11,6 +11,8 @@ blobstore:
   region: ""
   resource_directory_key: cc-resources
   secret_access_key_secret_name:
+cc:
+  log_level: info
 ccdb:
   adapter: postgres
   database: cloud_controller
