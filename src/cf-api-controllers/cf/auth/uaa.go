@@ -6,15 +6,9 @@ import (
 	uaaClient "github.com/cloudfoundry-community/go-uaa"
 )
 
-// Fetch implements the TokenFetcher interface, fetching tokens from UAA. This stands as an anti-corruption layer over
-// the actual FetchToken call.
-func (u *UAAClient) Fetch() (string, error) {
-	token, err := u.Token(context.Background())
-	if err != nil {
-		return "", err
-	}
-
-	return token.AccessToken, nil
+// UAAClient wraps over the official UAA client implementation.
+type UAAClient struct {
+	*uaaClient.API
 }
 
 // NewUAAClient creates a new UAA client.
@@ -31,7 +25,13 @@ func NewUAAClient(config *cfg.Config) *UAAClient {
 	return &UAAClient{client}
 }
 
-// UAAClient wraps over the official UAA client implementation.
-type UAAClient struct {
-	*uaaClient.API
+// Fetch implements the TokenFetcher interface, fetching tokens from UAA. This stands as an anti-corruption layer over
+// the actual FetchToken call.
+func (u *UAAClient) Fetch() (string, error) {
+	token, err := u.Token(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	return token.AccessToken, nil
 }

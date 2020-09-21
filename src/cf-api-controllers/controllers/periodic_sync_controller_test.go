@@ -17,7 +17,8 @@ import (
 
 var _ = Describe("PeriodicSyncController", func() {
 	const (
-		routeGUID = "route-guid"
+		routeGUID       = "route-guid"
+		secondRouteGUID = "route-guid-2"
 	)
 
 	findSyncCondition := func(conditions []appsv1alpha1.Condition) *appsv1alpha1.Condition {
@@ -68,7 +69,7 @@ var _ = Describe("PeriodicSyncController", func() {
 		var createdRouteResource networkingv1alpha1.Route
 		Eventually(func() error {
 			return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &createdRouteResource)
-		}, "8s", "1s").Should(Succeed())
+		}, "5s", "100ms").Should(Succeed())
 	}
 
 	When("there are routes in the CF API but not in Kubernetes", func() {
@@ -88,54 +89,90 @@ var _ = Describe("PeriodicSyncController", func() {
 		)
 
 		BeforeEach(func() {
-			fakeCFClient.ListRoutesReturns([]model.Route{
-				{
-					GUID: routeGUID,
-					Host: host,
-					Path: path,
-					URL:  url,
-					Destinations: []model.Destination{
-						{
-							GUID: destGUID,
-							Port: port,
-							App: model.DestinationApp{
-								GUID: appGUID,
-								Process: model.DestinationProcess{
-									Type: processType,
+			fakeCFClient.ListRoutesReturns(model.RouteList{
+				Resources: []model.Route{
+					{
+						GUID: routeGUID,
+						Host: host,
+						Path: path,
+						URL:  url,
+						Destinations: []model.Destination{
+							{
+								GUID: destGUID,
+								Port: port,
+								App: model.DestinationApp{
+									GUID: appGUID,
+									Process: model.DestinationProcess{
+										Type: processType,
+									},
+								},
+							},
+						},
+						Relationships: map[string]model.Relationship{
+							"space": {
+								Data: model.RelationshipData{
+									GUID: spaceGUID,
+								},
+							},
+							"domain": {
+								Data: model.RelationshipData{
+									GUID: domainGUID,
 								},
 							},
 						},
 					},
-					Relationships: map[string]model.Relationship{
-						"space": {
-							Data: model.RelationshipData{
-								GUID: spaceGUID,
+					{
+						GUID: secondRouteGUID,
+						Host: host,
+						Path: path,
+						URL:  url,
+						Destinations: []model.Destination{
+							{
+								GUID: destGUID,
+								Port: port,
+								App: model.DestinationApp{
+									GUID: appGUID,
+									Process: model.DestinationProcess{
+										Type: processType,
+									},
+								},
 							},
 						},
-						"domain": {
-							Data: model.RelationshipData{
-								GUID: domainGUID,
+						Relationships: map[string]model.Relationship{
+							"space": {
+								Data: model.RelationshipData{
+									GUID: spaceGUID,
+								},
+							},
+							"domain": {
+								Data: model.RelationshipData{
+									GUID: domainGUID,
+								},
 							},
 						},
 					},
 				},
-			}, nil)
-
-			fakeCFClient.GetSpaceReturns(model.Space{
-				GUID: spaceGUID,
-				Relationships: map[string]model.Relationship{
-					"organization": {
-						Data: model.RelationshipData{
-							GUID: orgGUID,
+				Included: model.RouteListIncluded{
+					Spaces: []model.Space{
+						{
+							GUID: spaceGUID,
+							Relationships: map[string]model.Relationship{
+								"organization": {
+									Data: model.RelationshipData{
+										GUID: orgGUID,
+									},
+								},
+							},
+						},
+					},
+					Domains: []model.Domain{
+						{
+							GUID:     domainGUID,
+							Name:     domainName,
+							Internal: false,
 						},
 					},
 				},
-			}, nil)
-
-			fakeCFClient.GetDomainReturns(model.Domain{
-				GUID:     domainGUID,
-				Name:     domainName,
-				Internal: false,
 			}, nil)
 
 			Expect(k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
@@ -155,6 +192,7 @@ var _ = Describe("PeriodicSyncController", func() {
 				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &createdRouteResource)
 			}, "5s", "1s").Should(Succeed())
 
+			Expect(createdRouteResource.ObjectMeta.Name).To(Equal(routeGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("app.kubernetes.io/name", routeGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/org_guid", orgGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/space_guid", spaceGUID))
@@ -177,13 +215,20 @@ var _ = Describe("PeriodicSyncController", func() {
 			Expect(createdRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveLen(2))
 			Expect(createdRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/app_guid", appGUID))
 			Expect(createdRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/process_type", processType))
+
+			var secondRouteResource networkingv1alpha1.Route
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: secondRouteGUID, Namespace: workloadsNamespace}, &secondRouteResource)
+			}, "5s", "1s").Should(Succeed())
+			Expect(secondRouteResource.ObjectMeta.Name).To(Equal(secondRouteGUID))
+
 		})
 	})
 
 	When("there are routes in Kubernetes that aren't in the CF API", func() {
 
 		BeforeEach(func() {
-			fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
+			fakeCFClient.ListRoutesReturns(model.RouteList{}, nil)
 
 			createRouteInK8s()
 
@@ -207,38 +252,6 @@ var _ = Describe("PeriodicSyncController", func() {
 		})
 	})
 
-	Describe("resync interval", func() {
-		BeforeEach(func() {
-			fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
-
-			createRouteInK8s()
-
-			Expect(
-				k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "whatever",
-						Namespace: workloadsNamespace,
-					},
-					Spec: appsv1alpha1.PeriodicSyncSpec{
-						PeriodSeconds: 1,
-					},
-				}),
-			).To(Succeed())
-		})
-
-		It("synchronizes at the frequency set on the PeriodicSync resource", func() {
-			Eventually(func() error {
-				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
-			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
-
-			createRouteInK8s()
-
-			Eventually(func() error {
-				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
-			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
-		})
-	})
-
 	Describe("PeriodicSync Status", func() {
 		Context("when the sync succeeds", func() {
 			const (
@@ -250,7 +263,7 @@ var _ = Describe("PeriodicSyncController", func() {
 
 			BeforeEach(func() {
 				testStartTime = metav1.Now()
-				fakeCFClient.ListRoutesReturns([]model.Route{}, nil)
+				fakeCFClient.ListRoutesReturns(model.RouteList{}, nil)
 
 				createRouteInK8s()
 
@@ -298,7 +311,7 @@ var _ = Describe("PeriodicSyncController", func() {
 
 			BeforeEach(func() {
 				testStartTime = metav1.Now()
-				fakeCFClient.ListRoutesReturns([]model.Route{}, errors.New(errMsg))
+				fakeCFClient.ListRoutesReturns(model.RouteList{}, errors.New(errMsg))
 
 				createRouteInK8s()
 

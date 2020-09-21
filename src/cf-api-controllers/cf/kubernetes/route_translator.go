@@ -16,7 +16,7 @@ const (
 	CFRouteGuidLabel   = "cloudfoundry.org/route_guid"
 )
 
-func TranslateRoute(route cfmodel.Route, space cfmodel.Space, domain cfmodel.Domain, namespace string) v1alpha1.Route {
+func TranslateRoute(route *cfmodel.Route, space *cfmodel.Space, domain *cfmodel.Domain, namespace string) v1alpha1.Route {
 	var destinations []v1alpha1.RouteDestination
 
 	for _, dest := range route.Destinations {

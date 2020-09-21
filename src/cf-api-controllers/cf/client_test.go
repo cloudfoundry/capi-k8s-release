@@ -262,14 +262,102 @@ var _ = Describe("Client", func() {
 	       }
 	     }
 	   }
-	 ]
+	 ],
+"included": {
+    "spaces": [
+      {
+        "guid": "885a8cb3-c07b-4856-b448-eeb10bf36236",
+        "created_at": "2017-02-01T01:33:58Z",
+        "updated_at": "2017-02-01T01:33:58Z",
+        "name": "my-space",
+        "relationships": {
+          "organization": {
+            "data": {
+              "guid": "e00705b9-7b42-4561-ae97-2520399d2133"
+            }
+          },
+          "quota": {
+            "data": null
+          }
+        },
+        "links": {
+          "self": {
+            "href": "https://api.example.org/v3/spaces/885a8cb3-c07b-4856-b448-eeb10bf36236"
+          },
+          "features": {
+            "href": "https://api.example.org/v3/spaces/885a8cb3-c07b-4856-b448-eeb10bf36236/features"
+          },
+          "organization": {
+            "href": "https://api.example.org/v3/organizations/e00705b9-7b42-4561-ae97-2520399d2133"
+          },
+          "apply_manifest": {
+            "href": "https://api.example.org/v3/spaces/885a8cb3-c07b-4856-b448-eeb10bf36236/actions/apply_manifest",
+            "method": "POST"
+          }
+        },
+        "metadata": {
+          "labels": {},
+          "annotations": {}
+        }
+      }
+    ],
+    "domains": [
+      {
+        "guid": "0b5f3633-194c-42d2-9408-972366617e0e",
+        "created_at": "2019-03-08T01:06:19Z",
+        "updated_at": "2019-03-08T01:06:19Z",
+        "name": "test-domain.com",
+        "internal": false,
+        "router_group": null,
+        "supported_protocols": [
+          "http"
+        ],
+        "metadata": {
+          "labels": {},
+          "annotations": {}
+        },
+        "relationships": {
+          "organization": {
+            "data": {
+              "guid": "e00705b9-7b42-4561-ae97-2520399d2133"
+            }
+          },
+          "shared_organizations": {
+            "data": [
+              {
+                "guid": "404f3d89-3f89-6z72-8188-751b298d88d5"
+              },
+              {
+                "guid": "416d3d89-3f89-8h67-2189-123b298d3592"
+              }
+            ]
+          }
+        },
+        "links": {
+          "self": {
+            "href": "https://api.example.org/v3/domains/0b5f3633-194c-42d2-9408-972366617e0e"
+          },
+          "organization": {
+            "href": "https://api.example.org/v3/organizations/e00705b9-7b42-4561-ae97-2520399d2133"
+          },
+          "route_reservations": {
+            "href": "https://api.example.org/v3/domains/0b5f3633-194c-42d2-9408-972366617e0e/route_reservations"
+          },
+          "shared_organizations": {
+            "href": "https://api.example.org/v3/domains/0b5f3633-194c-42d2-9408-972366617e0e/relationships/shared_organizations"
+          }
+        }
+      }
+    ]
+}
 	}`),
 					),
 				)
 			})
 
 			It("returns a list of routes", func() {
-				routes, err := client.ListRoutes()
+				routeList, err := client.ListRoutes()
+				routes := routeList.Resources
 
 				Expect(err).To(BeNil())
 				Expect(routes).ToNot(BeEmpty())
@@ -289,6 +377,16 @@ var _ = Describe("Client", func() {
 
 				Expect(routes[0].Relationships).To(HaveKeyWithValue("space", model.Relationship{Data: model.RelationshipData{GUID: "885a8cb3-c07b-4856-b448-eeb10bf36236"}}))
 				Expect(routes[0].Relationships).To(HaveKeyWithValue("domain", model.Relationship{Data: model.RelationshipData{GUID: "0b5f3633-194c-42d2-9408-972366617e0e"}}))
+
+				space := routeList.Included.Spaces[0]
+				Expect(space.Name).To(Equal("my-space"))
+				Expect(space.GUID).To(Equal("885a8cb3-c07b-4856-b448-eeb10bf36236"))
+				Expect(space.Relationships).To(HaveKeyWithValue("organization", model.Relationship{Data: model.RelationshipData{GUID: "e00705b9-7b42-4561-ae97-2520399d2133"}}))
+
+				domain := routeList.Included.Domains[0]
+				Expect(domain.GUID).To(Equal("0b5f3633-194c-42d2-9408-972366617e0e"))
+				Expect(domain.Name).To(Equal("test-domain.com"))
+				Expect(domain.Internal).To(BeFalse())
 			})
 		})
 
@@ -348,243 +446,6 @@ var _ = Describe("Client", func() {
 
 			It("errors", func() {
 				_, err := client.ListRoutes()
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("uaa-fail"))
-			})
-		})
-	})
-
-	Describe("GetSpace", func() {
-		var (
-			fakeCFAPIServer *ghttp.Server
-		)
-
-		BeforeEach(func() {
-			fakeCFAPIServer = ghttp.NewServer()
-
-			client = NewClient(fakeCFAPIServer.URL(), restClient, tokenFetcher)
-		})
-
-		AfterEach(func() {
-			fakeCFAPIServer.Close()
-		})
-
-		When("CF API is operating normally", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.AppendHandlers(
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920"),
-						ghttp.RespondWith(200, `{
-	 "guid": "885735b5-aea4-4cf5-8e44-961af0e41920",
-	 "created_at": "2017-02-01T01:33:58Z",
-	 "updated_at": "2017-02-01T01:33:58Z",
-	 "name": "my-space",
-	 "relationships": {
-	   "organization": {
-	     "data": {
-	       "guid": "e00705b9-7b42-4561-ae97-2520399d2133"
-	     }
-	   },
-	   "quota": {
-	     "data": null
-	   }
-	 },
-	 "links": {
-	   "self": {
-	     "href": "https://api.example.org/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920"
-	   },
-	   "features": {
-	     "href": "https://api.example.org/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920/features"
-	   },
-	   "organization": {
-	     "href": "https://api.example.org/v3/organizations/e00705b9-7b42-4561-ae97-2520399d2133"
-	   },
-	   "apply_manifest": {
-	     "href": "https://api.example.org/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920/actions/apply_manifest",
-	     "method": "POST"
-	   }
-	 },
-	 "metadata": {
-	   "labels": {},
-	   "annotations": {}
-	 }
-	}`),
-					),
-				)
-			})
-
-			It("returns an expected space object", func() {
-				space, err := client.GetSpace("885735b5-aea4-4cf5-8e44-961af0e41920")
-
-				Expect(err).To(BeNil())
-				Expect(space).ToNot(BeNil())
-
-				Expect(space.GUID).To(Equal("885735b5-aea4-4cf5-8e44-961af0e41920"))
-				Expect(space.Name).To(Equal("my-space"))
-				Expect(space.Relationships).To(HaveKeyWithValue("organization", model.Relationship{Data: model.RelationshipData{GUID: "e00705b9-7b42-4561-ae97-2520399d2133"}}))
-			})
-		})
-
-		When("CF API is down", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.Close()
-			})
-
-			It("returns a meaningful error", func() {
-				_, err := client.GetSpace("space-guid")
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("connection refused"))
-			})
-		})
-
-		When("CF API returns a non-200 status code", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.AppendHandlers(
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v3/spaces/space-guid"),
-						ghttp.RespondWith(418, ""),
-					),
-				)
-			})
-
-			It("returns a meaningful error", func() {
-				_, err := client.GetSpace("space-guid")
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("failed to get space, received status: 418"))
-			})
-		})
-
-		When("uaa client fails to fetch a token", func() {
-			BeforeEach(func() {
-				tokenFetcher.FetchReturns("", errors.New("uaa-fail"))
-			})
-
-			It("errors", func() {
-				_, err := client.GetSpace("space-guid")
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("uaa-fail"))
-			})
-		})
-
-	})
-
-	Describe("GetDomain", func() {
-		var (
-			client          *Client
-			fakeCFAPIServer *ghttp.Server
-		)
-
-		BeforeEach(func() {
-			fakeCFAPIServer = ghttp.NewServer()
-
-			client = NewClient(fakeCFAPIServer.URL(), restClient, tokenFetcher)
-		})
-
-		AfterEach(func() {
-			fakeCFAPIServer.Close()
-		})
-
-		When("CF API is operating normally", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.AppendHandlers(
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5"),
-						ghttp.RespondWith(200, `{
-	 "guid": "3a5d3d89-3f89-4f05-8188-8a2b298c79d5",
-	 "created_at": "2019-03-08T01:06:19Z",
-	 "updated_at": "2019-03-08T01:06:19Z",
-	 "name": "test-domain.com",
-	 "internal": false,
-	 "router_group": null,
-	 "supported_protocols": ["http"],
-	 "metadata": {
-	   "labels": { },
-	   "annotations": { }
-	 },
-	 "relationships": {
-	   "organization": {
-	     "data": { "guid": "3a3f3d89-3f89-4f05-8188-751b298c79d5" }
-	   },
-	   "shared_organizations": {
-	     "data": [
-	       {"guid": "404f3d89-3f89-6z72-8188-751b298d88d5"},
-	       {"guid": "416d3d89-3f89-8h67-2189-123b298d3592"}
-	     ]
-	   }
-	 },
-	 "links": {
-	   "self": {
-	     "href": "https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5"
-	   },
-	   "organization": {
-	     "href": "https://api.example.org/v3/organizations/3a3f3d89-3f89-4f05-8188-751b298c79d5"
-	   },
-	   "route_reservations": {
-	     "href": "https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/route_reservations"
-	   },
-	   "shared_organizations": {
-	     "href": "https://api.example.org/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5/relationships/shared_organizations"
-	   }
-	 }
-	}`),
-					),
-				)
-			})
-
-			It("returns an expected domain object", func() {
-				domain, err := client.GetDomain("3a5d3d89-3f89-4f05-8188-8a2b298c79d5")
-
-				Expect(err).To(BeNil())
-				Expect(domain).ToNot(BeNil())
-
-				Expect(domain.GUID).To(Equal("3a5d3d89-3f89-4f05-8188-8a2b298c79d5"))
-				Expect(domain.Name).To(Equal("test-domain.com"))
-				Expect(domain.Internal).To(BeFalse())
-			})
-		})
-
-		When("CF API is down", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.Close()
-			})
-
-			It("returns a meaningful error", func() {
-				_, err := client.GetDomain("domain-guid")
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("connection refused"))
-			})
-		})
-
-		When("CF API returns a non-200 status code", func() {
-			BeforeEach(func() {
-				fakeCFAPIServer.AppendHandlers(
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v3/domains/domain-guid"),
-						ghttp.RespondWith(418, ""),
-					),
-				)
-			})
-
-			It("returns a meaningful error", func() {
-				_, err := client.GetDomain("domain-guid")
-
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("failed to get domain, received status: 418"))
-			})
-		})
-
-		When("uaa client fails to fetch a token", func() {
-			BeforeEach(func() {
-				tokenFetcher.FetchReturns("", errors.New("uaa-fail"))
-			})
-
-			It("errors", func() {
-				_, err := client.GetDomain("domain-guid")
 
 				Expect(err).ToNot(BeNil())
 				Expect(err.Error()).To(ContainSubstring("uaa-fail"))

@@ -161,7 +161,7 @@ var _ = BeforeSuite(func(done Done) {
 	fakeCFClient = new(cffakes.FakeClientInterface)
 	err = (&PeriodicSyncReconciler{
 		Client:             k8sManager.GetClient(),
-		Log:                ctrl.Log.WithName("controllers").WithName("Image"),
+		Log:                ctrl.Log.WithName("controllers").WithName("PeriodicSync"),
 		Scheme:             k8sManager.GetScheme(),
 		CFClient:           fakeCFClient,
 		WorkloadsNamespace: workloadsNamespace,

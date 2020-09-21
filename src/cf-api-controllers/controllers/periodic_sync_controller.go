@@ -40,6 +40,8 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 )
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fake/controller_runtime_client.go --fake-name ControllerRuntimeClient sigs.k8s.io/controller-runtime/pkg/client.Client
+
 // PeriodicSyncReconciler reconciles a PeriodicSync object
 type PeriodicSyncReconciler struct {
 	client.Client
@@ -67,7 +69,7 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
 	}
 
-	routesInCC, err := r.CFClient.ListRoutes()
+	ccRouteList, err := r.CFClient.ListRoutes()
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err) // untested
@@ -81,8 +83,18 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	ccRouteMap := make(map[string]*model.Route)
-	for _, ccRoute := range routesInCC {
-		ccRouteMap[ccRoute.GUID] = &ccRoute
+	for i, ccRoute := range ccRouteList.Resources {
+		ccRouteMap[ccRoute.GUID] = &ccRouteList.Resources[i]
+	}
+
+	ccSpaceMap := make(map[string]*model.Space)
+	for i, ccSpace := range ccRouteList.Included.Spaces {
+		ccSpaceMap[ccSpace.GUID] = &ccRouteList.Included.Spaces[i]
+	}
+
+	ccDomainMap := make(map[string]*model.Domain)
+	for i, ccDomain := range ccRouteList.Included.Domains {
+		ccDomainMap[ccDomain.GUID] = &ccRouteList.Included.Domains[i]
 	}
 
 	k8sRouteGUIDs := make(map[string]struct{})
@@ -104,20 +116,9 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	for _, ccRoute := range missingInK8s {
 		// fetch additional required information from CC (domain, space)
 		spaceGUID := ccRoute.Relationships["space"].Data.GUID
-		space, err := r.CFClient.GetSpace(spaceGUID)
-		if err != nil {
-			reconciledSuccessfully = false
-			r.Log.WithValues("request", req.NamespacedName, "space_guid", spaceGUID).Error(err, "errored fetching CF API space")
-		}
-
 		domainGUID := ccRoute.Relationships["domain"].Data.GUID
-		domain, err := r.CFClient.GetDomain(domainGUID)
-		if err != nil {
-			reconciledSuccessfully = false
-			r.Log.WithValues("request", req.NamespacedName, "domain_guid", domainGUID).Error(err, "errored fetching CF API domain")
-		}
 
-		newRouteCR := kubernetes.TranslateRoute(*ccRoute, space, domain, r.WorkloadsNamespace)
+		newRouteCR := kubernetes.TranslateRoute(ccRoute, ccSpaceMap[spaceGUID], ccDomainMap[domainGUID], r.WorkloadsNamespace)
 
 		err = r.Create(ctx, &newRouteCR)
 		if err != nil {

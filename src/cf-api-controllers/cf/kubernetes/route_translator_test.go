@@ -71,7 +71,7 @@ var _ = Describe("RouteTranslator", func() {
 		})
 
 		It("returns a valid Route CR", func() {
-			routeCR = TranslateRoute(route, space, domain, namespace)
+			routeCR = TranslateRoute(&route, &space, &domain, namespace)
 
 			Expect(routeCR).NotTo(BeNil())
 
