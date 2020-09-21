@@ -21,8 +21,6 @@ func NewClient(host string, restClient Rest, uaaClient TokenFetcher) *Client {
 	}
 }
 
-// TODO: remove mockery usages after refactoring everything to use Ginkgo for consistency
-//go:generate mockery -case snake -name Rest
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . Rest
 type Rest interface {
 	Patch(url string, authToken string, body io.Reader) (*http.Response, error)
@@ -105,6 +103,7 @@ func (c *Client) UpdateDroplet(dropletGUID string, droplet model.Droplet) error 
 	return nil
 }
 
+// TODO: shouldn't this use the REST client?
 func (c *Client) ListRoutes() ([]model.Route, error) {
 	token, err := c.uaaClient.Fetch()
 	if err != nil {
