@@ -14,29 +14,24 @@ import (
 
 	. "github.com/onsi/ginkgo"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/mocks"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
-
-	"github.com/stretchr/testify/mock"
 
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Client", func() {
 	var (
-		client     *Client
-		restClient *cffakes.FakeRest
-		uaaClient  TokenFetcher
+		client       *Client
+		restClient   *cffakes.FakeRest
+		tokenFetcher *cffakes.FakeTokenFetcher
 	)
 
 	BeforeEach(func() {
-		uaaClient = new(mocks.TokenFetcher)
-		restClient = new(cffakes.FakeRest)
-		client = NewClient("http://capi.host", restClient, uaaClient)
-	})
+		tokenFetcher = new(cffakes.FakeTokenFetcher)
+		tokenFetcher.FetchReturns("valid-token", nil)
 
-	AfterEach(func() {
-		mock.AssertExpectationsForObjects(GinkgoT(), uaaClient)
+		restClient = new(cffakes.FakeRest)
+		client = NewClient("http://capi.host", restClient, tokenFetcher)
 	})
 
 	Describe("UpdateBuild", func() {
@@ -51,14 +46,13 @@ var _ = Describe("Client", func() {
 		When("successfully updates", func() {
 			BeforeEach(func() {
 				build = model.Build{State: "SUCCESS"}
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
-
 				restClient.PatchReturns(&http.Response{StatusCode: 200}, nil)
 			})
 
 			It("fetches a token and updates CF API server", func() {
 				Expect(client.UpdateBuild(guid, build)).To(Succeed())
-				uaaClient.(*mocks.TokenFetcher).AssertCalled(GinkgoT(), "Fetch")
+
+				Expect(tokenFetcher.FetchCallCount()).To(Equal(1))
 
 				raw, err := json.Marshal(build)
 				Expect(err).To(BeNil())
@@ -77,7 +71,7 @@ var _ = Describe("Client", func() {
 
 		When("uaa client fails to fetch a token", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("fail"))
+				tokenFetcher.FetchReturns("", errors.New("fail"))
 			})
 
 			It("errors", func() {
@@ -87,7 +81,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API server client fails to Patch", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				restClient.PatchReturns(nil, errors.New("fail"))
 			})
 
@@ -98,7 +91,6 @@ var _ = Describe("Client", func() {
 
 		When("a non-400+ status code is received", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				restClient.PatchReturns(&http.Response{StatusCode: 500}, nil)
 			})
 
@@ -119,13 +111,13 @@ var _ = Describe("Client", func() {
 		When("successfully updates", func() {
 			BeforeEach(func() {
 				droplet = model.Droplet{Image: "updated-image-reference"}
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				restClient.PatchReturns(&http.Response{StatusCode: 200}, nil)
 			})
 
 			It("fetches a token and updates CF API server", func() {
 				Expect(client.UpdateDroplet(guid, droplet)).To(Succeed())
-				uaaClient.(*mocks.TokenFetcher).AssertCalled(GinkgoT(), "Fetch")
+
+				Expect(tokenFetcher.FetchCallCount()).To(Equal(1))
 
 				raw, err := json.Marshal(droplet)
 				Expect(err).To(BeNil())
@@ -144,7 +136,7 @@ var _ = Describe("Client", func() {
 
 		When("uaa client fails to fetch a token", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("fail"))
+				tokenFetcher.FetchReturns("", errors.New("fail"))
 			})
 
 			It("errors", func() {
@@ -154,7 +146,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API server client fails to Patch", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				restClient.PatchReturns(nil, errors.New("fail"))
 			})
 
@@ -165,7 +156,6 @@ var _ = Describe("Client", func() {
 
 		When("a non-400+ status code is received", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				restClient.PatchReturns(&http.Response{StatusCode: 500}, nil)
 			})
 
@@ -183,7 +173,7 @@ var _ = Describe("Client", func() {
 		BeforeEach(func() {
 			fakeCFAPIServer = ghttp.NewServer()
 
-			client = NewClient(fakeCFAPIServer.URL(), restClient, uaaClient)
+			client = NewClient(fakeCFAPIServer.URL(), restClient, tokenFetcher)
 		})
 
 		AfterEach(func() {
@@ -192,7 +182,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is operating normally", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/routes"),
@@ -305,7 +294,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is down", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -319,7 +307,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API returns a non-200 status code", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/routes"),
@@ -338,7 +325,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API returns an unexpected JSON response", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/routes"),
@@ -357,7 +343,7 @@ var _ = Describe("Client", func() {
 
 		When("uaa client fails to fetch a token", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+				tokenFetcher.FetchReturns("", errors.New("uaa-fail"))
 			})
 
 			It("errors", func() {
@@ -377,7 +363,7 @@ var _ = Describe("Client", func() {
 		BeforeEach(func() {
 			fakeCFAPIServer = ghttp.NewServer()
 
-			client = NewClient(fakeCFAPIServer.URL(), restClient, uaaClient)
+			client = NewClient(fakeCFAPIServer.URL(), restClient, tokenFetcher)
 		})
 
 		AfterEach(func() {
@@ -386,7 +372,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is operating normally", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/spaces/885735b5-aea4-4cf5-8e44-961af0e41920"),
@@ -443,7 +428,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is down", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -457,7 +441,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API returns a non-200 status code", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/spaces/space-guid"),
@@ -476,7 +459,7 @@ var _ = Describe("Client", func() {
 
 		When("uaa client fails to fetch a token", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+				tokenFetcher.FetchReturns("", errors.New("uaa-fail"))
 			})
 
 			It("errors", func() {
@@ -498,7 +481,7 @@ var _ = Describe("Client", func() {
 		BeforeEach(func() {
 			fakeCFAPIServer = ghttp.NewServer()
 
-			client = NewClient(fakeCFAPIServer.URL(), restClient, uaaClient)
+			client = NewClient(fakeCFAPIServer.URL(), restClient, tokenFetcher)
 		})
 
 		AfterEach(func() {
@@ -507,7 +490,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is operating normally", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/domains/3a5d3d89-3f89-4f05-8188-8a2b298c79d5"),
@@ -567,7 +549,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API is down", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.Close()
 			})
 
@@ -581,7 +562,6 @@ var _ = Describe("Client", func() {
 
 		When("CF API returns a non-200 status code", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("valid-token", nil)
 				fakeCFAPIServer.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/v3/domains/domain-guid"),
@@ -600,7 +580,7 @@ var _ = Describe("Client", func() {
 
 		When("uaa client fails to fetch a token", func() {
 			BeforeEach(func() {
-				uaaClient.(*mocks.TokenFetcher).On("Fetch").Return("", errors.New("uaa-fail"))
+				tokenFetcher.FetchReturns("", errors.New("uaa-fail"))
 			})
 
 			It("errors", func() {
