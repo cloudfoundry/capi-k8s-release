@@ -7,14 +7,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
-	"github.com/sclevine/spec"
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func TestRestClient_PATCH(t *testing.T) {
-	spec.Run(t, "TestRestClient_PATCH", func(t *testing.T, when spec.G, it spec.S) {
+var _ = Describe("RestClient", func() {
+	Describe("PATCH", func() {
 		var (
 			restClient RestClient
 			testServer *httptest.Server
@@ -22,22 +21,20 @@ func TestRestClient_PATCH(t *testing.T) {
 			body       io.Reader
 		)
 
-		it.Before(func() {
+		BeforeEach(func() {
 			status := []byte(`{"status":"SUCCESS"}`)
 			authToken = "valid-auth-token-returned-by-uaa"
 
 			body = bytes.NewReader(status)
 			testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, r.URL.String(), "/")
+				Expect(r.URL.String()).To(Equal("/"))
 
 				b, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					panic(err)
-				}
-				assert.Equal(t, b, status)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(b).To(Equal(status))
 
-				assert.Equal(t, r.Header.Get("Authorization"), fmt.Sprintf("Bearer %s", authToken))
-				assert.Equal(t, r.Header.Get("Content-Type"), "application/json")
+				Expect(r.Header.Get("Authorization")).To(Equal(fmt.Sprintf("Bearer %s", authToken)))
+				Expect(r.Header.Get("Content-Type")).To(Equal("application/json"))
 
 				w.WriteHeader(http.StatusOK)
 			}))
@@ -47,16 +44,17 @@ func TestRestClient_PATCH(t *testing.T) {
 			}
 		})
 
-		it.After(func() {
+		AfterEach(func() {
 			testServer.Close()
 		})
 
-		when("request is valid", func() {
-			it("receives a 200 OK response from CF API", func() {
+		When("request is valid", func() {
+			It("receives a 200 OK response from CF API", func() {
 				response, err := restClient.Patch(testServer.URL, authToken, body)
-				assert.Equal(t, http.StatusOK, response.StatusCode)
-				assert.NoError(t, err)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(http.StatusOK).To(Equal(response.StatusCode))
 			})
 		})
+
 	})
-}
+})

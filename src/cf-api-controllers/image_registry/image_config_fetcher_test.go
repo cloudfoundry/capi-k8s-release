@@ -2,75 +2,79 @@ package image_registry
 
 import (
 	"fmt"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
 
 	"github.com/pivotal/kpack/pkg/registry"
 	"github.com/pivotal/kpack/pkg/registry/registryfakes"
 
 	"net/http"
 	"strings"
-	"testing"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/ghttp"
-	"github.com/sclevine/spec"
 )
 
-func TestImageConfigFetcher(t *testing.T) {
-	spec.Run(t, "TestImageConfigFetcher", func(t *testing.T, when spec.G, it spec.S) {
-		it.Before(func() {
-			RegisterTestingT(t)
-			format.TruncatedDiff = false
-		})
+var _ = Describe("ImageConfigFetcher", func() {
+	var emptyT *testing.T
 
-		when("fetching an OCI Image Config", func() {
-			when("supplying a valid image reference stored in a public registry", func() {
-				var (
-					fetcher         ImageConfigFetcher
-					imageConfig     *v1.Config
-					keychainFactory = &registryfakes.FakeKeychainFactory{}
-					err             error
-				)
+	BeforeEach(func() {
+		format.TruncatedDiff = false
+		// keychainFactory requires *testing.T, not an interface.
+		// It doesn't use the T for anything meaningful, so we just pass an empty one
+		emptyT = new(testing.T)
+	})
 
-				it.Before(func() {
-					keychainFactory.AddKeychainForSecretRef(t, registry.SecretRef{}, &registryfakes.FakeKeychain{})
-					fetcher = NewImageConfigFetcher(keychainFactory)
-				})
+	When("fetching an OCI Image Config", func() {
+		When("supplying a valid image reference stored in a public registry", func() {
+			var (
+				fetcher         ImageConfigFetcher
+				imageConfig     *v1.Config
+				keychainFactory = &registryfakes.FakeKeychainFactory{}
+				err             error
+			)
 
-				it("returns a valid, expected OCI Image Config", func() {
-					// small, distro-less public Docker image
-					// Verify by running `docker pull [ref]` and `docker inspect [ref]`
-					imageConfig, err = fetcher.FetchImageConfig("busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6", "", "")
-
-					Expect(err).ToNot(HaveOccurred())
-					Expect(imageConfig).ToNot(BeNil())
-
-					Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
-					Expect(imageConfig.Cmd).To(ConsistOf("sh"))
-					Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
-				})
+			BeforeEach(func() {
+				keychainFactory.AddKeychainForSecretRef(emptyT, registry.SecretRef{}, &registryfakes.FakeKeychain{})
+				fetcher = NewImageConfigFetcher(keychainFactory)
 			})
 
-			when("supplying a valid image reference stored in a private registry", func() {
-				var (
-					fetcher            ImageConfigFetcher
-					imageConfig        *v1.Config
-					err                error
-					fakeRegistryServer *ghttp.Server
-					keychainFactory    = &registryfakes.FakeKeychainFactory{}
-				)
+			It("returns a valid, expected OCI Image Config", func() {
+				// small, distro-less public Docker image
+				// Verify by running `docker pull [ref]` and `docker inspect [ref]`
+				imageConfig, err = fetcher.FetchImageConfig("busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6", "", "")
 
-				it.Before(func() {
-					fetcher = NewImageConfigFetcher(keychainFactory)
-					fakeRegistryServer = ghttp.NewServer()
-					fakeRegistryServer.AppendHandlers(
-						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v2/"),
-						),
-						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v2/busybox/manifests/sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd"),
-							ghttp.RespondWith(http.StatusOK, `{
+				Expect(err).ToNot(HaveOccurred())
+				Expect(imageConfig).ToNot(BeNil())
+
+				Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
+				Expect(imageConfig.Cmd).To(ConsistOf("sh"))
+				Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
+			})
+		})
+
+		When("supplying a valid image reference stored in a private registry", func() {
+			var (
+				fetcher            ImageConfigFetcher
+				imageConfig        *v1.Config
+				err                error
+				fakeRegistryServer *ghttp.Server
+				keychainFactory    = &registryfakes.FakeKeychainFactory{}
+			)
+
+			BeforeEach(func() {
+				fetcher = NewImageConfigFetcher(keychainFactory)
+				fakeRegistryServer = ghttp.NewServer()
+				fakeRegistryServer.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v2/"),
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v2/busybox/manifests/sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd"),
+						ghttp.RespondWith(http.StatusOK, `{
         "schemaVersion": 2,
         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
         "config": {
@@ -86,10 +90,10 @@ func TestImageConfigFetcher(t *testing.T) {
                 }
         ]
 }`),
-						),
-						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v2/busybox/blobs/sha256:ad0ac93746366a1c56e3c5e41910ccf4d15b678c1835dc9fb1ae2edd4b496596"),
-							ghttp.RespondWith(http.StatusOK, `{
+					),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v2/busybox/blobs/sha256:ad0ac93746366a1c56e3c5e41910ccf4d15b678c1835dc9fb1ae2edd4b496596"),
+						ghttp.RespondWith(http.StatusOK, `{
         "schemaVersion": 2,
         "mediaType": "application/vnd.docker.distribution.blob.v2+json",
         "config": {
@@ -108,32 +112,31 @@ func TestImageConfigFetcher(t *testing.T) {
                 }
         ]
 }`),
-						),
-					)
-				})
+					),
+				)
+			})
 
-				it.After(func() {
-					fakeRegistryServer.Close()
-				})
+			AfterEach(func() {
+				fakeRegistryServer.Close()
+			})
 
-				it("returns a valid, expected OCI Image Config", func() {
-					appImageSecretRef := registry.SecretRef{
-						ServiceAccount: "build-service-account",
-						Namespace:      "build-namespace",
-					}
-					appImageKeychain := &registryfakes.FakeKeychain{}
-					keychainFactory.AddKeychainForSecretRef(t, appImageSecretRef, appImageKeychain)
-					registryDomain := strings.TrimPrefix(fakeRegistryServer.URL(), `http://`)
-					imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd", registryDomain), "build-service-account", "build-namespace")
+			It("returns a valid, expected OCI Image Config", func() {
+				appImageSecretRef := registry.SecretRef{
+					ServiceAccount: "build-service-account",
+					Namespace:      "build-namespace",
+				}
+				appImageKeychain := &registryfakes.FakeKeychain{}
+				keychainFactory.AddKeychainForSecretRef(emptyT, appImageSecretRef, appImageKeychain)
+				registryDomain := strings.TrimPrefix(fakeRegistryServer.URL(), `http://`)
+				imageConfig, err = fetcher.FetchImageConfig(fmt.Sprintf("%s/busybox@sha256:4bc6920026921689d030c4dcb3f960cb5bdd5883dbe4622ae1f2d2accae3c0fd", registryDomain), "build-service-account", "build-namespace")
 
-					Expect(err).ToNot(HaveOccurred())
-					Expect(imageConfig).ToNot(BeNil())
+				Expect(err).ToNot(HaveOccurred())
+				Expect(imageConfig).ToNot(BeNil())
 
-					Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
-					Expect(imageConfig.Cmd).To(ConsistOf("sh"))
-					Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
-				})
+				Expect(imageConfig.Image).To(Equal("sha256:b0acc7ebf5092fcdd0fe097448529147e6619bd051f03ccf25b29bcae87e783f"))
+				Expect(imageConfig.Cmd).To(ConsistOf("sh"))
+				Expect(imageConfig.Env).To(ConsistOf("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"))
 			})
 		})
 	})
-}
+})
