@@ -7,7 +7,11 @@ import (
 )
 
 const (
-	NameLabel          = "app.kubernetes.io/name"
+	KubeNameLabel      = "app.kubernetes.io/name"
+	KubeVersionLabel   = "app.kubernetes.io/version"
+	KubeManagedByLabel = "app.kubernetes.io/managed-by"
+	KubeComponentLabel = "app.kubernetes.io/component"
+	KubePartOfLabel    = "app.kubernetes.io/part-of"
 	CFAppGuidLabel     = "cloudfoundry.org/app_guid"
 	CFProcessTypeLabel = "cloudfoundry.org/process_type"
 	CFOrgGuidLabel     = "cloudfoundry.org/org_guid"
@@ -45,11 +49,15 @@ func TranslateRoute(route *cfmodel.Route, space *cfmodel.Space, domain *cfmodel.
 			Name:      route.GUID,
 			Namespace: namespace,
 			Labels: map[string]string{
-				NameLabel:         route.GUID,
-				CFOrgGuidLabel:    space.Relationships["organization"].Data.GUID,
-				CFSpaceGuidLabel:  space.GUID,
-				CFDomainGuidLabel: domain.GUID,
-				CFRouteGuidLabel:  route.GUID,
+				KubeNameLabel:      route.GUID,
+				KubeVersionLabel:   "0.0.0",
+				KubeManagedByLabel: "cloudfoundry",
+				KubeComponentLabel: "cf-networking",
+				KubePartOfLabel:    "cloudfoundry",
+				CFOrgGuidLabel:     space.Relationships["organization"].Data.GUID,
+				CFSpaceGuidLabel:   space.GUID,
+				CFDomainGuidLabel:  domain.GUID,
+				CFRouteGuidLabel:   route.GUID,
 			},
 		},
 		Spec: v1alpha1.RouteSpec{
