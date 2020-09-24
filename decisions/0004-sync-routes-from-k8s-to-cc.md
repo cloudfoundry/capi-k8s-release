@@ -63,11 +63,10 @@ To handle these 2 failure modes, several approaches can be taken.
 1. Unclear what scale limitations we might encounter if we regularly download
    all k8s Routes.
 
-##### CCDB->k8s Sync in Go
+##### CF API->k8s Sync in Go
 1. Probably a new, independent go program
 1. Can take advantage of go-client cache & reflector to avoid repeatedly
    downloading all k8s state.
-   1. It's unclear, however, that kubebuilder could help
    1. What does it mean to "reconcile" a change to a single Route CRD if CCDB is authoritative?
 1. Would need to page through CF API to build picture of CF state.
 
@@ -102,12 +101,27 @@ To handle these 2 failure modes, several approaches can be taken.
 
 ## Decision
 
-I'm inclined towards trying out k8s->CCDB sync, despite its newness. It goes a
-step further to embrace kubernetes and allows us to make heavy use of existing
-ecosystem tools, potentially making it much less work than rolling our own bulk
-sync.
+We ended up taking a bit of a hybrid approach between "CF API->k8s Sync in Go" and "Sync from k8s->CCDB with kubebuilder controller and reloads".
+In the discussion of this ADR it became apparent that we could use kubebuilder to build a bulk sync loop that reconciles all routes from the CF API.
+
+We added a new CRD (PeriodicSync) and controller to cf-api-controllers. Using the CF API as a source of truth, the PeriodicSyncReconciler runs in the existing cf-ai-controller-manager and reconciles all the /v3/routes periodically.
 
 ## Consequences
 
-We haven't decided, but for the chosen thing we'd copy its tradeoffs section and
-expand.
+### Pros
+1. Correct behavior for "extra" routes in k8s.
+    1. This case was hard to solve with any other proposal
+1. Minimal new Ruby code, minimal unnecessary k8s API load
+1. No custom logic for managing periodicity, and no reliance on CC's existing clock mechanism thanks to kubebuilder
+1. Doesn't prevent us from optimizing using per-route reconciliation later
+    1. When the route-doesn't-exist in k8s, this might be a little wonky, but is likely still possible
+1. PeriodicSync CRD has "type" field so we can hopefully re-use some of this work for other resources like Droplets or LRPs.
+1. This loop would also be necessary syncing k8s->CCDB.
+    1. For any sync direction, you can't detect an extra CCDB route without a loop like this.
+
+### Cons
+1. Similar to existing sync loops, care must be taken to prevent the loop from exiting early on errors
+    1. It does do this now, but it's not always easy
+1. No CCDB access in cf-api-controllers
+    1. Serializing/deserializing /v3/routes frequently
+    1. We punted on pagination, limiting us to 5000 routes. Handling pagination in the future might be challenging, especially if it can cause us to miss routes in CCDB.
