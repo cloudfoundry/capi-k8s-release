@@ -21,7 +21,7 @@ const (
 )
 
 func TranslateRoute(route *cfmodel.Route, space *cfmodel.Space, domain *cfmodel.Domain, namespace string) v1alpha1.Route {
-	var destinations []v1alpha1.RouteDestination
+	destinations := make([]v1alpha1.RouteDestination, 0)
 
 	for _, dest := range route.Destinations {
 		destinations = append(destinations, v1alpha1.RouteDestination{
