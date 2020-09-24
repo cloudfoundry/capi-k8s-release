@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"errors"
+
 	. "github.com/onsi/gomega/gstruct"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -296,55 +296,6 @@ var _ = Describe("PeriodicSyncController", func() {
 
 				Expect(syncCondition.Status).To(Equal(appsv1alpha1.TrueConditionStatus))
 				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.CompletedConditionReason))
-				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 5))
-			})
-		})
-
-		Context("when the sync fails", func() {
-			const (
-				periodicSyncName = "my-route-sync"
-			)
-			var (
-				testStartTime metav1.Time
-				errMsg        = "error fetching routes o no"
-			)
-
-			BeforeEach(func() {
-				testStartTime = metav1.Now()
-				fakeCFClient.ListRoutesReturns(model.RouteList{}, errors.New(errMsg))
-
-				createRouteInK8s()
-
-				Expect(
-					k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      periodicSyncName,
-							Namespace: workloadsNamespace,
-						},
-						Spec: appsv1alpha1.PeriodicSyncSpec{
-							PeriodSeconds: 1,
-						},
-					}),
-				).To(Succeed())
-			})
-
-			It("updates the Synced condition on the PeriodicSync's Status", func() {
-				periodicSync := appsv1alpha1.PeriodicSync{}
-				Eventually(func() error {
-					return k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
-				}, "5s", "1s").Should(Succeed())
-
-				var syncCondition *appsv1alpha1.Condition
-				Eventually(func() *appsv1alpha1.Condition {
-					err := k8sClient.Get(context.Background(), types.NamespacedName{Name: periodicSyncName, Namespace: workloadsNamespace}, &periodicSync)
-					Expect(err).NotTo(HaveOccurred())
-					syncCondition = findSyncCondition(periodicSync.Status.Conditions)
-					return syncCondition
-				}, "5s", "1s").ShouldNot(BeNil())
-
-				Expect(syncCondition.Status).To(Equal(appsv1alpha1.FalseConditionStatus))
-				Expect(syncCondition.Reason).To(Equal(appsv1alpha1.FailedConditionReason))
-				Expect(syncCondition.Message).To(Equal(errMsg))
 				Expect(testStartTime.Unix()).To(BeNumerically("~", syncCondition.LastTransitionTime.Unix(), 5))
 			})
 		})

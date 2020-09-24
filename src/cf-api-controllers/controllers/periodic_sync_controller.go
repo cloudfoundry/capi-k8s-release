@@ -61,25 +61,25 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	var periodicSync appsv1alpha1.PeriodicSync
 	err := r.Get(ctx, req.NamespacedName, &periodicSync)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) { // untested
 			r.Log.WithValues("request", req.NamespacedName).Error(err, "PeriodicSync resource not found")
 		} else {
 			r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		}
-		return ctrl.Result{}, client.IgnoreNotFound(err) // untested
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	ccRouteList, err := r.CFClient.ListRoutes()
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
-		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err) // untested
+		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err)
 	}
 
 	var routesInK8s networkingv1alpha1.RouteList
 	err = r.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
-		return ctrl.Result{}, err // untested
+		return ctrl.Result{}, fmt.Errorf("error listing routes from kubernetes API: %w", err)
 	}
 
 	ccRouteMap := make(map[string]*model.Route)
@@ -160,7 +160,7 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	if !reconciledSuccessfully {
 		err := errors.New("failed to reconcile at least one route")
 		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
-		return ctrl.Result{}, err // untested
+		return ctrl.Result{}, err
 	}
 
 	if err := r.updateSyncStatusSuccess(ctx, &periodicSync); err != nil {
