@@ -1,4 +1,4 @@
-package cfg_test
+package main_test
 
 import (
 	"github.com/matt-royal/biloba"
@@ -11,5 +11,5 @@ import (
 func TestCfg(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t, "Cfg Suite", biloba.GoLandReporter())
+	RunSpecsWithDefaultAndCustomReporters(t, "Main Suite", biloba.GoLandReporter())
 }

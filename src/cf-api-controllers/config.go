@@ -1,4 +1,4 @@
-package cfg
+package main
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ type Config struct {
 	workloadsNamespace string
 }
 
-func Load() (*Config, error) {
+func LoadConfig() (*Config, error) {
 	c := &Config{}
 
 	if c.cfAPIHost = os.Getenv("CF_API_HOST"); c.cfAPIHost == "" {
