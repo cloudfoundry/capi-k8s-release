@@ -24,7 +24,6 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/auth"
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cfg"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"github.com/pivotal/kpack/pkg/dockercreds/k8sdockercreds"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -67,7 +66,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	config, err := cfg.Load()
+	config, err := LoadConfig()
 	if err != nil {
 		setupLog.Error(err, "unable to load required config")
 		os.Exit(1)
@@ -91,7 +90,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	uaaClient := auth.NewUAAClient(config)
+	uaaClient := auth.NewUAAClient(config.uaaEndpoint, config.uaaClientName, config.uaaClientSecret)
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{

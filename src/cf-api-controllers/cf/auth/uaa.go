@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cfg"
 	"context"
+
 	uaaClient "github.com/cloudfoundry-community/go-uaa"
 )
 
@@ -12,10 +12,10 @@ type UAAClient struct {
 }
 
 // NewUAAClient creates a new UAA client.
-func NewUAAClient(config *cfg.Config) *UAAClient {
+func NewUAAClient(endpoint, clientName, clientSecret string) *UAAClient {
 	client, err := uaaClient.New(
-		config.UAAEndpoint(),
-		uaaClient.WithClientCredentials(config.UAAClientName(), config.UAAClientSecret(), 1),
+		endpoint,
+		uaaClient.WithClientCredentials(clientName, clientSecret, 1),
 		uaaClient.WithSkipSSLValidation(true),
 	)
 	if err != nil {

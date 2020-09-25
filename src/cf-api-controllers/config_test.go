@@ -1,7 +1,7 @@
-package cfg_test
+package main_test
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cfg"
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Config", func() {
-	Describe("Load", func() {
+	Describe("LoadConfig", func() {
 		const (
 			expectedCFAPIHost               = "api.cloudfoundry.example.com"
 			expectedUAAEndpoint             = "uaa.cloudfoundry.example.com"
@@ -33,7 +33,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("loads the config from env", func() {
-			config, err := cfg.Load()
+			config, err := main.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(config.CFAPIHost()).To(Equal(expectedCFAPIHost))
@@ -50,7 +50,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := cfg.Load()
+				_, err := main.LoadConfig()
 				Expect(err).To(MatchError("`CF_API_HOST` environment variable must be set"))
 			})
 		})
@@ -62,7 +62,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := cfg.Load()
+				_, err := main.LoadConfig()
 				Expect(err).To(MatchError("`UAA_ENDPOINT` environment variable must be set"))
 			})
 		})
@@ -74,7 +74,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := cfg.Load()
+				_, err := main.LoadConfig()
 				Expect(err).To(MatchError("`UAA_CLIENT_NAME` environment variable must be set"))
 			})
 		})
@@ -86,7 +86,7 @@ var _ = Describe("Config", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := cfg.Load()
+				_, err := main.LoadConfig()
 				Expect(err).To(MatchError("`WORKLOADS_NAMESPACE` environment variable must be set"))
 			})
 		})
@@ -121,7 +121,7 @@ var _ = Describe("Config", func() {
 					})
 
 					It("loads the client secret from the specified file", func() {
-						config, err := cfg.Load()
+						config, err := main.LoadConfig()
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(config.UAAClientSecret()).To(Equal(expectedUAAClientSecretFromFile))
@@ -135,7 +135,7 @@ var _ = Describe("Config", func() {
 					})
 
 					It("returns an error", func() {
-						_, err := cfg.Load()
+						_, err := main.LoadConfig()
 						Expect(err).To(HaveOccurred())
 
 						_, ok := err.(*os.PathError)
@@ -152,7 +152,7 @@ var _ = Describe("Config", func() {
 					})
 
 					It("loads the client secret from the environment", func() {
-						config, err := cfg.Load()
+						config, err := main.LoadConfig()
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(config.UAAClientSecret()).To(Equal(expectedUAAClientSecretFromEnv))
@@ -161,7 +161,7 @@ var _ = Describe("Config", func() {
 
 				Context("UAA_CLIENT_SECRET is not set", func() {
 					It("returns an error", func() {
-						_, err := cfg.Load()
+						_, err := main.LoadConfig()
 						errMsg := "`UAA_CLIENT_SECRET_FILE` or `UAA_CLIENT_SECRET` environment variable must be set"
 						Expect(err).To(MatchError(errMsg))
 					})
