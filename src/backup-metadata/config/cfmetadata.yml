@@ -23,7 +23,7 @@ spec:
       imagePullSecrets:
       - name: registry-credentials-cf-metadata
       containers:
-      - image: cfcapidocker/backup-metadata@sha256:2d05d230e9406c35bf88187f1e1e34b37f361e9d85ae399825152379c13a736a
+      - image: cfcapidocker/backup-metadata@sha256:4f13252e31783bdee83a866b0bd6ac54e533b4df1b7e4639fb074670be1f4ac8
         name: cf-metadata
         command: ["/bin/bash", "-c", "--"]
         args: ["while true; do sleep 30; done;"]
