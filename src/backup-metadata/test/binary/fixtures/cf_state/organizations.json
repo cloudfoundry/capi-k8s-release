@@ -1,0 +1,20 @@
+{
+    "resources": [
+        {
+            "metadata": {
+                "guid": "org-1-id"
+            },
+            "entity": {
+                "name": "org-1"
+            }
+        },
+        {
+            "metadata": {
+                "guid": "org-2-id"
+            },
+            "entity": {
+                "name": "org-2"
+            }
+        }
+    ]
+ }

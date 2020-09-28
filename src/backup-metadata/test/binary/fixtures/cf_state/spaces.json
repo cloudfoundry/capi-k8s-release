@@ -1,0 +1,31 @@
+{
+    "resources": [
+        {
+            "metadata": {
+                "guid": "space-x-id"
+            },
+            "entity": {
+                "name": "space-x",
+                "organization_guid": "org-1-id"
+            }
+        },
+        {
+            "metadata": {
+                "guid": "space-y-id"
+            },
+            "entity": {
+                "name": "space-y",
+                "organization_guid": "org-1-id"
+            }
+        },
+        {
+            "metadata": {
+                "guid": "space-z-id"
+            },
+            "entity": {
+                "name": "space-z",
+                "organization_guid": "org-2-id"
+            }
+        }
+    ]
+}

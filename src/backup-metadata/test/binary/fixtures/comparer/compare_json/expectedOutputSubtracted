@@ -1,0 +1,55 @@
+{
+   "orgs": [
+     0: {
+       "name": "org-1",
+       "spaces": [
+         0: {
+           "apps": [
+             : {
+               "name": "test-app-1"
+             },
+             : {
+               "name": "test-app-2"
+             },
+             : {
+               "name": "test-app-3"
+             }
+           ],
+           "name": "space-x"
+         },
+         1: {
+           "apps": [
+             0: {
+               "name": "test-app-4"
+             },
+-            1: {
+-              "name": "app-that-was-not-restored"
+-            }
+           ],
+           "name": "space-y"
+         }
+       ]
+     },
+     1: {
+       "name": "org-2",
+       "spaces": [
+         : {
+           "apps": [
+             : {
+               "name": "test-app-5"
+             }
+           ],
+           "name": "space-z"
+         }
+       ]
+     }
+   ],
+   "totals": {
+-    "apps": 6,
++    "apps": 5,
+     "orgs": 2,
+     "spaces": 3,
+     "users": 4
+   }
+ }
+
