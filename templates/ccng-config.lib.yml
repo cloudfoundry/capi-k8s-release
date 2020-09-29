@@ -72,8 +72,8 @@ info:
   app_ssh_endpoint: TODO.TODO
   app_ssh_host_key_fingerprint: "placeholder"
   app_ssh_oauth_client: "placeholder"
-  min_cli_version: ""
-  min_recommended_cli_version: ""
+  min_cli_version: "7.0.1"
+  min_recommended_cli_version: "7.0.1"
 
 
 directories:
