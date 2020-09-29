@@ -1,6 +1,12 @@
 package upload
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"net/http"
+	"os"
+
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/archive"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -35,7 +41,22 @@ func Upload(zipPath, registryPath string, authenticator authn.Authenticator) (Ha
 		return Hash{}, err
 	}
 
-	err = remote.Write(ref, image, remote.WithAuth(authenticator))
+	options := []remote.Option{remote.WithAuth(authenticator)}
+	optAppRegistryCAPath := os.Getenv("APP_REGISTRY_CA")
+	if optAppRegistryCAPath != "" {
+		bs, err := ioutil.ReadFile(optAppRegistryCAPath)
+		if err != nil {
+			panic(err)
+		}
+		certPool := x509.NewCertPool()
+		ok := certPool.AppendCertsFromPEM(bs)
+		if !ok {
+			panic("TODO: lol idk")
+		}
+		transport := http.Transport{TLSClientConfig: &tls.Config{RootCAs: certPool}}
+		options = append(options, remote.WithTransport(&transport))
+	}
+	err = remote.Write(ref, image, options...)
 	if err != nil {
 		return Hash{}, err
 	}

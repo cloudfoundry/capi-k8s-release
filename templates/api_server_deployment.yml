@@ -89,6 +89,8 @@ spec:
           volumeMounts:
           - name: tmp-packages
             mountPath: /tmp/packages
+          - name: app-registry-ca
+            mountPath: /tmp/certs/app-registry
           env:
           - name: REGISTRY_USERNAME
             valueFrom:
@@ -100,6 +102,8 @@ spec:
               secretKeyRef:
                 name: cc-package-registry-upload-secret
                 key: password
+          - name: APP_REGISTRY_CA
+            value: "/tmp/certs/app-registry/ca.crt"
         - name: nginx
           image: #@ data.values.images.nginx
           imagePullPolicy: Always
@@ -161,4 +165,7 @@ spec:
         emptyDir: {}
       - name: tmp-packages
         emptyDir: {}
+      - name: app-registry-ca
+        secret:
+          secretName: cc-app-registry-ca-cert
 
