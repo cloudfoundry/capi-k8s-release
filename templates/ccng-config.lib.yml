@@ -220,11 +220,8 @@ buildpacks:
 
   fog_aws_storage_options: {}
 
-db_encryption_key: TODO
-
 database_encryption:
-  keys: {"encryption_key_0":"TODO"}
-  current_key_label: "encryption_key_0"
+  current_key_label: encryption_key_0
   pbkdf2_hmac_iterations: 2048
 
 disable_custom_buildpacks: true
