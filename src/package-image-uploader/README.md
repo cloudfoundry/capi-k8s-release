@@ -1,6 +1,6 @@
 # package-image-uploader
-
-A web server that converts package zip files to single-layer OCI images and uploads them to a registry.
+A minimal server for interacting with OCI image registries.
+Designed to be colocated with the `cf-api-server` and `cf-api-workers`.
 
 ## Usage
 ### Prerequisites
@@ -18,7 +18,10 @@ go run code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/cmd/ser
  ```
 
 ### POST /packages
-Request body
+Converts package zip files to single-layer OCI images and uploads them to the specified registry.
+**Note:** `package_zip_path` must refer to an accessible local file path.
+
+Request body:
 ```
 {
   "package_zip_path": "/path/to/package.zip",
@@ -27,7 +30,9 @@ Request body
 }
 ```
 
-Response body
+Response code: `200`
+
+Response body:
 ```
 {
   "hash": {
@@ -36,3 +41,19 @@ Response body
   }
 }
 ```
+
+### DELETE /images
+Converts package zip files to single-layer OCI images and uploads them to the specified registry.
+**Note:** `package_zip_path` must refer to an accessible local file path.
+
+Request body:
+```
+{
+  "image_reference": "some-image-name@sha256:some-image-digest",
+  "registry_base_path": "docker.io/cfcapidocker"
+}
+```
+
+Response code: `202`
+
+Response body: none

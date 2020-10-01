@@ -9,8 +9,9 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	. "code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers/fakes"
+
+	. "code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 	. "github.com/onsi/ginkgo"
@@ -144,6 +145,5 @@ var _ = Describe("PostPackageHandler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring("unable to convert/upload package"))
 		})
-
 	})
 })
