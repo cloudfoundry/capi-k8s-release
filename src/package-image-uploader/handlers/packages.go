@@ -40,7 +40,7 @@ func PostPackageHandler(uploadFunc UploaderFunc, logger *log.Logger, authenticat
 		}
 		logger.Printf("Processing request: %+v\n", parsedBody)
 
-		if invalidRequestBody(parsedBody) {
+		if invalidPostPackageRequest(parsedBody) {
 			logger.Printf("Invalid request body: %+v\n", parsedBody)
 			writer.WriteHeader(422)
 			writer.Write([]byte("missing required parameter"))
@@ -69,6 +69,6 @@ func PostPackageHandler(uploadFunc UploaderFunc, logger *log.Logger, authenticat
 	}
 }
 
-func invalidRequestBody(parsedBody postPackageBody) bool {
+func invalidPostPackageRequest(parsedBody postPackageBody) bool {
 	return parsedBody.PackageZipPath == "" || parsedBody.PackageGuid == "" || parsedBody.RegistryBasePath == ""
 }
