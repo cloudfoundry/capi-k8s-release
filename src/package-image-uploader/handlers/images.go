@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -14,14 +13,17 @@ import (
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/image_delete_func.go --fake-name ImageDeleteFunc . ImageDeleteFunc
 type ImageDeleteFunc func(ref name.Reference, options ...remote.Option) error
 
-type deleteImageBody struct {
-	ImageReference   string `json:"image_reference"`
-	RegistryBasePath string `json:"registry_base_path"`
+type deleteImageRequestBody struct {
+	ImageReference string `json:"image_reference"`
+}
+
+type DeleteImageResponseBody struct {
+	ImageReference string `json:"image_reference"`
 }
 
 func DeleteImageHandler(delete ImageDeleteFunc, logger *log.Logger, authenticator authn.Authenticator) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		parsedBody := deleteImageBody{}
+		parsedBody := deleteImageRequestBody{}
 		err := json.NewDecoder(request.Body).Decode(&parsedBody)
 		if err != nil {
 			logger.Printf("Failed to decode json body: %+v\n", err)
@@ -38,10 +40,9 @@ func DeleteImageHandler(delete ImageDeleteFunc, logger *log.Logger, authenticato
 			return
 		}
 
-		refName := fmt.Sprintf("%s/%s", parsedBody.RegistryBasePath, parsedBody.ImageReference)
-		ref, err := name.ParseReference(refName)
+		ref, err := name.ParseReference(parsedBody.ImageReference)
 		if err != nil {
-			logger.Printf("Failed to parse reference '%s': %+v\n", refName, err)
+			logger.Printf("Failed to parse reference '%s': %+v\n", parsedBody.ImageReference, err)
 			writer.WriteHeader(422)
 			writer.Write([]byte("unable to parse image reference\n"))
 			return
@@ -55,11 +56,19 @@ func DeleteImageHandler(delete ImageDeleteFunc, logger *log.Logger, authenticato
 			return
 		}
 
-		logger.Printf("Finished deleting image: %s\n", ref.Name())
 		writer.WriteHeader(http.StatusAccepted)
+		err = json.NewEncoder(writer).Encode(DeleteImageResponseBody{ImageReference: ref.Name()})
+		if err != nil { // untested / untestable
+			logger.Println("Error marshalling JSON response:", err)
+			writer.WriteHeader(500)
+			writer.Write([]byte("unable to encode JSON response"))
+			return
+		}
+
+		logger.Printf("Finished deleting image: %s\n", ref.Name())
 	}
 }
 
-func invalidDeleteImageRequest(parsedBody deleteImageBody) bool {
-	return parsedBody.ImageReference == "" || parsedBody.RegistryBasePath == ""
+func invalidDeleteImageRequest(parsedBody deleteImageRequestBody) bool {
+	return parsedBody.ImageReference == ""
 }

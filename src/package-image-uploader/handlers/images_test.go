@@ -1,8 +1,8 @@
 package handlers_test
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -30,8 +30,7 @@ var _ = Describe("DeleteImageHandler", func() {
 	)
 
 	const (
-		registryBasePath = "registry.example.com/cf-workloads"
-		imageReference   = "some-package@sha256:15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39"
+		imageReference = "registry.example.com/cf-workloads/some-package@sha256:15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39"
 	)
 
 	BeforeEach(func() {
@@ -48,8 +47,7 @@ var _ = Describe("DeleteImageHandler", func() {
 	Context("successfully deleting an image", func() {
 		BeforeEach(func() {
 			jsonBody = `{
-              "image_reference": "` + imageReference + `",
-              "registry_base_path": "` + registryBasePath + `"
+              "image_reference": "` + imageReference + `"
             }`
 
 			response = httptest.NewRecorder()
@@ -63,10 +61,17 @@ var _ = Describe("DeleteImageHandler", func() {
 			Expect(imageDeleteFunc.CallCount()).To(Equal(1))
 
 			ref, _ := imageDeleteFunc.ArgsForCall(0)
-			expectedRef := fmt.Sprintf("%s/%s", registryBasePath, imageReference)
-			Expect(ref.Name()).To(Equal(expectedRef))
+			Expect(ref.Name()).To(Equal(imageReference))
 
 			Expect(response.Code).To(Equal(http.StatusAccepted))
+
+			parsedBody := handlers.DeleteImageResponseBody{}
+			Expect(
+				json.NewDecoder(response.Body).Decode(&parsedBody),
+			).To(Succeed())
+			Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
+				ImageReference: imageReference,
+			}))
 		})
 	})
 
@@ -80,14 +85,14 @@ var _ = Describe("DeleteImageHandler", func() {
 
 			body, err := ioutil.ReadAll(response.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(body).To(ContainSubstring("missing required parameter"))
+			Expect(string(body)).To(ContainSubstring("missing required parameter"))
 			Expect(response.Code).To(Equal(http.StatusUnprocessableEntity))
 		},
-		Entry("image_reference is missing", `{"registry_base_path": "`+registryBasePath+`"}`),
-		Entry("registry_base_path is missing", `{"iamge_reference": "`+imageReference+`"}`),
+		Entry("image_reference is missing", `{"some_other_field": "some-value"}`),
+		Entry("request body is empty", `{}`),
 	)
 
-	When("the JSON is malformed", func() {
+	When("the request JSON is malformed", func() {
 		BeforeEach(func() {
 			jsonBody = `{`
 		})
@@ -108,8 +113,7 @@ var _ = Describe("DeleteImageHandler", func() {
 	When("the image reference is invalid", func() {
 		BeforeEach(func() {
 			jsonBody = `{
-              "image_reference": ".",
-              "registry_base_path": "."
+              "image_reference": "."
             }`
 		})
 
@@ -129,8 +133,7 @@ var _ = Describe("DeleteImageHandler", func() {
 	When("the upload errors", func() {
 		BeforeEach(func() {
 			jsonBody = `{
-              "image_reference": "` + imageReference + `",
-              "registry_base_path": "` + registryBasePath + `"
+              "image_reference": "` + imageReference + `"
             }`
 			imageDeleteFunc.Returns(errors.New("delete failed o no"))
 		})
