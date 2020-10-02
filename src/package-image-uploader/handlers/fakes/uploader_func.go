@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 )
 
 type UploaderFunc struct {
-	Stub        func(string, string, authn.Authenticator) (upload.Hash, error)
+	Stub        func(string, string, authn.Authenticator) (package_upload.Hash, error)
 	mutex       sync.RWMutex
 	argsForCall []struct {
 		arg1 string
@@ -18,18 +18,18 @@ type UploaderFunc struct {
 		arg3 authn.Authenticator
 	}
 	returns struct {
-		result1 upload.Hash
+		result1 package_upload.Hash
 		result2 error
 	}
 	returnsOnCall map[int]struct {
-		result1 upload.Hash
+		result1 package_upload.Hash
 		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *UploaderFunc) Spy(arg1 string, arg2 string, arg3 authn.Authenticator) (upload.Hash, error) {
+func (fake *UploaderFunc) Spy(arg1 string, arg2 string, arg3 authn.Authenticator) (package_upload.Hash, error) {
 	fake.mutex.Lock()
 	ret, specificReturn := fake.returnsOnCall[len(fake.argsForCall)]
 	fake.argsForCall = append(fake.argsForCall, struct {
@@ -54,7 +54,7 @@ func (fake *UploaderFunc) CallCount() int {
 	return len(fake.argsForCall)
 }
 
-func (fake *UploaderFunc) Calls(stub func(string, string, authn.Authenticator) (upload.Hash, error)) {
+func (fake *UploaderFunc) Calls(stub func(string, string, authn.Authenticator) (package_upload.Hash, error)) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = stub
@@ -66,28 +66,28 @@ func (fake *UploaderFunc) ArgsForCall(i int) (string, string, authn.Authenticato
 	return fake.argsForCall[i].arg1, fake.argsForCall[i].arg2, fake.argsForCall[i].arg3
 }
 
-func (fake *UploaderFunc) Returns(result1 upload.Hash, result2 error) {
+func (fake *UploaderFunc) Returns(result1 package_upload.Hash, result2 error) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = nil
 	fake.returns = struct {
-		result1 upload.Hash
+		result1 package_upload.Hash
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *UploaderFunc) ReturnsOnCall(i int, result1 upload.Hash, result2 error) {
+func (fake *UploaderFunc) ReturnsOnCall(i int, result1 package_upload.Hash, result2 error) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = nil
 	if fake.returnsOnCall == nil {
 		fake.returnsOnCall = make(map[int]struct {
-			result1 upload.Hash
+			result1 package_upload.Hash
 			result2 error
 		})
 	}
 	fake.returnsOnCall[i] = struct {
-		result1 upload.Hash
+		result1 package_upload.Hash
 		result2 error
 	}{result1, result2}
 }

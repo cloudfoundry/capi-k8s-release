@@ -1,4 +1,4 @@
-package upload
+package package_upload
 
 import (
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/archive"
