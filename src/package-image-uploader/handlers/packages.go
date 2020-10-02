@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fakes/uploader_func.go --fake-name UploaderFunc . UploaderFunc
-type UploaderFunc func(zipPath, registryPath string, authenticator authn.Authenticator) (upload.Hash, error)
+type UploaderFunc func(zipPath, registryPath string, authenticator authn.Authenticator) (package_upload.Hash, error)
 
 type postPackageBody struct {
 	PackageZipPath   string `json:"package_zip_path"`

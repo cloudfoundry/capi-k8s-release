@@ -13,7 +13,7 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/config"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/gorilla/mux"
@@ -50,7 +50,7 @@ func newServer(cfg *config.Config, logger *log.Logger) *http.Server {
 	})
 
 	r := mux.NewRouter()
-	r.HandleFunc("/packages", handlers.PostPackageHandler(upload.Upload, logger, authenticator)).Methods("POST")
+	r.HandleFunc("/packages", handlers.PostPackageHandler(package_upload.Upload, logger, authenticator)).Methods("POST")
 	r.HandleFunc("/images", handlers.DeleteImageHandler(remote.Delete, logger, authenticator)).Methods("DELETE")
 	addr := fmt.Sprintf("127.0.0.1:%d", cfg.Port)
 

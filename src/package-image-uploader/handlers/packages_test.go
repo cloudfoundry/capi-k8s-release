@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers/fakes"
 
 	. "code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -58,7 +58,7 @@ var _ = Describe("PostPackageHandler", func() {
               "registry_base_path": "` + registryBasePath + `"
             }`
 
-			uploaderFunc.Returns(upload.Hash{Algorithm: algorithm, Hex: hex}, nil)
+			uploaderFunc.Returns(package_upload.Hash{Algorithm: algorithm, Hex: hex}, nil)
 		})
 
 		It("uploads the package to the registry", func() {
@@ -131,7 +131,7 @@ var _ = Describe("PostPackageHandler", func() {
               "package_guid": "` + packageGuid + `",
               "registry_base_path": "` + registryBasePath + `"
             }`
-			uploaderFunc.Returns(upload.Hash{}, errors.New("upload failed o no"))
+			uploaderFunc.Returns(package_upload.Hash{}, errors.New("upload failed o no"))
 		})
 
 		It("returns a 500 error", func() {
