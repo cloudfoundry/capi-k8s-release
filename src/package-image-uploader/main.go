@@ -10,13 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/config"
-
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/gorilla/mux"
+
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/config"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func newServer(cfg *config.Config, logger *log.Logger) *http.Server {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/packages", handlers.PostPackageHandler(package_upload.Upload, logger, authenticator)).Methods("POST")
-	r.HandleFunc("/images", handlers.DeleteImageHandler(remote.Delete, logger, authenticator)).Methods("DELETE")
+	r.HandleFunc("/images", handlers.DeleteImageHandler(remote.Delete, remote.Get, logger, authenticator)).Methods("DELETE")
 	addr := fmt.Sprintf("127.0.0.1:%d", cfg.Port)
 
 	return &http.Server{
@@ -64,15 +64,15 @@ func newServer(cfg *config.Config, logger *log.Logger) *http.Server {
 	}
 }
 
-func handleServerShutdown(server *http.Server, done chan<- bool, shutdown <-chan os.Signal, logger *log.Logger) {
+func handleServerShutdown(s *http.Server, done chan<- bool, shutdown <-chan os.Signal, logger *log.Logger) {
 	<-shutdown
 	logger.Println("Server is attempting to shut down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
-	server.SetKeepAlivesEnabled(false)
-	if err := server.Shutdown(ctx); err != nil {
+	s.SetKeepAlivesEnabled(false)
+	if err := s.Shutdown(ctx); err != nil {
 		logger.Fatalf("Server unable to gracefully shutdown: %v\n", err)
 	}
 	close(done)

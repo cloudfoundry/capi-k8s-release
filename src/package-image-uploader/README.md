@@ -43,13 +43,15 @@ Response body:
 ```
 
 ### DELETE /images
-Deletes an image from the registry. The image reference should include a tag or digest, otherwise `latest` is assumed.
+Deletes an image from the registry. The image reference should include a tag or digest. Defaults to the `latest` tag.
+When an image is deleted by tag the endpoint will attempt to delete the manifests for both the tag and the digest.
 **Note:** Many registries delete images asynchronously, so the image may not be deleted immediately.
+**Note:** Some registries (e.g. GCR) require deleting an image's tag manifests before its digest manifest can be deleted.
 
 Request body:
 ```
 {
-  "image_reference": "docker.io/cfcapidocker/some-image-name@sha256:some-image-digest",
+  "image_reference": "docker.io/cfcapidocker/some-image-name:some-tag",
 }
 ```
 
@@ -58,6 +60,6 @@ Response code: `202`
 Response body:
 ```
 {
-  "image_reference": "docker.io/cfcapidocker/some-image-name@sha256:some-image-digest",
+  "image_reference": "docker.io/cfcapidocker/some-image-name:some-tag",
 }
 ```

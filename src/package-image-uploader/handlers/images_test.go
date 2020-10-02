@@ -9,6 +9,10 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -22,11 +26,12 @@ import (
 
 var _ = Describe("DeleteImageHandler", func() {
 	var (
-		handler         http.HandlerFunc
-		imageDeleteFunc *fakes.ImageDeleteFunc
-		response        *httptest.ResponseRecorder
-		authenticator   authn.Authenticator
-		jsonBody        string
+		handler             http.HandlerFunc
+		imageDeleteFunc     *fakes.ImageDeleteFunc
+		imageDescriptorFunc *fakes.ImageDescriptorFunc
+		response            *httptest.ResponseRecorder
+		authenticator       authn.Authenticator
+		jsonBody            string
 	)
 
 	const (
@@ -35,12 +40,13 @@ var _ = Describe("DeleteImageHandler", func() {
 
 	BeforeEach(func() {
 		imageDeleteFunc = new(fakes.ImageDeleteFunc)
+		imageDescriptorFunc = new(fakes.ImageDescriptorFunc)
 		logger := log.New(GinkgoWriter, "", 0)
 		authenticator = authn.FromConfig(authn.AuthConfig{
 			Username: "some-user",
 			Password: "some-password",
 		})
-		handler = handlers.DeleteImageHandler(imageDeleteFunc.Spy, logger, authenticator)
+		handler = handlers.DeleteImageHandler(imageDeleteFunc.Spy, imageDescriptorFunc.Spy, logger, authenticator)
 		response = httptest.NewRecorder()
 	})
 
@@ -51,6 +57,16 @@ var _ = Describe("DeleteImageHandler", func() {
             }`
 
 			response = httptest.NewRecorder()
+
+			descriptor := remote.Descriptor{
+				Descriptor: v1.Descriptor{
+					Digest: v1.Hash{
+						Algorithm: "sha256",
+						Hex:       "15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39",
+					},
+				},
+			}
+			imageDescriptorFunc.Returns(&descriptor, nil)
 		})
 
 		It("deletes the image from the registry", func() {
@@ -58,7 +74,8 @@ var _ = Describe("DeleteImageHandler", func() {
 
 			handler.ServeHTTP(response, req)
 
-			Expect(imageDeleteFunc.CallCount()).To(Equal(1))
+			Expect(imageDescriptorFunc.CallCount()).To(Equal(1))
+			Expect(imageDeleteFunc.CallCount()).To(Equal(2))
 
 			ref, _ := imageDeleteFunc.ArgsForCall(0)
 			Expect(ref.Name()).To(Equal(imageReference))
