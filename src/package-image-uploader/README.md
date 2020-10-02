@@ -43,17 +43,21 @@ Response body:
 ```
 
 ### DELETE /images
-Converts package zip files to single-layer OCI images and uploads them to the specified registry.
-**Note:** `package_zip_path` must refer to an accessible local file path.
+Deletes an image from the registry. The image reference should include a tag or digest, otherwise `latest` is assumed.
+**Note:** Many registries delete images asynchronously, so the image may not be deleted immediately.
 
 Request body:
 ```
 {
-  "image_reference": "some-image-name@sha256:some-image-digest",
-  "registry_base_path": "docker.io/cfcapidocker"
+  "image_reference": "docker.io/cfcapidocker/some-image-name@sha256:some-image-digest",
 }
 ```
 
 Response code: `202`
 
-Response body: none
+Response body:
+```
+{
+  "image_reference": "docker.io/cfcapidocker/some-image-name@sha256:some-image-digest",
+}
+```
