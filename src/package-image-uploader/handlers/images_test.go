@@ -9,6 +9,11 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+
 	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -22,57 +27,109 @@ import (
 
 var _ = Describe("DeleteImageHandler", func() {
 	var (
-		handler         http.HandlerFunc
-		imageDeleteFunc *fakes.ImageDeleteFunc
-		response        *httptest.ResponseRecorder
-		authenticator   authn.Authenticator
-		jsonBody        string
+		handler             http.HandlerFunc
+		imageDeleteFunc     *fakes.ImageDeleteFunc
+		imageDescriptorFunc *fakes.ImageDescriptorFunc
+		response            *httptest.ResponseRecorder
+		authenticator       authn.Authenticator
+		jsonBody            string
 	)
 
 	const (
-		imageReference = "registry.example.com/cf-workloads/some-package@sha256:15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39"
+		digestImageRef = "registry.example.com/cf-workloads/some-package@sha256:15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39"
+		tagImageRef    = "registry.example.com/cf-workloads/some-package:some-tag"
 	)
 
 	BeforeEach(func() {
 		imageDeleteFunc = new(fakes.ImageDeleteFunc)
+		imageDescriptorFunc = new(fakes.ImageDescriptorFunc)
 		logger := log.New(GinkgoWriter, "", 0)
 		authenticator = authn.FromConfig(authn.AuthConfig{
 			Username: "some-user",
 			Password: "some-password",
 		})
-		handler = handlers.DeleteImageHandler(imageDeleteFunc.Spy, logger, authenticator)
+		handler = handlers.DeleteImageHandler(imageDeleteFunc.Spy, imageDescriptorFunc.Spy, logger, authenticator)
+		descriptor := remote.Descriptor{
+			Descriptor: v1.Descriptor{
+				Digest: v1.Hash{
+					Algorithm: "sha256",
+					Hex:       "15e8a86a2cfce269dbc4321e741f729d60f41cafc7a8f7e11cd2892a4de3bf39",
+				},
+			},
+		}
+		imageDescriptorFunc.Returns(&descriptor, nil)
+
 		response = httptest.NewRecorder()
 	})
 
 	Context("successfully deleting an image", func() {
 		BeforeEach(func() {
-			jsonBody = `{
-              "image_reference": "` + imageReference + `"
-            }`
-
 			response = httptest.NewRecorder()
 		})
 
-		It("deletes the image from the registry", func() {
-			req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+		When("image reference is a digest", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              		"image_reference": "` + digestImageRef + `"
+            	}`
+			})
 
-			handler.ServeHTTP(response, req)
+			It("deletes the image manifest from the registry by digest", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
 
-			Expect(imageDeleteFunc.CallCount()).To(Equal(1))
+				handler.ServeHTTP(response, req)
 
-			ref, _ := imageDeleteFunc.ArgsForCall(0)
-			Expect(ref.Name()).To(Equal(imageReference))
+				Expect(imageDescriptorFunc.CallCount()).To(Equal(1))
+				Expect(imageDeleteFunc.CallCount()).To(Equal(1))
 
-			Expect(response.Code).To(Equal(http.StatusAccepted))
+				ref, _ := imageDeleteFunc.ArgsForCall(0)
+				Expect(ref.Name()).To(Equal(digestImageRef))
 
-			parsedBody := handlers.DeleteImageResponseBody{}
-			Expect(
-				json.NewDecoder(response.Body).Decode(&parsedBody),
-			).To(Succeed())
-			Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
-				ImageReference: imageReference,
-			}))
+				Expect(response.Code).To(Equal(http.StatusAccepted))
+
+				parsedBody := handlers.DeleteImageResponseBody{}
+				Expect(
+					json.NewDecoder(response.Body).Decode(&parsedBody),
+				).To(Succeed())
+				Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
+					ImageReference: digestImageRef,
+				}))
+			})
 		})
+
+		When("image reference is a tag", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              		"image_reference": "` + tagImageRef + `"
+            	}`
+			})
+
+			It("deletes the image manifest from the registry by digest and tag", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+
+				handler.ServeHTTP(response, req)
+
+				Expect(imageDescriptorFunc.CallCount()).To(Equal(1))
+				Expect(imageDeleteFunc.CallCount()).To(Equal(2))
+
+				ref, _ := imageDeleteFunc.ArgsForCall(0)
+				Expect(ref.Name()).To(Equal(tagImageRef))
+
+				ref, _ = imageDeleteFunc.ArgsForCall(1)
+				Expect(ref.Name()).To(Equal(digestImageRef))
+
+				Expect(response.Code).To(Equal(http.StatusAccepted))
+
+				parsedBody := handlers.DeleteImageResponseBody{}
+				Expect(
+					json.NewDecoder(response.Body).Decode(&parsedBody),
+				).To(Succeed())
+				Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
+					ImageReference: digestImageRef,
+				}))
+			})
+		})
+
 	})
 
 	DescribeTable("required fields are missing/blank",
@@ -130,25 +187,106 @@ var _ = Describe("DeleteImageHandler", func() {
 		})
 	})
 
-	When("the upload errors", func() {
-		BeforeEach(func() {
-			jsonBody = `{
-              "image_reference": "` + imageReference + `"
+	When("fetching image metadata fails", func() {
+		When("the registry returns a 404", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              "image_reference": "` + digestImageRef + `"
             }`
-			imageDeleteFunc.Returns(errors.New("delete failed o no"))
+				imageDescriptorFunc.Returns(nil, &transport.Error{
+					StatusCode: 404,
+				})
+			})
+
+			It("assumes the image has been deleted and returns a successful response", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+
+				handler.ServeHTTP(response, req)
+
+				Expect(response.Code).To(Equal(http.StatusAccepted))
+
+				parsedBody := handlers.DeleteImageResponseBody{}
+				Expect(
+					json.NewDecoder(response.Body).Decode(&parsedBody),
+				).To(Succeed())
+				Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
+					ImageReference: digestImageRef,
+				}))
+			})
 		})
 
-		It("returns a 500 error", func() {
-			req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+		When("the registry returns another error", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              "image_reference": "` + digestImageRef + `"
+            }`
+				imageDescriptorFunc.Returns(nil, errors.New("delete failed o no"))
+			})
 
-			handler.ServeHTTP(response, req)
+			It("returns a 500 error", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
 
-			Expect(imageDeleteFunc.CallCount()).To(Equal(1))
-			Expect(response.Code).To(Equal(http.StatusInternalServerError))
-			body, err := ioutil.ReadAll(response.Body)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(body).To(ContainSubstring("unable to delete image"))
-			Expect(body).To(ContainSubstring(imageReference))
+				handler.ServeHTTP(response, req)
+
+				Expect(imageDescriptorFunc.CallCount()).To(Equal(1))
+				Expect(response.Code).To(Equal(http.StatusInternalServerError))
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(body).To(ContainSubstring("unable to fetch image metadata"))
+				Expect(body).To(ContainSubstring(digestImageRef))
+			})
+		})
+	})
+
+	When("the delete errors", func() {
+		When("the registry returns a 404", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              "image_reference": "` + digestImageRef + `"
+            }`
+
+				imageDeleteFunc.Returns(&transport.Error{
+					StatusCode: 404,
+				})
+			})
+
+			It("assumes the image has been deleted and returns a successful response", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+
+				handler.ServeHTTP(response, req)
+
+				Expect(response.Code).To(Equal(http.StatusAccepted))
+
+				parsedBody := handlers.DeleteImageResponseBody{}
+				Expect(
+					json.NewDecoder(response.Body).Decode(&parsedBody),
+				).To(Succeed())
+				Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
+					ImageReference: digestImageRef,
+				}))
+			})
+		})
+
+		When("the registry returns another error", func() {
+			BeforeEach(func() {
+				jsonBody = `{
+              "image_reference": "` + digestImageRef + `"
+            }`
+				imageDeleteFunc.Returns(errors.New("delete failed o no"))
+			})
+
+			It("returns a 500 error", func() {
+				req := httptest.NewRequest("DELETE", "/images", strings.NewReader(jsonBody))
+
+				handler.ServeHTTP(response, req)
+
+				Expect(imageDeleteFunc.CallCount()).To(Equal(1))
+				Expect(response.Code).To(Equal(http.StatusInternalServerError))
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(body).To(ContainSubstring("unable to delete image"))
+				Expect(body).To(ContainSubstring(digestImageRef))
+			})
 		})
 	})
 })
