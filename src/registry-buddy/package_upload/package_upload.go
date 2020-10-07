@@ -1,7 +1,7 @@
 package package_upload
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/archive"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/archive"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"

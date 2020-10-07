@@ -16,7 +16,7 @@ import (
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/archive"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/archive"
 	h "github.com/buildpacks/pack/testhelpers"
 )
 

@@ -14,11 +14,11 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers/fakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers/fakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
