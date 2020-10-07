@@ -236,9 +236,6 @@ renderer:
 
 cloud_controller_username_lookup_client_name: "cloud_controller_username_lookup"
 
-cc_service_key_client_name: "cc_service_key_client"
-cc_service_key_client_secret: TODO
-
 allow_app_ssh_access: false
 default_app_ssh_access: false
 
