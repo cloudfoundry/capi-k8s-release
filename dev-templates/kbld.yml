@@ -22,10 +22,10 @@ sources:
     path: #@ data.values.src_dirs.cf_api_controllers
     pack: *packConfig
   - imageRepo: cloudfoundry/cf-api-package-image-uploader
-    path: #@ data.values.src_dirs.registry_buddy
+    path: #@ data.values.src_dirs.package_image_uploader
     pack: *packConfig
-  - imageRepo: #@ data.values.kbld.destination.registry_buddy
-    path: #@ data.values.src_dirs.registry_buddy
+  - imageRepo: #@ data.values.kbld.destination.package_image_uploader
+    path: #@ data.values.src_dirs.package_image_uploader
     pack: *packConfig
 ---
 apiVersion: kbld.k14s.io/v1alpha1
@@ -40,16 +40,16 @@ destinations:
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     newImage: #@ data.values.kbld.destination.cf_api_controllers
   - imageRepo: cloudfoundry/cf-api-package-image-uploader
-    newImage: #@ data.values.kbld.destination.registry_buddy
-  - imageRepo: #@ data.values.kbld.destination.registry_buddy
-    newImage: #@ data.values.kbld.destination.registry_buddy
+    newImage: #@ data.values.kbld.destination.package_image_uploader
+  - imageRepo: #@ data.values.kbld.destination.package_image_uploader
+    newImage: #@ data.values.kbld.destination.package_image_uploader
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageKeys
 keys:
 - ccng
 - cf_api_controllers
-- registry_buddy
+- package_image_uploader
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
-	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/package_upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/gorilla/mux"
 

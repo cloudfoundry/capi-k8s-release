@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/package_upload"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
 )
 

@@ -4,8 +4,8 @@ kbld:
   destination:
     ccng: ""
     cf_api_controllers: ""
-    registry_buddy: ""
+    package_image_uploader: ""
 src_dirs:
   ccng: ""
   cf_api_controllers: ""
-  registry_buddy: ""
+  package_image_uploader: ""

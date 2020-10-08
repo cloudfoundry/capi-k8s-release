@@ -3,7 +3,7 @@ package config_test
 import (
 	"os"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/config"
+	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/config"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
