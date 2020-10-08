@@ -1,4 +1,4 @@
-module code.cloudfoundry.org/capi-k8s-release/src/registry-buddy
+module code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader
 
 go 1.14
 
