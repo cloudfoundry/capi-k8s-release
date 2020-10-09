@@ -1,0 +1,24 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+
+#@overlay/match by=overlay.subset({"metadata": {"name": "cf-api-server"}, "kind": "Deployment"})
+---
+spec:
+  template:
+    spec:
+      volumes:
+      #@overlay/append
+      - name: honeycomb-key
+        secret:
+          secretName: honeycomb-key
+
+#@ def updates():
+#@overlay/match missing_ok=True
+honeycomb_api_key: TODO
+#@ end
+
+#@overlay/match by=overlay.subset({"metadata": {"name": "cloud-controller-ng-yaml"}})
+---
+data:
+  #@overlay/replace via=lambda a,_: yaml.encode(overlay.apply(yaml.decode(a), updates()))
+  cloud_controller_ng.yml:
