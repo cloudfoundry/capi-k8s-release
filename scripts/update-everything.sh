@@ -24,6 +24,7 @@ pushd ~/workspace/capi-k8s-release/
 popd
 
 pushd ~/workspace/cf-for-k8s/
+  git reset HEAD --hard
   git co master
   git pull
 popd
