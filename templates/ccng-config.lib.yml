@@ -51,11 +51,6 @@ bulk_api:
   auth_user: TODO
   auth_password: TODO
 
-#! TODO: remove this for k8s since we're using mTLS for securing this communication
-internal_api:
-  auth_user: TODO
-  auth_password: TODO
-
 nginx:
   use_nginx: true
   #! TODO: consume this from a variable since it's defined in the pod's mounts
