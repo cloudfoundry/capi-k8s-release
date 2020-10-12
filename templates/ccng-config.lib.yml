@@ -143,10 +143,6 @@ staging:
   minimum_staging_memory_mb: 1024
   minimum_staging_disk_mb: 4096
   minimum_staging_file_descriptor_limit: 16384
-  #! TODO: make this optional until the related features are implemented/supported
-  auth:
-    user: TODO
-    password: TODO
 
 default_health_check_timeout: 60
 maximum_health_check_timeout: 180
