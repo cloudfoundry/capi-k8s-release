@@ -21,7 +21,7 @@ sources:
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     path: #@ data.values.src_dirs.cf_api_controllers
     pack: *packConfig
-  - imageRepo: cloudfoundry/cf-api-package-image-uploader
+  - imageRepo: cloudfoundry/cf-api-package-registry-buddy
     path: #@ data.values.src_dirs.registry_buddy
     pack: *packConfig
   - imageRepo: #@ data.values.kbld.destination.registry_buddy
@@ -39,7 +39,7 @@ destinations:
     newImage: #@ data.values.kbld.destination.cf_api_controllers
   - imageRepo: #@ data.values.kbld.destination.cf_api_controllers
     newImage: #@ data.values.kbld.destination.cf_api_controllers
-  - imageRepo: cloudfoundry/cf-api-package-image-uploader
+  - imageRepo: cloudfoundry/cf-api-package-registry-buddy
     newImage: #@ data.values.kbld.destination.registry_buddy
   - imageRepo: #@ data.values.kbld.destination.registry_buddy
     newImage: #@ data.values.kbld.destination.registry_buddy
