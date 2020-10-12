@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/handlers"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )

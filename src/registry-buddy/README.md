@@ -1,4 +1,4 @@
-# package-image-uploader
+# registry-buddy
 A minimal server for interacting with OCI image registries.
 Designed to be colocated with the `cf-api-server` and `cf-api-workers`.
 
@@ -14,7 +14,7 @@ The following environment variables must be configured:
 
 To start the server locally, run:
  ```
-go run code.cloudfoundry.org/capi-k8s-release/src/package-image-uploader/cmd/server
+go run code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/cmd/server
  ```
 
 ### POST /packages
