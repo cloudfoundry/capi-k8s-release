@@ -46,11 +46,6 @@ instance_file_descriptor_limit: 16384
 
 request_timeout_in_seconds: 900
 
-#! TODO: this appears unused
-bulk_api:
-  auth_user: TODO
-  auth_password: TODO
-
 nginx:
   use_nginx: true
   #! TODO: consume this from a variable since it's defined in the pod's mounts
