@@ -20,6 +20,7 @@ jobs:
           cd src/registry-buddy/
           go test -v ./...
   registry-buddy-integration-tests:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     container:
       image: cloudfoundry/capi:go-units
