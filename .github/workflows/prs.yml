@@ -1,0 +1,79 @@
+name: Test PRs
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  registry-buddy-unit-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: cloudfoundry/capi:go-units
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v2
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Run unit tests
+        run: |
+          cd src/registry-buddy/
+          go test -v ./...
+  registry-buddy-integration-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: cloudfoundry/capi:go-units
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v2
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Run integration tests against GCR
+        env:
+          REGISTRY_BASE_PATH: ${{ secrets.REGISTRY_BUDDY_TEST_GCR_URI_PATH }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_BUDDY_TEST_GCR_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_BUDDY_TEST_GCR_PASSWORD }}
+        run: |
+          cd src/registry-buddy/
+          go test -v ./integration/
+  cf-api-controllers-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: cloudfoundry/capi:go-units
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v2
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Run all tests
+        run: |
+          cd src/cf-api-controllers/
+          go test -v ./...
+  template-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: cloudfoundry/capi:cf-for-k8s
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v2
+        with:
+          path: capi-k8s-release
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Clone latest cf-for-k8s
+        uses: actions/checkout@v2
+        with:
+          repository: cloudfoundry/cf-for-k8s
+          ref: develop
+          path: cf-for-k8s
+      - name: Run template tests
+        run: |
+          cd cf-for-k8s
+          vendir sync -d config/capi/_ytt_lib/capi-k8s-release=../capi-k8s-release > /dev/null
+          ytt -f config/ -f sample-cf-install-values.yml > /dev/null
