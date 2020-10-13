@@ -9,7 +9,7 @@ sources:
       build:
         builder: paketobuildpacks/builder:full
         buildpacks:
-          - gcr.io/paketo-community/ruby
+          - gcr.io/paketo-buildpacks/ruby
   - imageRepo: #@ data.values.kbld.destination.ccng
     path: #@ data.values.src_dirs.ccng
     pack: *ccngPackConfig
