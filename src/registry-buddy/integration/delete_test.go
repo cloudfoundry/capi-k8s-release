@@ -59,7 +59,7 @@ var _ = Describe("Deleting Images", func() {
 
 	It("deletes image manifests for both the image digest and tag", func() {
 		jsonBody := `{
-              "image_reference": "` + ref.Name() + `"
+              "image_reference": "` + digestRef.Name() + `"
             }`
 		req, err := http.NewRequest("DELETE", testServer.URL+"/images", strings.NewReader(jsonBody))
 		Expect(err).NotTo(HaveOccurred())
@@ -79,7 +79,7 @@ var _ = Describe("Deleting Images", func() {
 		Eventually(func() int {
 			// calling Get returns image metadata if the image manifest exists
 			// it returns an error if the image manifest has been deleted
-			_, err = remote.Get(ref, remote.WithAuth(authenticator))
+			_, err = remote.Get(digestRef, remote.WithAuth(authenticator))
 			if e, ok := err.(*transport.Error); ok && e.StatusCode == 404 {
 				return e.StatusCode
 			}
