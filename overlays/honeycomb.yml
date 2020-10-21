@@ -1,0 +1,16 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
+#@ def updates():
+#@overlay/match missing_ok=True
+honeycomb:
+  write_key: #@ data.values.honeycomb.write_key
+  dataset: #@ data.values.honeycomb.dataset
+#@ end
+
+#@overlay/match by=overlay.subset({"metadata": {"name": "cloud-controller-ng-yaml"}})
+---
+data:
+  #@overlay/replace via=lambda a,_: yaml.encode(overlay.apply(yaml.decode(a), updates()))
+  cloud_controller_ng.yml:

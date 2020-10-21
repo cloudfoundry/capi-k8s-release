@@ -34,6 +34,22 @@ From elsewhere:
 
 Environment variables can be used with either script to override default local source directories and remote image repositories.
 
+### Configuring Honeycomb
+To enable Honeycomb event emission, write out a `honeycomb-data.yml` file containing your
+write key and the name of your dataset
+```
+---
+honeycomb:
+  write_key: SOME_WRITE_KEY
+  dataset: my-dataset
+```
+
+Then, pass the honeycomb overlays and your `data.yml` file to the `rollout-sh`
+script or the underlying `ytt` command
+```
+-f ./overlays/honeycomb.yml -f ./overlays/honeycomb-values.yml -f ./honeycomb-data.yml
+```
+
 ### Configuring pushes of buildpack apps
 
 `capi-k8s-release` currently uploads app source code to a blobstore, but then hands that off to `kpack` to build app images that are then placed in a registry.  In order for this to work, you must configure the following values:
