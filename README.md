@@ -17,10 +17,10 @@ In this repo:
 - [cf-api-controllers](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/cf-api-controllers) is a collection of kubebuilder controllers that synchronize the CF API and various k8s CRDs (Images, Builds, Routes, PeriodicSyncs, etc).
 - [registry-buddy](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/registry-buddy) is sidecar service to help ruby code communicate with container registries using [go-containerregistry](https://github.com/google/go-containerregistry).
 - [nginx](https://github.com/cloudfoundry/capi-k8s-release/tree/master/dockerfiles/nginx) is a custom-built nginx container including [the nginx upload module](https://github.com/vkholodkov/nginx-upload-module) for managing resumable multipart package uploads.
-- [backup-metadata](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/backup-metadata) is a velero hook to that collects metadata about resources currently stored in the CF API. 
+- [backup-metadata](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/backup-metadata) is a velero hook that collects metadata about resources currently stored in the CF API. 
 
 From elsewhere:
-- [cloud_controller_ng](https://github.com/cloudfoundry/cloud_controller_ng) is reference implementation of the [the V3 CF API](http://v3-apidocs.cloudfoundry.org/).
+- [cloud_controller_ng](https://github.com/cloudfoundry/cloud_controller_ng) is a reference implementation of the [the V3 CF API](http://v3-apidocs.cloudfoundry.org/).
 - [eirini](https://github.com/cloudfoundry-incubator/eirini) is an adapter that lets Cloudfoundry Processes and Tasks run on Kubernetes
 - [kpack](https://github.com/pivotal/kpack) is a collection of CRDs and Controllers for building container images from source using [Cloud Native Buildpacks](https://buildpacks.io/features/)
 - [route controller & istio](https://github.com/cloudfoundry/cf-k8s-networking) are used by cf-for-k8s to manage Routes to apps and the service mesh between CF components
