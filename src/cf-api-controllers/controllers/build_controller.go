@@ -21,10 +21,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/image_registry"
 	"github.com/buildpacks/lifecycle"
+	"github.com/buildpacks/lifecycle/launch"
 	"github.com/go-logr/logr"
 	buildv1alpha1 "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	corev1alpha1 "github.com/pivotal/kpack/pkg/apis/core/v1alpha1"
@@ -152,9 +154,14 @@ func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[s
 
 	ret := make(map[string]string)
 	for _, process := range buildMetadata.Processes {
-		ret[process.Type] = process.Command
+		ret[process.Type] = extractFullCommand(process)
 	}
 	return ret, nil
+}
+
+func extractFullCommand(process launch.Process) string {
+	commandWithArgs := append([]string{process.Command}, process.Args...)
+	return strings.Join(commandWithArgs, " ")
 }
 
 func (r *BuildReconciler) reconcileSuccessfulBuild(build *buildv1alpha1.Build, logger logr.Logger) (ctrl.Result, error) {

@@ -35,6 +35,7 @@ var _ = Describe("BuildController", func() {
 			Processes: []launch.Process{{
 				Type:    "baz",
 				Command: "some-start-command",
+				Args:    []string{"-flag", "some-arg"},
 			}},
 		})
 		Expect(err).To(BeNil())
@@ -123,7 +124,7 @@ var _ = Describe("BuildController", func() {
 			Expect(actualBuildPatch.State).To(Equal(model.BuildStagedState))
 			Expect(actualBuildPatch.Lifecycle.Data.Image).To(Equal("foo.bar/here/be/an/image"))
 			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveLen(1))
-			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command"))
+			Expect(actualBuildPatch.Lifecycle.Data.ProcessTypes).To(HaveKeyWithValue("baz", "some-start-command -flag some-arg"))
 		})
 
 		Context("when the build fails with a failed container", func() {
