@@ -30,7 +30,7 @@ From elsewhere:
 ### Rolling out development changes to capi-k8s-release
 
 1. `./scripts/rollout.sh` will take any local changes to `capi-k8s-release`, apply them to a local `cf-for-k8s` directory, and then deploy `cf-for-k8s`
-1. `./scripts/build-and-rollout.sh` will take local changes to `cloud_controller_ng` and the components in `capi-k8s-release/src`, build them with [kbld](https://get-kbld.io/), [pack](https://github.com/buildpacks/pack), and [paketo's ruby and go buildpacks](https://github.com/paketo-buildpacks), and then deploy them all those new images to cf-for-k8s. 
+1. `./scripts/build-and-rollout.sh` will take local changes to `cloud_controller_ng` and the components in `capi-k8s-release/src`, build them with [kbld](https://get-kbld.io/), [pack](https://github.com/buildpacks/pack), and [paketo's ruby and go buildpacks](https://github.com/paketo-buildpacks), and then deploy the new images to cf-for-k8s.
 
 Environment variables can be used with either script to override default local source directories and remote image repositories.
 
