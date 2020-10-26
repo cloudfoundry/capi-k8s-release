@@ -8,7 +8,7 @@ cf-metadata.tgz: bin/* config/*
 	cd .. ; tar -cf backup-metadata/cf-metadata.tgz backup-metadata/bin/* backup-metadata/config/*
 
 build: test-unit test-binary
-	go build -o backup-metadata cmd/main.go
+	go build -o backup-metadata main.go
 
 test-unit:
 	ginkgo -r internal 
