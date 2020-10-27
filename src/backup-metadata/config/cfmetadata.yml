@@ -23,7 +23,7 @@ spec:
       imagePullSecrets:
       - name: registry-credentials-cf-metadata
       containers:
-      - image: cfcapidocker/backup-metadata@sha256:0ac4fad79781fce0d08f049664e8f48adf2f6ea731dd3ed3e14568128de62f5d
+      - image: cfcapidocker/backup-metadata@sha256:aae7f9ef8e77d2670aaec90c421a7b92f21f31ff676775ff249f29b0be490957
         name: cf-metadata
         command: ["/cnb/process/wait"]
         env:
