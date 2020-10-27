@@ -18,7 +18,7 @@ spec:
       labels:
         app: cf-metadata
       annotations:
-        pre.hook.backup.velero.io/command: '["/bin/bash", "-c", "/cnb/process/generate-metadata"]'
+        pre.hook.backup.velero.io/command: '["/cnb/process/web"]' # `/cnb/process/web` runs the built binary
     spec:
       imagePullSecrets:
       - name: registry-credentials-cf-metadata
