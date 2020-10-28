@@ -27,14 +27,14 @@ spec:
         name: cf-metadata
         command: ["/cnb/process/wait"]
         env:
-        - name: CF_API
+        - name: CF_API_HOST
           value: #@ data.values.cf.api
-        - name: CF_USER
+        - name: CF_CLIENT
           valueFrom:
             secretKeyRef:
               key: username
               name: cf-credentials-cf-metadata
-        - name: CF_PASSWORD
+        - name: CF_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
               key: password
