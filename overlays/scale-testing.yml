@@ -1,0 +1,67 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({ "kind" : "Deployment", "metadata": { "name" : "eirini" }})
+---
+spec:
+  #@overlay/match missing_ok=True
+  replicas: 10
+
+#@overlay/match by=overlay.subset({ "kind" : "Deployment", "metadata": { "name" : "eirini-controller" }})
+---
+spec:
+  #@overlay/match missing_ok=True
+  replicas: 10
+
+#@overlay/match by=overlay.subset({ "kind" : "Deployment", "metadata": { "name" : "eirini-events" }})
+---
+spec:
+  #@overlay/match missing_ok=True
+  replicas: 10
+
+#@overlay/match by=overlay.subset({ "kind" : "Deployment", "metadata": { "name" : "eirini-task-reporter" }})
+---
+spec:
+  #@overlay/match missing_ok=True
+  replicas: 10
+
+#! Modify these values to adjust scaling characteristics
+#@ ingress_gateway_replicas = 2
+#@ ingress_gateway_cpu_request = "1"
+#@ ingress_gateway_cpu_limit = "2"
+#@ ingress_gateway_mem_request = "1Gi"
+#@ ingress_gateway_mem_limit = "2Gi"
+#@ istiod_replicas = 2
+#@ istiod_cpu_request = "1"
+#@ istiod_cpu_limit = "2"
+#@ istiod_mem_request = "1Gi"
+#@ istiod_mem_limit = "2Gi"
+#@ routecontroller_replicas = 2
+#@ routecontroller_cpu_request = "200m"
+#@ routecontroller_cpu_limit = "400m"
+#@ routecontroller_mem_request = "32Mi"
+#@ routecontroller_mem_limit = "1024Mi"
+#@ sidecar_cpu_request = "100m"
+#@ sidecar_cpu_limit = "2000m"
+#@ sidecar_mem_request = "128Mi"
+#@ sidecar_mem_limit = "1024Mi"
+
+#@overlay/match by=overlay.subset({"kind": "DaemonSet", "metadata":{"name":"istio-ingressgateway"}}),expects=1
+---
+#@overlay/replace
+kind: Deployment
+spec:
+  #@overlay/match missing_ok=True
+  replicas: #@ ingress_gateway_replicas
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name", expects=1
+      - name: istio-proxy
+        #@overlay/match missing_ok=True
+        resources:
+          limits:
+            cpu: #@ ingress_gateway_cpu_limit
+            memory: #@ ingress_gateway_mem_limit
+          requests:
+            cpu: #@ ingress_gateway_cpu_request
+            memory: #@ ingress_gateway_mem_request
