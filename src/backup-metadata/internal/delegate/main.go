@@ -18,25 +18,25 @@ const (
 )
 
 func Main(args []string, input Reader, env map[string]string) error {
-	cfAPI := env["CF_API"]
-	cfUsername := env["CF_USER"]
-	cfPassword := env["CF_PASSWORD"]
+	cfAPI := env["CF_API_HOST"]
+	cfClient := env["CF_CLIENT"]
+	cfClientSecret := env["CF_CLIENT_SECRET"]
 
 	if cfAPI == "" {
-		return fmt.Errorf("CF_API Environment is not set")
+		return fmt.Errorf("'CF_API_HOST' Environment Variable is not set")
 	}
 
-	if cfUsername == "" {
-		return fmt.Errorf("CF_USER Environment is not set")
+	if cfClient == "" {
+		return fmt.Errorf("'CF_CLIENT' Environment Variable is not set")
 	}
 
-	if cfPassword == "" {
-		return fmt.Errorf("CF_PASSWORD Environment is not set")
+	if cfClientSecret == "" {
+		return fmt.Errorf("'CF_CLIENT_SECRET' Environment Variable is not set")
 	}
 
 	switch len(args) {
 	case reportMetadata:
-		err := printMetadata(cfAPI, cfUsername, cfPassword)
+		err := printMetadata(cfAPI, cfClient, cfClientSecret)
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func Main(args []string, input Reader, env map[string]string) error {
 			return fmt.Errorf("unknown option: %s, Did you mean compare ?", args[1])
 		}
 
-		if err := printComparison(cfAPI, cfUsername, cfPassword, input); err != nil {
+		if err := printComparison(cfAPI, cfClient, cfClientSecret, input); err != nil {
 			return err
 		}
 	default:

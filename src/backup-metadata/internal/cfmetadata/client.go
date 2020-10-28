@@ -30,11 +30,11 @@ type Client struct {
 	CfClient cfclient.CloudFoundryClient
 }
 
-func NewClient(apiAddress string, userName string, password string) (*Client, error) {
+func NewClient(apiAddress string, clientID string, clientSecret string) (*Client, error) {
 	conf := &cfclient.Config{
 		ApiAddress:        apiAddress,
-		Username:          userName,
-		Password:          password,
+		ClientID:          clientID,
+		ClientSecret:      clientSecret,
 		SkipSslValidation: true,
 	}
 
