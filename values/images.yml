@@ -1,6 +1,7 @@
 #@data/values
 ---
 images:
+  backup_metadata: cloudfoundry/cf-api-backup-metadata-generator@sha256:b4a76bd7ea43782e2e0d624d86c6d04175ca5c5e6a29ff0210179a96a21e6d9c
   ccng: cloudfoundry/cloud-controller-ng@sha256:af245cae10e0fe8d89a3df78a83b2671f06aeb911d7db1857703b4fe326b7e95
   cf_api_controllers: cloudfoundry/cf-api-controllers@sha256:3e160806f070af538eca6f04f6b3ee6a95f6b3247946e6961a0c976c18848243
   cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0

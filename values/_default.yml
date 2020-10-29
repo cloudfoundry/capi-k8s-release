@@ -61,4 +61,5 @@ images:
   nginx:
   statsd_exporter:
   registry_buddy:
+  backup_metadata:
 temporary_disable_v2_staging: true
