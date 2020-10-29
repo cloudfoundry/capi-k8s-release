@@ -104,11 +104,11 @@ spec:
           image: #@ data.values.images.nginx
           imagePullPolicy: Always
           ports:
-          - containerPort: 80
+          - containerPort: 9024
           - containerPort: 9023
           readinessProbe:
             httpGet:
-              port: 80
+              port: 9024
               path: "/healthz"
           resources:
             requests:

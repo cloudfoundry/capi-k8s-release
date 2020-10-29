@@ -34,7 +34,7 @@ spec:
         - name: UAA_CLIENT_NAME
           value: cf_api_controllers
         - name: CF_API_HOST
-          value: #@ "http://capi.{}.svc.cluster.local".format(data.values.system_namespace)
+          value: #@ "http://capi.{}.svc.cluster.local:9024".format(data.values.system_namespace)
         - name: WORKLOADS_NAMESPACE
           value: #@ data.values.workloads_namespace
         resources:

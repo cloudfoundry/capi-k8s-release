@@ -29,7 +29,7 @@ data:
       }
 
       server {
-          listen 80;
+          listen 9024;
 
           # Prevent access to internal endpoints
           location ~ /(internal|staging)/ {
