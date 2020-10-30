@@ -23,7 +23,7 @@ var _ = Describe("Compare", func() {
 	When("There is no difference in CF State", func() {
 		It("should report no changes", func() {
 			command := exec.Command(pathToBinary, "compare") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 			writeToPipe(command, getFileContents("fixtures/cf_state/metadata.json"))
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -37,7 +37,7 @@ var _ = Describe("Compare", func() {
 	When("There is a difference between CF State", func() {
 		It("should report newly added items", func() {
 			command := exec.Command(pathToBinary, "compare") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 			writeToPipe(command, getFileContents("fixtures/comparer/compare_json/current-minus-app.json"))
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -50,7 +50,7 @@ var _ = Describe("Compare", func() {
 
 		It("should report deleted items", func() {
 			command := exec.Command(pathToBinary, "compare") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 			writeToPipe(command, getFileContents("fixtures/comparer/compare_json/current-plus-app.json"))
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -66,7 +66,7 @@ var _ = Describe("Compare", func() {
 	When("the input JSON is invalid", func() {
 		It("returns a helpful error", func() {
 			command := exec.Command(pathToBinary, "compare") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 			writeToPipe(command, "This is }not{ JSON.")
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -80,7 +80,7 @@ var _ = Describe("Compare", func() {
 	When("the input JSON is not a CF-metadata JSON", func() {
 		It("should report it", func() {
 			command := exec.Command(pathToBinary, "compare") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 			writeToPipe(command, `{"foo": "bar"}`)
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -94,7 +94,7 @@ var _ = Describe("Compare", func() {
 	When("an unknown option is passed", func() {
 		It("should report an error", func() {
 			command := exec.Command(pathToBinary, "compareee") // #nosec
-			command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+			command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
