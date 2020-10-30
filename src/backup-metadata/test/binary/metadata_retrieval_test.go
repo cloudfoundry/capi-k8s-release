@@ -22,7 +22,7 @@ var _ = Describe("CF Metadata Retrieval", func() {
 		defer testServer.Close()
 
 		command := interactiveShell(pathToBinary) // #nosec
-		command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+		command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -35,7 +35,7 @@ var _ = Describe("CF Metadata Retrieval", func() {
 		defer testServer.Close()
 
 		command := interactiveShell(pathToBinary) // #nosec
-		command.Env = []string{"CF_API=" + testServer.URL, "CF_USER=" + cfUser, "CF_PASSWORD=" + cfPassword}
+		command.Env = []string{"CF_API_HOST=" + testServer.URL, "CF_CLIENT=" + cfClient, "CF_CLIENT_SECRET=" + cfClientSecret}
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 		Expect(err).NotTo(HaveOccurred())

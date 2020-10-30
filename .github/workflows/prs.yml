@@ -68,7 +68,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd src/backup-metadata/
-          go test -v ./internal/...
+          go test -v ./internal/... ./test/binary/...
   template-tests:
     runs-on: ubuntu-latest
     container:

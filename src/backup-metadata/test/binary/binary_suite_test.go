@@ -1,6 +1,7 @@
 package binary_test
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,14 +19,14 @@ import (
 )
 
 var (
-	pathToBinary string
-	cfUser       = "test-cf-user"
-	cfPassword   = "test-cf-password"
+	pathToBinary   string
+	cfClient       = "test-cf-user"
+	cfClientSecret = "test-cf-password"
 )
 
 var _ = BeforeSuite(func() {
 	var err error
-	pathToBinary, err = gexec.Build("../../cmd")
+	pathToBinary, err = gexec.Build("../../main.go")
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -49,9 +50,11 @@ func newCfTestAPIServer() *httptest.Server {
 	mux.HandleFunc("/oauth/token", func(w http.ResponseWriter, r *http.Request) {
 		body, _ := ioutil.ReadAll(r.Body)
 		bodyStr := string(body)
+		authHeader := r.Header.Get("Authorization")
+		expectedAuth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cfClient, cfClientSecret)))
 
-		if strings.Contains(bodyStr, "password="+cfPassword) &&
-			strings.Contains(bodyStr, "username="+cfUser) {
+		if strings.Contains(authHeader, expectedAuth) &&
+			strings.Contains(bodyStr, "grant_type=client_credentials") {
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, `{"access_token" : "token"}`)
 
