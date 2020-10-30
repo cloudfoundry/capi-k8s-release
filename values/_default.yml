@@ -62,3 +62,6 @@ images:
   statsd_exporter:
   registry_buddy:
 temporary_disable_v2_staging: true
+honeycomb:
+  write_key: ""
+  dataset: ""

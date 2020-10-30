@@ -34,6 +34,22 @@ From elsewhere:
 
 Environment variables can be used with either script to override default local source directories and remote image repositories.
 
+### Configuring Honeycomb
+
+For debugging, it may be useful to emit events to Honeycomb. This can be done by
+passing an additional data file with a library annotation to the `ytt` command
+that builds the cf-for-k8s manifest, or to one of our `rollout.sh` scripts.
+
+```
+#@library/ref "@capi-k8s-release"
+#@data/values
+---
+honeycomb:
+  dataset: my-capi-dataset
+  write_key: MY_WRITE_KEY
+```
+
+
 ### Configuring pushes of buildpack apps
 
 `capi-k8s-release` currently uploads app source code to a blobstore, but then hands that off to `kpack` to build app images that are then placed in a registry.  In order for this to work, you must configure the following values:
