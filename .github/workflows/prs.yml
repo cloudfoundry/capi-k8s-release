@@ -54,6 +54,21 @@ jobs:
         run: |
           cd src/cf-api-controllers/
           go test -v ./...
+  backup-metadata-generator-unit-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: cloudfoundry/capi:go-units
+    steps:
+      - name: Check out changes
+        uses: actions/checkout@v2
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Run unit tests
+        run: |
+          cd src/backup-metadata/
+          go test -v ./internal/...
   template-tests:
     runs-on: ubuntu-latest
     container:
