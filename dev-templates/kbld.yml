@@ -27,6 +27,18 @@ sources:
   - imageRepo: #@ data.values.kbld.destination.registry_buddy
     path: #@ data.values.src_dirs.registry_buddy
     pack: *packConfig
+  - imageRepo: cloudfoundry/cf-api-backup-metadata-generator
+    path: #@ data.values.src_dirs.backup_metadata
+    pack: &goWithProcfilePackConfig
+      build:
+        builder: paketobuildpacks/builder:full
+        buildpacks:
+          - gcr.io/paketo-buildpacks/go
+          - gcr.io/paketo-buildpacks/procfile
+        rawOptions: ["--default-process", "wait"]
+  - imageRepo: #@ data.values.kbld.destination.backup_metadata
+    path: #@ data.values.src_dirs.backup_metadata
+    pack: *goWithProcfilePackConfig
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
@@ -43,6 +55,10 @@ destinations:
     newImage: #@ data.values.kbld.destination.registry_buddy
   - imageRepo: #@ data.values.kbld.destination.registry_buddy
     newImage: #@ data.values.kbld.destination.registry_buddy
+  - imageRepo: cloudfoundry/cf-api-backup-metadata-generator
+    newImage: #@ data.values.kbld.destination.backup_metadata
+  - imageRepo: #@ data.values.kbld.destination.backup_metadata
+    newImage: #@ data.values.kbld.destination.backup_metadata
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageKeys
@@ -50,6 +66,7 @@ keys:
 - ccng
 - cf_api_controllers
 - registry_buddy
+- backup_metadata
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
