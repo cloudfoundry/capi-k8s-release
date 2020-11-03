@@ -56,4 +56,4 @@ pre.hook.backup.velero.io/container: CONTAINER_NAME
 pre.hook.backup.velero.io/command: '["/cnb/process/generate-metadata"]'
 ```
 
-In `cf-for-k8s` the `backup-metadata` container is [colocated on the `cf-api-controllers` Deployment](https://github.com/cloudfoundry/capi-k8s-release/blob/master/templates/controllers_deployment.yml).
+In `cf-for-k8s` the `backup-metadata` container is [colocated on the `cf-api-controllers` Deployment](https://github.com/cloudfoundry/capi-k8s-release/blob/c7aac8ff97bb52b37e44c25a83bab483494d0f48/templates/controllers_deployment.yml#L53).
