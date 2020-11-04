@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/image"
 	"log"
 	"net/http/httptest"
 	"os"
@@ -9,7 +10,6 @@ import (
 
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/package_upload"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/gorilla/mux"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -74,7 +74,7 @@ func startServer(authenticator authn.Authenticator) *httptest.Server {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/packages", handlers.PostPackageHandler(package_upload.Upload, logger, authenticator)).Methods("POST")
-	r.HandleFunc("/images", handlers.DeleteImageHandler(remote.Delete, remote.Get, logger, authenticator)).Methods("DELETE")
+	r.HandleFunc("/images", handlers.DeleteImageHandler(image.NewDynamicDeleter(), logger, authenticator)).Methods("DELETE")
 
 	return httptest.NewServer(r)
 }

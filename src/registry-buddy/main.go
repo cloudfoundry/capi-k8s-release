@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/image"
 	"context"
 	"fmt"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/package_upload"
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/gorilla/mux"
 
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/config"
@@ -51,7 +51,7 @@ func newServer(cfg *config.Config, logger *log.Logger) *http.Server {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/packages", handlers.PostPackageHandler(package_upload.Upload, logger, authenticator)).Methods("POST")
-	r.HandleFunc("/images", handlers.DeleteImageHandler(remote.Delete, remote.Get, logger, authenticator)).Methods("DELETE")
+	r.HandleFunc("/images", handlers.DeleteImageHandler(image.NewDynamicDeleter(), logger, authenticator)).Methods("DELETE")
 	addr := fmt.Sprintf("127.0.0.1:%d", cfg.Port)
 
 	return &http.Server{
