@@ -72,7 +72,7 @@ var _ = Describe("Deleting Images", func() {
 			json.NewDecoder(res.Body).Decode(&parsedBody),
 		).To(Succeed())
 		Expect(parsedBody).To(Equal(handlers.DeleteImageResponseBody{
-			ImageReference: digestRef.Name(),
+			ImageReference: ref.Name(),
 		}))
 
 		// The manifest for the image tag is deleted

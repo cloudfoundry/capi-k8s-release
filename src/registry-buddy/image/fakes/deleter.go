@@ -2,19 +2,21 @@
 package fakes
 
 import (
+	"log"
 	"sync"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/handlers"
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/image"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
-type ImageDeleteFunc struct {
-	Stub        func(name.Reference, ...remote.Option) error
+type Deleter struct {
+	Stub        func(name.Reference, authn.Authenticator, *log.Logger) error
 	mutex       sync.RWMutex
 	argsForCall []struct {
 		arg1 name.Reference
-		arg2 []remote.Option
+		arg2 authn.Authenticator
+		arg3 *log.Logger
 	}
 	returns struct {
 		result1 error
@@ -26,17 +28,18 @@ type ImageDeleteFunc struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *ImageDeleteFunc) Spy(arg1 name.Reference, arg2 ...remote.Option) error {
+func (fake *Deleter) Spy(arg1 name.Reference, arg2 authn.Authenticator, arg3 *log.Logger) error {
 	fake.mutex.Lock()
 	ret, specificReturn := fake.returnsOnCall[len(fake.argsForCall)]
 	fake.argsForCall = append(fake.argsForCall, struct {
 		arg1 name.Reference
-		arg2 []remote.Option
-	}{arg1, arg2})
-	fake.recordInvocation("ImageDeleteFunc", []interface{}{arg1, arg2})
+		arg2 authn.Authenticator
+		arg3 *log.Logger
+	}{arg1, arg2, arg3})
+	fake.recordInvocation("Deleter", []interface{}{arg1, arg2, arg3})
 	fake.mutex.Unlock()
 	if fake.Stub != nil {
-		return fake.Stub(arg1, arg2...)
+		return fake.Stub(arg1, arg2, arg3)
 	}
 	if specificReturn {
 		return ret.result1
@@ -44,25 +47,25 @@ func (fake *ImageDeleteFunc) Spy(arg1 name.Reference, arg2 ...remote.Option) err
 	return fake.returns.result1
 }
 
-func (fake *ImageDeleteFunc) CallCount() int {
+func (fake *Deleter) CallCount() int {
 	fake.mutex.RLock()
 	defer fake.mutex.RUnlock()
 	return len(fake.argsForCall)
 }
 
-func (fake *ImageDeleteFunc) Calls(stub func(name.Reference, ...remote.Option) error) {
+func (fake *Deleter) Calls(stub func(name.Reference, authn.Authenticator, *log.Logger) error) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = stub
 }
 
-func (fake *ImageDeleteFunc) ArgsForCall(i int) (name.Reference, []remote.Option) {
+func (fake *Deleter) ArgsForCall(i int) (name.Reference, authn.Authenticator, *log.Logger) {
 	fake.mutex.RLock()
 	defer fake.mutex.RUnlock()
-	return fake.argsForCall[i].arg1, fake.argsForCall[i].arg2
+	return fake.argsForCall[i].arg1, fake.argsForCall[i].arg2, fake.argsForCall[i].arg3
 }
 
-func (fake *ImageDeleteFunc) Returns(result1 error) {
+func (fake *Deleter) Returns(result1 error) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = nil
@@ -71,7 +74,7 @@ func (fake *ImageDeleteFunc) Returns(result1 error) {
 	}{result1}
 }
 
-func (fake *ImageDeleteFunc) ReturnsOnCall(i int, result1 error) {
+func (fake *Deleter) ReturnsOnCall(i int, result1 error) {
 	fake.mutex.Lock()
 	defer fake.mutex.Unlock()
 	fake.Stub = nil
@@ -85,7 +88,7 @@ func (fake *ImageDeleteFunc) ReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *ImageDeleteFunc) Invocations() map[string][][]interface{} {
+func (fake *Deleter) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.mutex.RLock()
@@ -97,7 +100,7 @@ func (fake *ImageDeleteFunc) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *ImageDeleteFunc) recordInvocation(key string, args []interface{}) {
+func (fake *Deleter) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -109,4 +112,4 @@ func (fake *ImageDeleteFunc) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ handlers.ImageDeleteFunc = new(ImageDeleteFunc).Spy
+var _ image.Deleter = new(Deleter).Spy
