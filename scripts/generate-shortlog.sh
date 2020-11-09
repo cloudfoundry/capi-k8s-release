@@ -9,6 +9,7 @@ CAPI_RELEASE_DIR="${CAPI_RELEASE_DIR:-${HOME}/workspace/capi-release/}"
 CCNG_DIR="${CCNG_DIR:-${CAPI_RELEASE_DIR}src/cloud_controller_ng}"
 CF_API_CONTROLLERS_DIR="${CAPI_CF_API_CONTROLLERS_DIR:-${REPO_BASE_DIR}/src/cf-api-controllers}"
 REGISTRY_BUDDY_DIR="${REGISTRY_BUDDY_DIR:-${REPO_BASE_DIR}/src/registry-buddy}"
+BACKUP_METADATA_GENERATOR_DIR="${BACKUP_METADATA_GENERATOR_DIR:-${REPO_BASE_DIR}/src/backup-metadata}"
 NGINX_DIR="${NGINX_DIR:-${REPO_BASE_DIR}/dockerfiles/nginx}"
 
 function git_sha() {
@@ -69,3 +70,4 @@ chunk ccng "${CCNG_DIR}"
 chunk nginx "${NGINX_DIR}"
 chunk cf_api_controllers "${CF_API_CONTROLLERS_DIR}"
 chunk registry_buddy "${REGISTRY_BUDDY_DIR}"
+chunk backup_metadata "${BACKUP_METADATA_GENERATOR_DIR}"
