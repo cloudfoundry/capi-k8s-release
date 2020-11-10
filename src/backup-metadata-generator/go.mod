@@ -1,4 +1,4 @@
-module code.cloudfoundry.org/capi-k8s-release/src/backup-metadata
+module code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator
 
 go 1.14
 

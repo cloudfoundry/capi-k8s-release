@@ -1,8 +1,8 @@
 package cfmetadata_test
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata/cfmetadatafakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/cfmetadata"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/cfmetadata/cfmetadatafakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

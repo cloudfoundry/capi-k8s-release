@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate"
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/helpers"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/delegate"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/helpers"
 )
 
 func main() {

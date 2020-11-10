@@ -1,4 +1,4 @@
-# Build the backup-metadata binary
+# Build the backup-metadata-generator binary
 FROM golang:1.14 as builder
 
 WORKDIR /workspace
@@ -14,8 +14,8 @@ COPY main.go main.go
 COPY internal/ internal/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o backup-metadata cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o backup-metadata-generator cmd/main.go
 
 FROM cloudfoundry/build:base
 WORKDIR /
-COPY --from=builder /workspace/backup-metadata .
+COPY --from=builder /workspace/backup-metadata-generator .

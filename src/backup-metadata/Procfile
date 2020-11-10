@@ -1,2 +1,0 @@
-wait: sleep infinity
-generate-metadata: backup-metadata

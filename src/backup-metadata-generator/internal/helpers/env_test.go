@@ -1,7 +1,7 @@
 package helpers_test
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/helpers"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

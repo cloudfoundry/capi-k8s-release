@@ -67,7 +67,7 @@ jobs:
           go-version: 1.14
       - name: Run unit tests
         run: |
-          cd src/backup-metadata/
+          cd src/backup-metadata-generator/
           go test -v ./internal/... ./test/binary/...
   template-tests:
     runs-on: ubuntu-latest
