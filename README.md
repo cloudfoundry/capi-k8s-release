@@ -17,7 +17,7 @@ In this repo:
 - [cf-api-controllers](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/cf-api-controllers) is a collection of kubebuilder controllers that synchronize the CF API and various k8s CRDs (Images, Builds, Routes, PeriodicSyncs, etc).
 - [registry-buddy](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/registry-buddy) is sidecar service to help ruby code communicate with container registries using [go-containerregistry](https://github.com/google/go-containerregistry).
 - [nginx](https://github.com/cloudfoundry/capi-k8s-release/tree/master/dockerfiles/nginx) is a custom-built nginx container including [the nginx upload module](https://github.com/vkholodkov/nginx-upload-module) for managing resumable multipart package uploads.
-- [backup-metadata](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/backup-metadata) is a velero hook that collects metadata about resources currently stored in the CF API. 
+- [backup-metadata-generator](https://github.com/cloudfoundry/capi-k8s-release/tree/master/src/backup-metadata-generator) is a velero hook that collects metadata about resources currently stored in the CF API. 
 
 From elsewhere:
 - [cloud_controller_ng](https://github.com/cloudfoundry/cloud_controller_ng) is a reference implementation of the [the V3 CF API](http://v3-apidocs.cloudfoundry.org/).

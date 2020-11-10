@@ -1,8 +1,8 @@
 package delegate_test
 
 import (
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate"
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/delegate/delegatefakes"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/delegate"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/delegate/delegatefakes"
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"

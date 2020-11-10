@@ -14,7 +14,7 @@ go test -v ./internal/... ./test/binary/...
 ### End-to-End (e2e) Integration Tests
 **Prerequisites:**
 
-1. A Kubernetes cluster with [Velero installed](https://velero.io/docs/v1.5/basic-install/#install-and-configure-the-server-components). See our [CI script](https://github.com/cloudfoundry/capi-ci/blob/master/ci/backup-metadata/install-velero.sh) for a GCP example.
+1. A Kubernetes cluster with [Velero installed](https://velero.io/docs/v1.5/basic-install/#install-and-configure-the-server-components). See our [CI script](https://github.com/cloudfoundry/capi-ci/blob/master/ci/backup-metadata-generator/install-velero.sh) for a GCP example.
    For GCP you will also need to provide a service account with the following permissions:
 
    ```
@@ -56,4 +56,4 @@ pre.hook.backup.velero.io/container: CONTAINER_NAME
 pre.hook.backup.velero.io/command: '["/cnb/process/generate-metadata"]'
 ```
 
-In `cf-for-k8s` the `backup-metadata` container is [colocated on the `cf-api-controllers` Deployment](https://github.com/cloudfoundry/capi-k8s-release/blob/c7aac8ff97bb52b37e44c25a83bab483494d0f48/templates/controllers_deployment.yml#L53).
+In `cf-for-k8s` the `backup-metadata-generator` container is [colocated on the `cf-api-controllers` Deployment](https://github.com/cloudfoundry/capi-k8s-release/blob/c7aac8ff97bb52b37e44c25a83bab483494d0f48/templates/controllers_deployment.yml#L53).

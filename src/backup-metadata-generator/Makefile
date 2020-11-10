@@ -5,10 +5,10 @@ all: build
 artifact: cf-metadata.tgz
 
 cf-metadata.tgz: bin/* config/*
-	cd .. ; tar -cf backup-metadata/cf-metadata.tgz backup-metadata/bin/* backup-metadata/config/*
+	cd .. ; tar -cf backup-metadata-generator/cf-metadata.tgz backup-metadata-generator/bin/* backup-metadata-generator/config/*
 
 build: test-unit test-binary
-	go build -o backup-metadata main.go
+	go build -o backup-metadata-generator main.go
 
 test-unit:
 	ginkgo -r internal 

@@ -4,10 +4,10 @@ kbld:
   destination:
     ccng: ""
     cf_api_controllers: ""
-    backup_metadata: ""
+    backup_metadata_generator: ""
     registry_buddy: ""
 src_dirs:
   ccng: ""
   cf_api_controllers: ""
-  backup_metadata: ""
+  backup_metadata_generator: ""
   registry_buddy: ""

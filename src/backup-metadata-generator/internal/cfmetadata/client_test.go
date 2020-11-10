@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata/internal/cfmetadata"
+	"code.cloudfoundry.org/capi-k8s-release/src/backup-metadata-generator/internal/cfmetadata"
 )
 
 var _ = Describe("CF Client", func() {
