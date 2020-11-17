@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"context"
-
 	. "github.com/onsi/gomega/gstruct"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appsv1alpha1 "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/apis/apps.cloudfoundry.org/v1alpha1"
@@ -16,9 +14,24 @@ import (
 )
 
 var _ = Describe("PeriodicSyncController", func() {
+	var (
+		port = 56789
+	)
+
 	const (
 		routeGUID       = "route-guid"
 		secondRouteGUID = "route-guid-2"
+		appGUID    = "app-guid"
+		destGUID   = "dest-guid"
+		spaceGUID  = "space-guid"
+		domainGUID = "domain-guid"
+		orgGUID    = "org-guid"
+
+		host        = "a-host"
+		path        = "/path"
+		url         = "a-host.domain.com/path"
+		processType = "web"
+		domainName  = "domain.com"
 	)
 
 	findSyncCondition := func(conditions []appsv1alpha1.Condition) *appsv1alpha1.Condition {
@@ -30,8 +43,6 @@ var _ = Describe("PeriodicSyncController", func() {
 		return nil
 	}
 	createRouteInK8s := func() {
-		port := 56789
-
 		Expect(
 			k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
 				ObjectMeta: metav1.ObjectMeta{
@@ -73,21 +84,6 @@ var _ = Describe("PeriodicSyncController", func() {
 	}
 
 	When("there are routes in the CF API but not in Kubernetes", func() {
-		const (
-			appGUID    = "app-guid"
-			destGUID   = "dest-guid"
-			spaceGUID  = "space-guid"
-			domainGUID = "domain-guid"
-			orgGUID    = "org-guid"
-
-			host        = "a-host"
-			path        = "/path"
-			url         = "a-host.domain.com/path"
-			port        = 56789
-			processType = "web"
-			domainName  = "domain.com"
-		)
-
 		BeforeEach(func() {
 			fakeCFClient.ListRoutesReturns(model.RouteList{
 				Resources: []model.Route{
@@ -248,7 +244,162 @@ var _ = Describe("PeriodicSyncController", func() {
 		It("deletes the extra Route from kubernetes", func() {
 			Eventually(func() error {
 				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, new(networkingv1alpha1.Route))
-			}, "5s", "1s").Should(MatchError(ContainSubstring("not found")))
+			}, "10s", "1s").Should(MatchError(ContainSubstring("not found")))
+		})
+	})
+
+	When("the destinations in the Kubernetes Routes don't match those in the CF API", func() {
+
+		BeforeEach(func() {
+			fakeCFClient.ListRoutesReturns(model.RouteList{
+				Resources: []model.Route{
+					{
+						GUID: routeGUID,
+						Host: host,
+						Path: path,
+						URL:  url,
+						Destinations: []model.Destination{
+							{
+								GUID: destGUID,
+								Port: port,
+								App: model.DestinationApp{
+									GUID: appGUID,
+									Process: model.DestinationProcess{
+										Type: processType,
+									},
+								},
+							},
+						},
+						Relationships: map[string]model.Relationship{
+							"space": {
+								Data: model.RelationshipData{
+									GUID: spaceGUID,
+								},
+							},
+							"domain": {
+								Data: model.RelationshipData{
+									GUID: domainGUID,
+								},
+							},
+						},
+					},
+					{
+						GUID: secondRouteGUID,
+						Host: host,
+						Path: path,
+						URL:  url,
+						Destinations: []model.Destination{
+							{
+								GUID: destGUID,
+								Port: port,
+								App: model.DestinationApp{
+									GUID: appGUID,
+									Process: model.DestinationProcess{
+										Type: processType,
+									},
+								},
+							},
+						},
+						Relationships: map[string]model.Relationship{
+							"space": {
+								Data: model.RelationshipData{
+									GUID: spaceGUID,
+								},
+							},
+							"domain": {
+								Data: model.RelationshipData{
+									GUID: domainGUID,
+								},
+							},
+						},
+					},
+				},
+				Included: model.RouteListIncluded{
+					Spaces: []model.Space{
+						{
+							GUID: spaceGUID,
+							Relationships: map[string]model.Relationship{
+								"organization": {
+									Data: model.RelationshipData{
+										GUID: orgGUID,
+									},
+								},
+							},
+						},
+					},
+					Domains: []model.Domain{
+						{
+							GUID:     domainGUID,
+							Name:     domainName,
+							Internal: false,
+						},
+					},
+				},
+			}, nil)
+
+			Expect(
+				k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      routeGUID,
+						Namespace: workloadsNamespace,
+					},
+					Spec: networkingv1alpha1.RouteSpec{
+						Host: "a-host",
+						Path: "/path",
+						Url:  "a-host.domain.com/path",
+						Domain: networkingv1alpha1.RouteDomain{
+							Name:     "domain.com",
+							Internal: false,
+						},
+						Destinations: []networkingv1alpha1.RouteDestination{
+							{
+								Guid:   "dest-guid",
+								Port:   &port,
+								Weight: nil,
+								App: networkingv1alpha1.DestinationApp{
+									Guid: "wrong-app-guid",
+									Process: networkingv1alpha1.AppProcess{
+										Type: "web",
+									},
+								},
+								Selector: networkingv1alpha1.DestinationSelector{
+									MatchLabels: map[string]string{},
+								},
+							},
+						},
+					},
+				}),
+			).To(Succeed())
+
+			Expect(
+				k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "whatever",
+						Namespace: workloadsNamespace,
+					},
+					Spec: appsv1alpha1.PeriodicSyncSpec{
+						PeriodSeconds: 1,
+					},
+				}),
+			).To(Succeed())
+		})
+
+		It("updates the destination on Kubernetes", func() {
+			var updatedRouteResource networkingv1alpha1.Route
+			Eventually(func() string {
+				k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &updatedRouteResource)
+				return updatedRouteResource.Spec.Destinations[0].App.Guid
+			}, "5s", "1s").Should(Equal(appGUID))
+
+			Expect(updatedRouteResource.Spec.Destinations).To(HaveLen(1))
+			Expect(updatedRouteResource.Spec.Destinations[0].Guid).To(Equal(destGUID))
+			Expect(updatedRouteResource.Spec.Destinations[0].Port).To(PointTo(Equal(port)))
+			Expect(updatedRouteResource.Spec.Destinations[0].App.Guid).To(Equal(appGUID))
+			Expect(updatedRouteResource.Spec.Destinations[0].App.Process.Type).To(Equal(processType))
+
+			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveLen(2))
+			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/app_guid", appGUID))
+			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/process_type", processType))
 		})
 	})
 

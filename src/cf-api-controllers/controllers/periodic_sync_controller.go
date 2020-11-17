@@ -97,20 +97,40 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		ccDomainMap[ccDomain.GUID] = &ccRouteList.Included.Domains[i]
 	}
 
-	k8sRouteGUIDs := make(map[string]struct{})
+	k8sRouteMap := make(map[string]networkingv1alpha1.Route)
 	for _, k8sRoute := range routesInK8s.Items {
-		k8sRouteGUIDs[k8sRoute.Name] = struct{}{}
-	}
-
-	// calculate the set of route GUIDs which need to be created in k8s
-	var missingInK8s []*model.Route
-	for ccRouteGuid, ccRoute := range ccRouteMap {
-		if _, ok := k8sRouteGUIDs[ccRouteGuid]; !ok {
-			missingInK8s = append(missingInK8s, ccRoute)
-		}
+		k8sRouteMap[k8sRoute.Name] = k8sRoute
 	}
 
 	reconciledSuccessfully := true
+
+	var missingInK8s []*model.Route
+	for ccRouteGuid, ccRoute := range ccRouteMap {
+		if k8sRoute, ok := k8sRouteMap[ccRouteGuid]; ok {
+			spaceGUID := ccRoute.Relationships["space"].Data.GUID
+			domainGUID := ccRoute.Relationships["domain"].Data.GUID
+
+			desiredRoute := kubernetes.TranslateRoute(ccRoute, ccSpaceMap[spaceGUID], ccDomainMap[domainGUID], r.WorkloadsNamespace)
+
+			if kubernetes.CompareRoutes(desiredRoute, k8sRoute) {
+				continue
+			}
+
+			k8sRoute.Spec = desiredRoute.Spec
+			err = r.Update(ctx, &k8sRoute)
+
+			if err != nil {
+				reconciledSuccessfully = false
+				r.Log.WithValues("request", req.NamespacedName, "route_guid", k8sRoute.Name).Error(err, "errored updating Route resource in k8s")
+				continue
+			}
+
+			r.Log.WithValues("request", req.NamespacedName, "route_guid", k8sRoute.Name).Info("successfully updated Route resource")
+		} else {
+			// track the set of route GUIDs which need to be created in k8s
+			missingInK8s = append(missingInK8s, ccRoute)
+		}
+	}
 
 	// iterate over all routes to be created and create them
 	for _, ccRoute := range missingInK8s {
@@ -132,7 +152,7 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	// calculate the set of route GUIDs which need to be deleted in k8s
 	var extraInK8s []string
-	for k8sRouteGuid, _ := range k8sRouteGUIDs {
+	for k8sRouteGuid, _ := range k8sRouteMap {
 		if _, ok := ccRouteMap[k8sRouteGuid]; !ok {
 			extraInK8s = append(extraInK8s, k8sRouteGuid)
 		}

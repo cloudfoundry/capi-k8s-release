@@ -209,7 +209,7 @@ var _ = Describe("PeriodicSyncController", func() {
 				client.ListCalls(func(_ context.Context, object runtime.Object, _ ...ctrlClient.ListOption) error {
 					ptr := object.(*networkingv1alpha1.RouteList)
 					*ptr = networkingv1alpha1.RouteList{
-						Items: []networkingv1alpha1.Route{{ }},
+						Items: []networkingv1alpha1.Route{{}},
 					}
 					return nil
 				})

@@ -4,6 +4,7 @@ import (
 	cfmodel "code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/model"
 	"code.cloudfoundry.org/cf-k8s-networking/routecontroller/apis/networking/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
 )
 
 const (
@@ -74,4 +75,8 @@ func TranslateRoute(route *cfmodel.Route, space *cfmodel.Space, domain *cfmodel.
 	}
 
 	return routeCR
+}
+
+func CompareRoutes(desiredRoute, actualRoute v1alpha1.Route) bool {
+	return reflect.DeepEqual(desiredRoute.Spec, actualRoute.Spec)
 }
