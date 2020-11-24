@@ -29,6 +29,8 @@ spec:
           image: #@ data.values.images.ccng
           imagePullPolicy: Always
           command: [ "/cnb/process/deployment-updater" ]
+          ports:
+          - containerPort: 4445
           env:
           - name: CLOUD_CONTROLLER_NG_CONFIG
             value: #@ ccng_config_mount_path
@@ -41,7 +43,7 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
-          readinessProbe:
+          startupProbe:
             tcpSocket:
               port: 4445
             periodSeconds: 3
