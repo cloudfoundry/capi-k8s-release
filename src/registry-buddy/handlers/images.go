@@ -27,6 +27,7 @@ func DeleteImageHandler(deleter image.Deleter, logger *log.Logger, authenticator
 			writer.Write([]byte("unable to parse request body\n"))
 			return
 		}
+		defer request.Body.Close()
 		logger.Printf("Processing request: %+v\n", parsedBody)
 
 		if invalidDeleteImageRequest(parsedBody) {
