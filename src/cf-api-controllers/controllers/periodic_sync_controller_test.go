@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/cf-api-controllers/cf/kubernetes"
 	"context"
 	. "github.com/onsi/gomega/gstruct"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,11 +22,11 @@ var _ = Describe("PeriodicSyncController", func() {
 	const (
 		routeGUID       = "route-guid"
 		secondRouteGUID = "route-guid-2"
-		appGUID    = "app-guid"
-		destGUID   = "dest-guid"
-		spaceGUID  = "space-guid"
-		domainGUID = "domain-guid"
-		orgGUID    = "org-guid"
+		appGUID         = "app-guid"
+		destGUID        = "dest-guid"
+		spaceGUID       = "space-guid"
+		domainGUID      = "domain-guid"
+		orgGUID         = "org-guid"
 
 		host        = "a-host"
 		path        = "/path"
@@ -48,6 +49,9 @@ var _ = Describe("PeriodicSyncController", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      routeGUID,
 					Namespace: workloadsNamespace,
+					Labels: map[string]string{
+						kubernetes.KubeManagedByLabel: "cloudfoundry",
+					},
 				},
 				Spec: networkingv1alpha1.RouteSpec{
 					Host: "a-host",
@@ -190,6 +194,7 @@ var _ = Describe("PeriodicSyncController", func() {
 
 			Expect(createdRouteResource.ObjectMeta.Name).To(Equal(routeGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("app.kubernetes.io/name", routeGUID))
+			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("app.kubernetes.io/managed-by", "cloudfoundry"))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/org_guid", orgGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/space_guid", spaceGUID))
 			Expect(createdRouteResource.ObjectMeta.Labels).To(HaveKeyWithValue("cloudfoundry.org/domain_guid", domainGUID))
@@ -342,6 +347,9 @@ var _ = Describe("PeriodicSyncController", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      routeGUID,
 						Namespace: workloadsNamespace,
+						Labels: map[string]string{
+							kubernetes.KubeManagedByLabel: "cloudfoundry",
+						},
 					},
 					Spec: networkingv1alpha1.RouteSpec{
 						Host: "a-host",
@@ -400,6 +408,68 @@ var _ = Describe("PeriodicSyncController", func() {
 			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveLen(2))
 			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/app_guid", appGUID))
 			Expect(updatedRouteResource.Spec.Destinations[0].Selector.MatchLabels).To(HaveKeyWithValue("cloudfoundry.org/process_type", processType))
+		})
+	})
+
+	When("there are routes not managed by Cloud Foundry", func() {
+		BeforeEach(func() {
+			fakeCFClient.ListRoutesReturns(model.RouteList{}, nil)
+
+			Expect(
+				k8sClient.Create(context.Background(), &networkingv1alpha1.Route{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      routeGUID,
+						Namespace: workloadsNamespace,
+						Labels: map[string]string{
+							kubernetes.KubeManagedByLabel: "some-other-platform",
+						},
+					},
+					Spec: networkingv1alpha1.RouteSpec{
+						Host: "a-host",
+						Path: "/path",
+						Url:  "a-host.domain.com/path",
+						Domain: networkingv1alpha1.RouteDomain{
+							Name:     "domain.com",
+							Internal: false,
+						},
+						Destinations: []networkingv1alpha1.RouteDestination{
+							{
+								Guid:   "dest-guid",
+								Port:   &port,
+								Weight: nil,
+								App: networkingv1alpha1.DestinationApp{
+									Guid: "wrong-app-guid",
+									Process: networkingv1alpha1.AppProcess{
+										Type: "web",
+									},
+								},
+								Selector: networkingv1alpha1.DestinationSelector{
+									MatchLabels: map[string]string{},
+								},
+							},
+						},
+					},
+				}),
+			).To(Succeed())
+
+			Expect(
+				k8sClient.Create(context.Background(), &appsv1alpha1.PeriodicSync{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "whatever",
+						Namespace: workloadsNamespace,
+					},
+					Spec: appsv1alpha1.PeriodicSyncSpec{
+						PeriodSeconds: 1,
+					},
+				}),
+			).To(Succeed())
+		})
+
+		It("does NOT delete the extra Route from kubernetes", func() {
+			var routeResource networkingv1alpha1.Route
+			Consistently(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Name: routeGUID, Namespace: workloadsNamespace}, &routeResource)
+			}, "5s", "1s").Should(Succeed())
 		})
 	})
 

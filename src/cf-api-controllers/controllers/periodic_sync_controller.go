@@ -75,8 +75,15 @@ func (r *PeriodicSyncReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, fmt.Errorf("error listing routes from CF API: %w", err)
 	}
 
+	cfRouteSelector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
+		MatchLabels: map[string]string{kubernetes.KubeManagedByLabel: "cloudfoundry"},
+	})
+	if err != nil {
+		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
+		return ctrl.Result{}, fmt.Errorf("error converting label selector: %w", err)
+	}
 	var routesInK8s networkingv1alpha1.RouteList
-	err = r.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace})
+	err = r.List(ctx, &routesInK8s, &client.ListOptions{Namespace: r.WorkloadsNamespace, LabelSelector: cfRouteSelector})
 	if err != nil {
 		r.updateSyncStatusFailure(ctx, &periodicSync, err.Error())
 		return ctrl.Result{}, fmt.Errorf("error listing routes from kubernetes API: %w", err)
