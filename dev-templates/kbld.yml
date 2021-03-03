@@ -10,6 +10,9 @@ sources:
         builder: paketobuildpacks/builder:full
         buildpacks:
           - gcr.io/paketo-buildpacks/ruby
+        rawOptions:
+          - "--env"
+          - "BP_MRI_VERSION=2.7.*"
   - imageRepo: #@ data.values.kbld.destination.ccng
     path: #@ data.values.src_dirs.ccng
     pack: *ccngPackConfig
