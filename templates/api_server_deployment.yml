@@ -111,6 +111,11 @@ spec:
           ports:
           - containerPort: 80
           - containerPort: 9023
+          args:
+          - "-g"
+          - "daemon off;"
+          - "-c"
+          - "/etc/nginx/nginx.conf"
           readinessProbe:
             httpGet:
               port: 80
@@ -166,4 +171,3 @@ spec:
         emptyDir: {}
       - name: tmp-packages
         emptyDir: {}
-
