@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
@@ -68,6 +69,10 @@ func (r *BuildReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	err := r.Get(ctx, req.NamespacedName, &build)
 	if err != nil {
 		r.Log.WithValues("request", req.NamespacedName).Error(err, "failed initial build fetch")
+		if apierrors.IsNotFound(err) {
+			r.Log.WithValues("request", req.NamespacedName).Info("Attempted to reconcile build which no longer exists")
+			return ctrl.Result{Requeue: false}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
