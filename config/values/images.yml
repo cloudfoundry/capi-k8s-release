@@ -1,5 +1,7 @@
+#@ load("@ytt:overlay", "overlay")
 #@data/values
 ---
+#@overlay/match missing_ok=True
 images:
   backup_metadata_generator: cloudfoundry/cf-api-backup-metadata-generator@sha256:0f3098d99b35bfb9608b580323e0cc454bd254afaf08cd02acec58af770fea4f
   ccng: cloudfoundry/cloud-controller-ng@sha256:53ec4a6b42453129853d255896961b03d66d5b0eb52cbf68bfa7250aa6d607ce
