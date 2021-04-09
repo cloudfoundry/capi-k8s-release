@@ -29,7 +29,7 @@ function git_remote() {
 function get_image() {
   local name=${1}
   pushd "${REPO_BASE_DIR}" >/dev/null
-      yq -r ".images.${name}" values/images.yml
+    yq -r ".images.${name}" config/values/images.yml
   popd >/dev/null
 }
 

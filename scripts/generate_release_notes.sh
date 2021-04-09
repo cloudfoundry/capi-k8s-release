@@ -26,11 +26,11 @@ pushd "${HOME}/workspace/git_repo_changelog" > /dev/null
 
   pushd "${HOME}/workspace/capi-k8s-release" > /dev/null
     git checkout ${OLD_VERSION} 2>/dev/null
-    OLD_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
+    OLD_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng config/values/images.yml)"
     OLD_CCNG_SHA="$(git log --grep="${OLD_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
 
     git checkout ${NEW_VERSION} 2>/dev/null
-    NEW_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng values/images.yml)"
+    NEW_CCNG_IMAGE_DIGEST="$(bosh int --path=/images/ccng config/values/images.yml)"
     NEW_CCNG_SHA="$(git log --grep="${NEW_CCNG_IMAGE_DIGEST}" | rg "cloud_controller_ng" -A1 | tail -n+2)"
   popd > /dev/null
 
