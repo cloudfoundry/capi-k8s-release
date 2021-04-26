@@ -13,7 +13,7 @@ RUN tar xzvf nginx-upload-module-2.3.0.tar.gz
 RUN cd nginx-upload-module-2.3.0 && \
   patch < ../upload_module_put_support.patch
 
-RUN tar xzvf nginx-1.16.1.tar.gz
+RUN tar xzvf nginx-1.18.0.tar.gz
 RUN tar xzvf pcre-8.42.tar.gz
 
 # install whatever is needed for "./configure"
@@ -27,7 +27,7 @@ RUN apt-get install -y \
   zlib1g \
   zlib1g-dev
 
-RUN cd nginx-1.16.1 && \
+RUN cd nginx-1.18.0 && \
   ./configure \
     --with-debug \
     --with-pcre=../pcre-8.42 \
