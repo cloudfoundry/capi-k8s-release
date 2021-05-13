@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	RegistryBasePath string
 	RegistryUsername string
 	RegistryPassword string
 	Port             int
@@ -15,6 +16,12 @@ type Config struct {
 func Load() (*Config, error) {
 	c := &Config{}
 	var exists bool
+
+	c.RegistryBasePath, exists = os.LookupEnv("REGISTRY_BASE_PATH")
+	if !exists {
+		return nil, errors.New("REGISTRY_BASE_PATH not configured")
+	}
+
 	c.RegistryUsername, exists = os.LookupEnv("REGISTRY_USERNAME")
 	if !exists {
 		return nil, errors.New("REGISTRY_USERNAME not configured")

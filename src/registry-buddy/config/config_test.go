@@ -12,12 +12,15 @@ import (
 var _ = Describe("Config", func() {
 	Describe("Load", func() {
 		const (
+			regBasePath = "example.com/some-repo"
 			regUsername = "some-username"
 			regPassword = "some-password"
 		)
 
 		BeforeEach(func() {
-			err := os.Setenv("REGISTRY_USERNAME", regUsername)
+			err := os.Setenv("REGISTRY_BASE_PATH", regBasePath)
+			Expect(err).NotTo(HaveOccurred())
+			err = os.Setenv("REGISTRY_USERNAME", regUsername)
 			Expect(err).NotTo(HaveOccurred())
 			err = os.Setenv("REGISTRY_PASSWORD", regPassword)
 			Expect(err).NotTo(HaveOccurred())
@@ -29,22 +32,24 @@ var _ = Describe("Config", func() {
 			cfg, err := config.Load()
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(cfg.RegistryBasePath).To(Equal(regBasePath))
 			Expect(cfg.RegistryUsername).To(Equal(regUsername))
 			Expect(cfg.RegistryPassword).To(Equal(regPassword))
 			Expect(cfg.Port).To(Equal(9876))
 		})
 
-		Context("when the REGISTRY_USERNAME env var is not set", func() {
+		Context("when the REGISTRY_BASE_PATH env var is not set", func() {
 			BeforeEach(func() {
-				err := os.Unsetenv("REGISTRY_USERNAME")
+				err := os.Unsetenv("REGISTRY_BASE_PATH")
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("returns an error", func() {
 				_, err := config.Load()
-				Expect(err).To(MatchError("REGISTRY_USERNAME not configured"))
+				Expect(err).To(MatchError("REGISTRY_BASE_PATH not configured"))
 			})
 		})
+
 
 		Context("when the REGISTRY_PASSWORD env var is not set", func() {
 			BeforeEach(func() {
