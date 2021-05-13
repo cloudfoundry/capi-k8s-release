@@ -1,7 +1,6 @@
 package healthz
 
 import (
-	"errors"
 	"fmt"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -15,22 +14,25 @@ func Check(registryPath string, authenticator authn.Authenticator) error {
 		panic(err)
 	}
 
-	scopes := []string{repo.Scope(transport.CatalogScope)} // is this the right scope?
+	scopes := []string{repo.Scope(transport.PushScope)} // TODO: double-check this one
+
+	// This pings the registry to determine how to authenticate (basic or bearer)
+	// if this fails, either the server is down or the credentials provided to get the auth token is invalid
 	t, err := transport.New(repo.Registry, authenticator, http.DefaultTransport, scopes)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error setting up transport to the registry: %s", err)
 	}
 	client := &http.Client{Transport: t}
 
 	resp, err := client.Get(fmt.Sprintf("https://%s/v2/", repo.Registry.Name()))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to reach the registry: %s", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
 		return nil
 	} else {
-		return errors.New("something bad happened... fill me in")
+		return fmt.Errorf("unable to reach the registry, status code: %s", resp.StatusCode)
 	}
 }
