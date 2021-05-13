@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/healthz"
 	"code.cloudfoundry.org/capi-k8s-release/src/registry-buddy/image"
 	"context"
 	"fmt"
@@ -52,6 +53,7 @@ func newServer(cfg *config.Config, logger *log.Logger) *http.Server {
 	r := mux.NewRouter()
 	r.HandleFunc("/packages", handlers.PostPackageHandler(package_upload.Upload, logger, authenticator)).Methods("POST")
 	r.HandleFunc("/images", handlers.DeleteImageHandler(image.NewDynamicDeleter(), logger, authenticator)).Methods("DELETE")
+	r.HandleFunc("/healthz", handlers.HealthzHandler(cfg.RegistryBasePath, healthz.Check, logger, authenticator)).Methods("GET")
 	addr := fmt.Sprintf("127.0.0.1:%d", cfg.Port)
 
 	return &http.Server{
