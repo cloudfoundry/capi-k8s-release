@@ -42,6 +42,7 @@ import (
 
 const BuildGUIDLabel = "cloudfoundry.org/build_guid"
 const BuildReasonAnnotation = "image.kpack.io/reason"
+const StackUpdateBuildReason = "STACK"
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -o fake/controller_runtime_client.go --fake-name ControllerRuntimeClient sigs.k8s.io/controller-runtime/pkg/client.Client
 
@@ -135,15 +136,29 @@ func (r *BuildReconciler) buildFilter(e runtime.Object) bool {
 	}
 
 	if _, isGuidPresent := newBuild.ObjectMeta.Labels[BuildGUIDLabel]; !isGuidPresent {
-		r.Log.WithValues("build", newBuild).V(1).Info("received update event for a non-CF Build resource, ignoring event")
+		r.Log.WithValues("build", newBuild).V(1).Info("ignoring event: received update event for a non-CF Build resource")
 		return false
 	}
 	buildReason, ok := newBuild.ObjectMeta.Annotations[BuildReasonAnnotation]
 	if !ok {
-		r.Log.WithValues("build", newBuild).V(1).Info("received update event that was missing the build reason, ignoring event")
+		r.Log.WithValues("build", newBuild).V(1).Info("ignoring event: received update event that was missing the build reason")
 		return false
 	}
-	return !newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown() && buildReason != "STACK"
+
+	// Stack updates are handled by the Image controller
+	if buildReason == StackUpdateBuildReason {
+		r.Log.WithValues("build", newBuild).V(1).Info("ignoring event: build triggered due to an automatic stack update")
+		return false
+	}
+
+	// Wait until the 'Succeeded' condition is in a terminal 'False' or 'True' state
+	if newBuild.Status.GetCondition(corev1alpha1.ConditionSucceeded).IsUnknown() {
+		r.Log.WithValues("build", newBuild).V(1).Info("ignoring event: build 'Succeeded' condition status is Unknown")
+		return false
+	}
+
+	r.Log.WithValues("build", newBuild).V(1).Info("event passed ignore filters, continuing with reconciliation")
+	return true
 }
 
 func (r *BuildReconciler) extractProcessTypes(build *buildv1alpha1.Build) (map[string]string, error) {
