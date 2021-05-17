@@ -9,7 +9,7 @@ image_resource:
 
 inputs:
   - name: registry-buddy
-  - name: cf-for-k8s-ci
+  - name: capi-k8s-release-ci
 
 params:
   REGISTRY_BASE_PATH:
@@ -17,4 +17,4 @@ params:
   REGISTRY_USERNAME:
 
 run:
-  path: cf-for-k8s-ci/ci/tasks/cake/run-registry-buddy-integration-tests.sh
+  path: capi-k8s-release-ci/ci/tasks/run-registry-buddy-integration-tests.sh
