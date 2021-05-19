@@ -9,10 +9,10 @@ image_resource:
 
 inputs:
   - name: cloud_controller_ng
-  - name: cf-for-k8s-ci
+  - name: capi-k8s-release-ci
 
 run:
-  path: cf-for-k8s-ci/ci/tasks/cake/run_cc_unit_tests.sh
+  path: capi-k8s-release-ci/ci/tasks/run_cc_unit_tests.sh
 
 params:
   DB: ~

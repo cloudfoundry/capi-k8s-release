@@ -6,7 +6,7 @@ image_resource:
     repository: cloudfoundry/cf-for-k8s-dind
 
 inputs:
-  - name: cf-for-k8s-ci
+  - name: capi-k8s-release-ci
   - name: source-repository
 
 outputs:
@@ -17,4 +17,4 @@ params:
   ADDITIONAL_ARGS: null
 
 run:
-  path: cf-for-k8s-ci/ci/tasks/cake/build-with-pack.sh
+  path: capi-k8s-release-ci/ci/tasks/build-with-pack.sh

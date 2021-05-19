@@ -10,9 +10,9 @@ image_resource:
 
 inputs:
   - name: cf-api-controllers
-  - name: cf-for-k8s-ci
+  - name: capi-k8s-release-ci
 
 params: {}
 
 run:
-  path: cf-for-k8s-ci/ci/tasks/cake/run-cf-api-controllers-unit-tests.sh
+  path: capi-k8s-release-ci/ci/tasks/run-cf-api-controllers-unit-tests.sh

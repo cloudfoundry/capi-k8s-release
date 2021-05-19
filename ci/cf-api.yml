@@ -470,6 +470,7 @@ jobs:
     - get: capi-k8s-release-except-images
       trigger: true
     - get: capi-k8s-release
+    - get: capi-k8s-release-ci
     - get: cf-for-k8s-ci
     - get: capi-bara-tests
     - get: cf-for-k8s
