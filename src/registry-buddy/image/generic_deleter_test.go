@@ -191,6 +191,10 @@ var _ = Describe("NewGenericDeleter returned function", func() {
 
 	When("fetching the image information fails with a non-404", func() {
 		BeforeEach(func() {
+			var err error
+			imageRef, err = name.ParseReference(digestImageRef)
+			Expect(err).NotTo(HaveOccurred())
+
 			imageDescriptorFunc.Returns(nil, &transport.Error{StatusCode: 500})
 		})
 
