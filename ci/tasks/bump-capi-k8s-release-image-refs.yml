@@ -7,7 +7,7 @@ image_resource:
     repository: cloudfoundry/cf-for-k8s-ci
 
 inputs:
-- name: cf-for-k8s-ci
+- name: capi-k8s-release-ci
 - name: capi-k8s-release
 - name: capi-docker-image
 - name: cf-api-controllers-docker-image
@@ -28,4 +28,4 @@ params:
   GIT_COMMIT_USERNAME: "relint-ci"
 
 run:
-  path: cf-for-k8s-ci/ci/tasks/cake/bump-capi-k8s-release-image-refs.sh
+  path: capi-k8s-release-ci/ci/tasks/bump-capi-k8s-release-image-refs.sh
