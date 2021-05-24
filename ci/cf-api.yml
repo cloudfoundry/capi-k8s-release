@@ -372,14 +372,9 @@ jobs:
         ADDITIONAL_ARGS: "-b gcr.io/paketo-buildpacks/ruby --env BP_MRI_VERSION=2.7.*"
       input_mapping:
         source-repository: cloud-controller-ng
-    - task: run-deplab
-      privileged: true
-      file: capi-k8s-release-ci/ci/tasks/run-deplab.yml
-      input_mapping:
-        source-repository: cloud-controller-ng
     - put: capi-docker-image
       params:
-        image: labeled-image/image.tar
+        image: image/image.tar
 
 - name: build-cf-api-controllers-image
   plan:
