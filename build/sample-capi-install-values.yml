@@ -1,0 +1,21 @@
+#@data/values
+---
+app_domains:
+#@overlay/append
+- apps.cf.example.com
+
+blobstore:
+  secret_access_key_secret_name: the_blobstore_secret_key
+
+ccdb:
+  password_secret_name: ccdb_password
+  encryption_key_secret_name: ccdb_encryption_key
+
+uaa:
+  clients:
+    cf_api_controllers:
+      secret_name: uaa_cf_api_controllers_client_credentials
+    cf_api_backup_metadata_generator:
+      secret_name: uaa_cf_api_backup_metadata_generator_client_credentials
+    cloud_controller_username_lookup:
+      secret_name: uaa_cloud_controller_lookup_client_credentials
