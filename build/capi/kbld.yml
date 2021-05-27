@@ -5,7 +5,7 @@ kind: Config
 minimumRequiredVersion: 0.28.0
 sources:
 - imageRepo: cloudfoundry/cf-api-controllers
-  path: sources/capi-k8s-release/src/cf-api-controllers
+  path: ../src/cf-api-controllers
   pack:
     build:
       builder: paketobuildpacks/builder:tiny
@@ -18,7 +18,7 @@ sources:
       - #@ "BP_OCI_SOURCE={}".format(data.values.git_url)
 
 - imageRepo: cloudfoundry/cf-api-backup-metadata-generator
-  path: sources/capi-k8s-release/src/backup-metadata-generator
+  path: ../src/backup-metadata-generator
   pack:
     build:
       builder: paketobuildpacks/builder:base
@@ -34,7 +34,7 @@ sources:
       - #@ "BP_OCI_SOURCE={}".format(data.values.git_url)
 
 - imageRepo: cloudfoundry/cf-api-package-registry-buddy
-  path: sources/capi-k8s-release/src/registry-buddy
+  path: ../src/registry-buddy
   pack:
     build:
       builder: paketobuildpacks/builder:tiny
@@ -47,7 +47,7 @@ sources:
       - #@ "BP_OCI_SOURCE={}".format(data.values.git_url)
 
 - imageRepo: cloudfoundry/capi-nginx
-  path: sources/capi-k8s-release/dockerfiles/nginx
+  path: ../dockerfiles/nginx
   docker:
     build:
       rawOptions:

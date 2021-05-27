@@ -8,20 +8,20 @@ function generate_kbld_config() {
   local kbld_config_path="${1}"
 
   local source_path
-  source_path="${SCRIPT_DIR}/sources/capi-k8s-release"
+  source_path="${SCRIPT_DIR}/../sources/cloud_controller_ng"
 
   pushd "${source_path}" > /dev/null
     local git_ref
     git_ref=$(git rev-parse HEAD)
   popd > /dev/null
 
-  echo "Creating CAPI K8s release kbld config with ytt..."
+  echo "Creating CCNG kbld config with ytt..."
   local kbld_config_values
   kbld_config_values=$(cat <<EOF
 #@data/values
 ---
 git_ref: ${git_ref}
-git_url: https://github.com/cloudfoundry/capi-k8s-release
+git_url: https://github.com/cloudfoundry/cloud_controller_ng
 EOF
 )
 
