@@ -1,0 +1,22 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+minimumRequiredVersion: 0.28.0
+sources:
+- imageRepo: cloudfoundry/cf-api-package-registry-buddy
+  path: ../src/registry-buddy
+  pack:
+    build:
+      builder: paketobuildpacks/builder:tiny
+      buildpacks:
+      - gcr.io/paketo-buildpacks/go
+      rawOptions:
+      - --env
+      - #@ "BP_OCI_REVISION={}".format(data.values.git_ref)
+      - --env
+      - #@ "BP_OCI_SOURCE={}".format(data.values.git_url)
+
+destinations:
+- imageRepo: cloudfoundry/cf-api-package-registry-buddy
+  newImage: index.docker.io/cloudfoundry/cf-api-package-registry-buddy

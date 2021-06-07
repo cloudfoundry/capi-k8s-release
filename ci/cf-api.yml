@@ -18,7 +18,7 @@ groups:
   - check-nginx
   - registry-buddy-unit-tests
   - registry-buddy-integration-tests
-  - build-capi-docker-image
+  - build-cloud-controller-ng-docker-image
   - build-cf-api-controllers-image
   - registry-buddy-docker-image
   - build-nginx-docker-image
@@ -70,7 +70,7 @@ resources:
     uri: git@github.com:cloudfoundry/capi-bara-tests.git
     branch: main
 
-- name: capi-docker-image
+- name: cloud-controller-ng-docker-image
   type: registry-image
   source:
     repository: cloudfoundry/cloud-controller-ng
@@ -357,24 +357,30 @@ jobs:
       #       text: '[registry-buddy-integratoin-tests] OH NO! Failed package registry-ing with Harbor'
       #       icon_emoji: ((slack_failure_emoji))
 
-- name: build-capi-docker-image
+- name: build-cloud-controller-ng-docker-image
   plan:
     - in_parallel:
       - get: cloud-controller-ng
         passed: [cc-tests]
         trigger: true
       - get: capi-k8s-release-ci
-    - task: build-with-pack
-      privileged: true
-      file: capi-k8s-release-ci/ci/tasks/build-with-pack.yml
-      params:
-        # TODO: remove this once CCNG updates its Gemfile to mandate Ruby version
-        ADDITIONAL_ARGS: "-b gcr.io/paketo-buildpacks/ruby --env BP_MRI_VERSION=2.7.*"
+      - get: capi-k8s-release
+      - get: cf-for-k8s
+    - task: bump-vendir
       input_mapping:
-        source-repository: cloud-controller-ng
-    - put: capi-docker-image
+        component-repo: cloud-controller-ng
+      file: capi-k8s-release-ci/ci/tasks/bump-vendir/task.yml
+    - task: build-with-kbld
+      privileged: true
+      input_mapping:
+        capi-k8s-release: vendir-bumped-capi-k8s-release
+      file: capi-k8s-release-ci/ci/tasks/build-with-kbld/task.yml
       params:
-        image: image/image.tar
+        COMPONENT: cloud-controller-ng
+        IMAGE_NAME: cloud-controller-ng
+    - put: cloud-controller-ng-docker-image
+      params:
+        image: kbld-output/image.tar
 
 - name: build-cf-api-controllers-image
   plan:
@@ -383,22 +389,17 @@ jobs:
         trigger: true
         passed: [cf-api-controllers-unit-tests]
       - get: capi-k8s-release-ci
-    - task: build-with-pack
+      - get: capi-k8s-release
+      - get: cf-for-k8s
+    - task: build-with-kbld
       privileged: true
-      file: capi-k8s-release-ci/ci/tasks/build-with-pack.yml
+      file: capi-k8s-release-ci/ci/tasks/build-with-kbld/task.yml
       params:
-        CONTEXT_PATH: src/cf-api-controllers
-        ADDITIONAL_ARGS: "-b gcr.io/paketo-buildpacks/go"
-      input_mapping:
-        source-repository: cf-api-controllers
-    - task: run-deplab
-      privileged: true
-      file: capi-k8s-release-ci/ci/tasks/run-deplab.yml
-      input_mapping:
-        source-repository: cf-api-controllers
+        COMPONENT: cf-api-controllers
+        IMAGE_NAME: cf-api-controllers
     - put: cf-api-controllers-docker-image
       params:
-        image: labeled-image/image.tar
+        image: kbld-output/image.tar
 
 - name: registry-buddy-docker-image
   plan:
@@ -407,22 +408,17 @@ jobs:
         trigger: true
         passed: [registry-buddy-unit-tests, registry-buddy-integration-tests]
       - get: capi-k8s-release-ci
-    - task: build-with-pack
+      - get: capi-k8s-release
+      - get: cf-for-k8s
+    - task: build-with-kbld
       privileged: true
-      file: capi-k8s-release-ci/ci/tasks/build-with-pack.yml
+      file: capi-k8s-release-ci/ci/tasks/build-with-kbld/task.yml
       params:
-        CONTEXT_PATH: src/registry-buddy
-        ADDITIONAL_ARGS: "-b gcr.io/paketo-buildpacks/go"
-      input_mapping:
-        source-repository: registry-buddy
-    - task: run-deplab
-      privileged: true
-      file: capi-k8s-release-ci/ci/tasks/run-deplab.yml
-      input_mapping:
-        source-repository: registry-buddy
+        COMPONENT: registry-buddy
+        IMAGE_NAME: cf-api-package-registry-buddy
     - put: registry-buddy-docker-image
       params:
-        image: labeled-image/image.tar
+        image: kbld-output/image.tar
 
 - name: build-nginx-docker-image
   plan:
@@ -430,30 +426,18 @@ jobs:
       - get: capi-nginx
         trigger: true
       - get: cf-for-k8s-ci
-    - task: generate-image-labels-file
-      file: cf-for-k8s-ci/ci/tasks/generate-oci-image-labels/task.yml
-      input_mapping:
-        source-repo: capi-nginx
-      output_mapping:
-        labels: capi-nginx-labels
-
-    - task: build
+      - get: capi-k8s-release-ci
+      - get: capi-k8s-release
+      - get: cf-for-k8s
+    - task: build-with-kbld
       privileged: true
-      file: capi-k8s-release-ci/ci/tasks/oci-build-task.yml
-      input_mapping:
-        context-repository: capi-nginx
-        image-labels-file: capi-nginx-labels
+      file: capi-k8s-release-ci/ci/tasks/build-with-kbld/task.yml
       params:
-        CONTEXT: context-repository/dockerfiles/nginx
-        LABELS_FILE: image-labels-file/oci-image-labels
-    - task: run-deplab
-      privileged: true
-      file: capi-k8s-release-ci/ci/tasks/run-deplab.yml
-      input_mapping:
-        source-repository: capi-nginx
+        COMPONENT: nginx
+        IMAGE_NAME: capi-nginx
     - put: nginx-docker-image
       params:
-        image: labeled-image/image.tar
+        image: kbld-output/image.tar
 
 # TODO: rename this later
 - name: cf-api-tests
@@ -462,7 +446,7 @@ jobs:
   plan:
   - in_parallel:
     - get: cloud-controller-ng
-      passed: [build-capi-docker-image]
+      passed: [build-cloud-controller-ng-docker-image]
     - get: capi-k8s-release-except-images
       trigger: true
     - get: capi-k8s-release
@@ -471,9 +455,9 @@ jobs:
     - get: capi-bara-tests
     - get: cf-for-k8s
       trigger: true
-    - get: capi-docker-image
+    - get: cloud-controller-ng-docker-image
       trigger: true
-      passed: [build-capi-docker-image]
+      passed: [build-cloud-controller-ng-docker-image]
     - get: cf-api-controllers-docker-image
       trigger: true
       passed: [build-cf-api-controllers-image]
@@ -516,7 +500,7 @@ jobs:
       inputs:
       - name: cf-for-k8s
       - name: capi-k8s-release
-      - name: capi-docker-image
+      - name: cloud-controller-ng-docker-image
       - name: cf-api-controllers-docker-image
       - name: registry-buddy-docker-image
       - name: backup-metadata-generator-docker-image
@@ -537,7 +521,7 @@ jobs:
               popd >/dev/null
             }
 
-            CAPI_IMAGE="cloudfoundry/cloud-controller-ng@$(get_image_digest_for_resource capi-docker-image)"
+            CAPI_IMAGE="cloudfoundry/cloud-controller-ng@$(get_image_digest_for_resource cloud-controller-ng-docker-image)"
             NGINX_IMAGE="cloudfoundry/capi-nginx@$(get_image_digest_for_resource nginx-docker-image)"
             CONTROLLERS_IMAGE="cloudfoundry/cf-api-controllers@$(get_image_digest_for_resource cf-api-controllers-docker-image)"
             REGISTRY_BUDDY_IMAGE="cloudfoundry/cf-api-package-registry-buddy@$(get_image_digest_for_resource registry-buddy-docker-image)"
@@ -715,7 +699,7 @@ jobs:
     - get: capi-k8s-release-ci
     - get: cloud-controller-ng
       passed: [cf-api-tests]
-    - get: capi-docker-image
+    - get: cloud-controller-ng-docker-image
       trigger: true
       passed: [cf-api-tests]
     - get: registry-buddy-docker-image
@@ -742,7 +726,13 @@ jobs:
       passed: [cf-api-tests]
     - get: capi-nginx
       passed: [cf-api-tests]
+  - task: bump-vendir
+    input_mapping:
+      component-repo: cloud-controller-ng
+    file: capi-k8s-release-ci/ci/tasks/bump-vendir/task.yml
   - task: bump-capi-k8s-release-image-refs
+    input_mapping:
+      capi-k8s-release: vendir-bumped-capi-k8s-release
     file: capi-k8s-release-ci/ci/tasks/bump-capi-k8s-release-image-refs.yml
   - put: capi-k8s-release
     params:

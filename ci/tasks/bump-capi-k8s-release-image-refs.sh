@@ -8,7 +8,7 @@ function get_image_digest_for_resource () {
   popd >/dev/null
 }
 
-CAPI_IMAGE="cloudfoundry/cloud-controller-ng@$(get_image_digest_for_resource capi-docker-image)"
+CAPI_IMAGE="cloudfoundry/cloud-controller-ng@$(get_image_digest_for_resource cloud-controller-ng-docker-image)"
 NGINX_IMAGE="cloudfoundry/capi-nginx@$(get_image_digest_for_resource nginx-docker-image)"
 CONTROLLERS_IMAGE="cloudfoundry/cf-api-controllers@$(get_image_digest_for_resource cf-api-controllers-docker-image)"
 REGISTRY_BUDDY_IMAGE="cloudfoundry/cf-api-package-registry-buddy@$(get_image_digest_for_resource registry-buddy-docker-image)"
@@ -66,6 +66,8 @@ function make_git_commit() {
       git config user.name "${GIT_COMMIT_USERNAME}"
       git config user.email "${GIT_COMMIT_EMAIL}"
       git add config/values/images.yml
+      git add build/vendir.yml
+      git add build/vendir.lock.yml
 
       # dont make a commit if there aren't new images
       if ! git diff --cached --exit-code; then

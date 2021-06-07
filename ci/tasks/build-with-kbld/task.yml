@@ -1,0 +1,23 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: cloudfoundry/cf-for-k8s-dind
+
+params:
+  DOCKERHUB_USERNAME: ((dockerhub.username))
+  DOCKERHUB_PASSWORD: ((dockerhub.password))
+  COMPONENT:
+  IMAGE_NAME:
+
+inputs:
+  - name: cf-for-k8s
+  - name: capi-k8s-release
+  - name: capi-k8s-release-ci
+
+outputs:
+  - name: kbld-output
+
+run:
+  path: capi-k8s-release-ci/ci/tasks/build-with-kbld/task.sh

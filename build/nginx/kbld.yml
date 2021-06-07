@@ -1,0 +1,19 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+minimumRequiredVersion: 0.28.0
+sources:
+- imageRepo: cloudfoundry/capi-nginx
+  path: ../dockerfiles/nginx
+  docker:
+    build:
+      rawOptions:
+      - --label
+      - #@ "org.opencontainers.image.revision={}".format(data.values.git_ref)
+      - --label
+      - #@ "org.opencontainers.image.source={}".format(data.values.git_url)
+
+destinations:
+- imageRepo: cloudfoundry/capi-nginx
+  newImage: index.docker.io/cloudfoundry/capi-nginx

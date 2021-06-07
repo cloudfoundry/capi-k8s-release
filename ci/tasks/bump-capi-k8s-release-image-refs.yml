@@ -9,7 +9,7 @@ image_resource:
 inputs:
 - name: capi-k8s-release-ci
 - name: capi-k8s-release
-- name: capi-docker-image
+- name: cloud-controller-ng-docker-image
 - name: cf-api-controllers-docker-image
 - name: registry-buddy-docker-image
 - name: nginx-docker-image

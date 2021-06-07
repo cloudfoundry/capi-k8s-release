@@ -34,7 +34,14 @@ pushd "${SCRIPT_DIR}" > /dev/null
   # build each input component
   for component in "${components[@]}"; do
     mkdir "${KBLD_CONFIG_DIR}/${component}"
-    "${SCRIPT_DIR}/${component}/generate-kbld-config.sh" "${KBLD_CONFIG_DIR}/${component}/kbld.yml"
+
+    # use component specific kbld generation if available, else fall back to default generation script
+    if [[ -f "${SCRIPT_DIR}/${component}/generate-kbld-config.sh" ]]; then
+      "${SCRIPT_DIR}/${component}/generate-kbld-config.sh" "${KBLD_CONFIG_DIR}/${component}/kbld.yml"
+    else
+      "${SCRIPT_DIR}/default-generate-kbld-config.sh" "${KBLD_CONFIG_DIR}/${component}/kbld.yml" "${SCRIPT_DIR}/${component}/kbld.yml"
+    fi
+
   done
 
   kbld -f "${KBLD_CONFIG_DIR}" -f <(ytt -f "${SCRIPT_DIR}/../config/" -f "${SCRIPT_DIR}/sample-capi-install-values.yml") --lock-output "${KBLD_LOCK_FILE}"
