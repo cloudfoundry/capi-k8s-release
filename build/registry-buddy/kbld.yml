@@ -8,7 +8,7 @@ sources:
   path: ../src/registry-buddy
   pack:
     build:
-      builder: paketobuildpacks/builder:tiny
+      builder: paketobuildpacks/builder:full
       buildpacks:
       - gcr.io/paketo-buildpacks/go
       rawOptions:
