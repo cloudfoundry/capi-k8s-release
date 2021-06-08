@@ -13,10 +13,10 @@ There are several jobs in this pipeline that run unit and integration tests to v
 
 
 ## Image building
-This pipeline builds images in two different ways: via [pack](https://github.com/buildpacks/pack) or [oci-build-task](https://github.com/vito/oci-build-task). When building images via pack, the job needs to start up nested docker daemon because pack requires it. The registry-buddy, capi, and cf-api-controllers images are built with pack while the nginx image is built via oci. These images get pushed to the cloudfoundy dockerhub org.
+This pipeline builds images via [`kbld`](https://carvel.dev/kbld/) which uses [`pack`](https://github.com/buildpacks/pack) or `docker build` (for nginx) to build the container images. OCI `source` and `revision` labels are added to the images as part of this process.
+See the  [OCI Annotations repo](https://github.com/opencontainers/image-spec/blob/master/annotations.md) for more details regarding these labels.
 
-The build image jobs also adds annotations to the images using [deplab](https://github.com/vmware-tanzu/dependency-labeler).
-
+For more information, check out the `build/build.sh` script to see how we generate the kbld config and build the images.
 
 ## Release
 Once all the validation tests have passed, `the k8s-ci-passed` job updates the image reference templates with the newly build images.
