@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Revert "Bump fog-azure-rm"...
-      sha: 9591e85e38c7fbd6cef94ab556ce4f2581e3393c
+      commitTitle: Account for exposed staging memory and disk in request spec builds
+        output...
+      sha: 410e5f050448d8eb23cbe26f523df3c502e89b18
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
