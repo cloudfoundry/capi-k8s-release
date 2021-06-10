@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2320 from cloudfoundry/dependabot/npm_and_yarn/docs/v3/cheerio-1.0.0-rc.10...'
-      sha: 248cb6e1ed18a97e81e04f0b461ce1c834fa3848
+      commitTitle: Add docs for staged_memory_in_mb and staged_disk_in_mb in builds...
+      sha: 83913d297f2aca8941070133441c2b23fb705f03
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig

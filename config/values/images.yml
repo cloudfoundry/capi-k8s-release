@@ -4,9 +4,9 @@
 #@overlay/match missing_ok=True
 images:
   backup_metadata_generator: cloudfoundry/cf-api-backup-metadata-generator@sha256:0f3098d99b35bfb9608b580323e0cc454bd254afaf08cd02acec58af770fea4f
-  ccng: cloudfoundry/cloud-controller-ng@sha256:33ae9cbd350e964182d07f5503eb2d16a4360a46e2335659e63919f95a15064f
+  ccng: cloudfoundry/cloud-controller-ng@sha256:247f60f7c26f23926ed424e6406640418ca44750502daf9e08beafab928da5b9
   cf_api_controllers: cloudfoundry/cf-api-controllers@sha256:029da4a2cadf04c70f96342855e745af00384986239e4e2fc3eb9bba777a23d9
   cf_autodetect_builder: cloudfoundry/cnb:0.0.94-bionic@sha256:5b03a853e636b78c44e475bbc514e2b7b140cc41cca8ab907e9753431ae8c0b0
   nginx: cloudfoundry/capi-nginx@sha256:da9dc5d2431c55affe8a6d07169199e958a619d0159cbbf99d130ff4a45d11d5
   registry_buddy: cloudfoundry/cf-api-package-registry-buddy@sha256:163aca64a4e0aa1a3c8a9555d13b3c7218ae059c1ec2d986d783d961daa52d1d
-  statsd_exporter: cloudfoundry/statsd_exporter-cf-for-k8s@sha256:345becae35e174f1cce6928c8b23744b5ca42a6f259ea9c00c9ee9ff2fa55303
+  statsd_exporter: cloudfoundry/statsd_exporter-cf-for-k8s@sha256:e5c31ef43dc6448307997c81909d07cd0691850d7c2ca9b9311915767e5b2d65
