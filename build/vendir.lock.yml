@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Remove errant `)` from "Get a service broker" documentation
-      sha: a5f00ac59b2efd84c826ff119728744fc3780030
+      commitTitle: 'Merge pull request #2324 from cloudfoundry/space-application-supporter-events...'
+      sha: 2affda63794663a2ab6e7c65a6e2caa817c0dd53
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
