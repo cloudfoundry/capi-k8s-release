@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Merge branch 'manifest-diff-memory'...
-      sha: 2e5b0f7245fa09272b1ee71fac3a81fcb3fa5a78
+      commitTitle: Remove errant `)` from "Get a service broker" documentation
+      sha: a5f00ac59b2efd84c826ff119728744fc3780030
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
