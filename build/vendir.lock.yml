@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Add docs for staged_memory_in_mb and staged_disk_in_mb in builds...
-      sha: 83913d297f2aca8941070133441c2b23fb705f03
+      commitTitle: Merge branch 'manifest-diff-memory'...
+      sha: 2e5b0f7245fa09272b1ee71fac3a81fcb3fa5a78
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
