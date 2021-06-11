@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2316 from sap-contributions/space-application-supporter-jobs...'
-      sha: 79d49fb7aa2ba3afadc4cdcf71ad54d98c7df914
+      commitTitle: 'Merge pull request #2319 from sap-contributions/space-application-supporter-buildpacks...'
+      sha: ac5ae1b4c277a12830f0b0e8fb448278ac8b3c75
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
