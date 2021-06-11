@@ -8,4 +8,4 @@ directories:
   - path: .
     git:
       url: https://github.com/cloudfoundry/cloud_controller_ng
-      ref: 2affda63794663a2ab6e7c65a6e2caa817c0dd53
+      ref: 79d49fb7aa2ba3afadc4cdcf71ad54d98c7df914
