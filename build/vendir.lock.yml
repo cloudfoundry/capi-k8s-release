@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2325 from sap-contributions/space-application-supporter-environment-variable-groups...'
-      sha: aeba231e4005af5f4782db80020d7b69f0973134
+      commitTitle: 'Merge pull request #2308 from cloudfoundry/dependabot/bundler/sequel-5.45.0...'
+      sha: bc42093885a88cf9edcc3ccf681bb5953dbc17f0
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
