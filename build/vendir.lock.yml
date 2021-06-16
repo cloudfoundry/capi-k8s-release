@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2308 from cloudfoundry/dependabot/bundler/sequel-5.45.0...'
-      sha: bc42093885a88cf9edcc3ccf681bb5953dbc17f0
+      commitTitle: Space application supporter can get and list packages (#2328)...
+      sha: fb80fc343fc3f00ddad6429cc3919eae2a3ab38e
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
