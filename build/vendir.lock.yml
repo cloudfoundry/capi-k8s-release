@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Space application supporter can get and list packages (#2328)...
-      sha: fb80fc343fc3f00ddad6429cc3919eae2a3ab38e
+      commitTitle: 'Merge pull request #2334 from cloudfoundry/space-application-supporter-droplets...'
+      sha: 79e145e78541936e4f2c6c336ad0cf358f76d39c
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
