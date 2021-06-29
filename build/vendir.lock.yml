@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Update docs npm json and fix docs Bundler warning...
-      sha: 1ce356e1ca3d5805dc359d06b690b5b4ce1362d5
+      commitTitle: 'Merge pull request #2356 from cloudfoundry/remove-unmunged-body...'
+      sha: 2801afdc074272c20fcd3e23cfbb290cd52e1c2d
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
