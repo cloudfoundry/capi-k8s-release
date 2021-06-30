@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2356 from cloudfoundry/remove-unmunged-body...'
-      sha: 2801afdc074272c20fcd3e23cfbb290cd52e1c2d
+      commitTitle: 'Merge pull request #2360 from cloudfoundry/dependabot/bundler/rubocop-1.18.1...'
+      sha: 52d78a6123385723c60e1cf9e47cb084c9523909
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
