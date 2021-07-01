@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Log caller and query length for sql queries (#2329)...
-      sha: 214c7d26ff1eb653c4c2579783d080348c930be2
+      commitTitle: Space application supporter revisions (#2350)...
+      sha: c70f8ecbbd41449623f25d65dfefc466a53bdc5a
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
