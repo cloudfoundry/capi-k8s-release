@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2346 from cloudfoundry/space-application-supporter-space-quotas...'
-      sha: 4e017cfdceb7b64cd79b36965969240866feeef4
+      commitTitle: Space application supporter can access deployments endpoints (#2323)...
+      sha: 5787b935f80f4bdc48b236cca68d0595928dc944
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
