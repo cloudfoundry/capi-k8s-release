@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2365 from cloudfoundry/dependabot/bundler/addressable-2.8.0...'
-      sha: cdb9c8361ac6ca0e48f896632f6d24b6c08b298b
+      commitTitle: 'Merge pull request #2375 from cloudfoundry/space_supporter_rename...'
+      sha: 5cce873a10cdf17fa2331efa9b6c298643360710
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
