@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2375 from cloudfoundry/space_supporter_rename...'
-      sha: 5cce873a10cdf17fa2331efa9b6c298643360710
+      commitTitle: 'Merge pull request #2363 from cloudfoundry/dependabot/bundler/sequel-5.46.0...'
+      sha: 4409661ae77ab03dc7eaf9e01c5b5470919b4c70
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
