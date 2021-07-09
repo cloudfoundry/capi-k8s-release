@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2363 from cloudfoundry/dependabot/bundler/sequel-5.46.0...'
-      sha: 4409661ae77ab03dc7eaf9e01c5b5470919b4c70
+      commitTitle: 'Merge pull request #2383 from cloudfoundry/dependabot/bundler/rake-13.0.6...'
+      sha: d41ab67aa8c8433a8e2e840f1acef5382a53576b
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
