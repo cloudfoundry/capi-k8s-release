@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2383 from cloudfoundry/dependabot/bundler/rake-13.0.6...'
-      sha: d41ab67aa8c8433a8e2e840f1acef5382a53576b
+      commitTitle: '`space_application_supporter` => `space_supporter` in request/sidecars_spec.rb...'
+      sha: 5ac5a293248aa2f2659b79ec5a95e46911982323
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
