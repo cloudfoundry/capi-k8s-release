@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: '`space_application_supporter` => `space_supporter` in request/sidecars_spec.rb...'
-      sha: 5ac5a293248aa2f2659b79ec5a95e46911982323
+      commitTitle: Allow space application supporter to access specific build endpoints.
+        (#2390)...
+      sha: 21c475053684499c638d623fb65eb58cafdc9c25
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
