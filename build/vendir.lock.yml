@@ -2,9 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Allow space application supporter to access specific build endpoints.
-        (#2390)...
-      sha: 21c475053684499c638d623fb65eb58cafdc9c25
+      commitTitle: 'SAP contribution: fix unsafe navigation from non existing space
+        to org (#2396)...'
+      sha: 3ddd6d12d397632e47b452fbd3eef3975c57e231
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
