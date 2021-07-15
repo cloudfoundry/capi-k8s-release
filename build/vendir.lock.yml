@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Space supporter can access correct org quotas endpoints (#2395)...
-      sha: 69154e258798f2a06c558a89dabb41f8fd44cdb1
+      commitTitle: 'Merge pull request #2351 from sap-contributions/db-connection-expiration...'
+      sha: 7400a3cb71750663b2f490a6a2538d7a7c29d744
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
