@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Space application supporter can get and list security groups (#2341)...
-      sha: 438066cd3d922318a281fc8909c4de4e0e2cefda
+      commitTitle: Space supporter can access correct org quotas endpoints (#2395)...
+      sha: 69154e258798f2a06c558a89dabb41f8fd44cdb1
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
