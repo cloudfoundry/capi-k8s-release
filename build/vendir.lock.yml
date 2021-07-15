@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2407 from cloudfoundry/space_support_patch_v3_builds_guid_returns_403...'
-      sha: edbf4fa46e4aa63b05643941a0cef96e2a762160
+      commitTitle: Space application supporter can get and list security groups (#2341)...
+      sha: 438066cd3d922318a281fc8909c4de4e0e2cefda
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
