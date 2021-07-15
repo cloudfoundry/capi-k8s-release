@@ -2,9 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'SAP contribution: fix unsafe navigation from non existing space
-        to org (#2396)...'
-      sha: 3ddd6d12d397632e47b452fbd3eef3975c57e231
+      commitTitle: 'Merge pull request #2407 from cloudfoundry/space_support_patch_v3_builds_guid_returns_403...'
+      sha: edbf4fa46e4aa63b05643941a0cef96e2a762160
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
