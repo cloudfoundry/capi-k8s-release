@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2351 from sap-contributions/db-connection-expiration...'
-      sha: 7400a3cb71750663b2f490a6a2538d7a7c29d744
+      commitTitle: Allow space application supporter to access specific service plan
+        endpoints (#2349)...
+      sha: fddf001059bfd06deaf124dee59418f72c021e67
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
