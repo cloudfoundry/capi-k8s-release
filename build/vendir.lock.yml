@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Space application supporter can list and cancel tasks (#2376)...
-      sha: 7c0470f8aa725fc94328a1dde789729a912d8dad
+      commitTitle: Allow space supporter to access specific service broker endpoints
+        (#2408)...
+      sha: bf6bcae03d1b447e142db7df5d2edf364485e25a
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
