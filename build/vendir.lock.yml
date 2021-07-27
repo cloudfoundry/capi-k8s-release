@@ -2,9 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Allow space supporter to get ssh_enabled app feature and to access
-        apps in the stack (#2431)...
-      sha: fc0955f790f63705bdd1d39cd7f2d088b37a1958
+      commitTitle: 'Merge pull request #2370 from sap-contributions/truncate-large-process-crash-events...'
+      sha: 92e3ae6fecbaaa286d359bdcf733c19f4533510f
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
