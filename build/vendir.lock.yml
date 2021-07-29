@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2370 from sap-contributions/truncate-large-process-crash-events...'
-      sha: 92e3ae6fecbaaa286d359bdcf733c19f4533510f
+      commitTitle: Merge branch 'sap-contributions-replace-readable-org-guids-for-domains'
+      sha: 1d530dbd2194aa80d026291c67197a34d8f77e6f
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
