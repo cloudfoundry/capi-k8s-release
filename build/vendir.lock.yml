@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Merge branch 'sap-contributions-replace-readable-org-guids-for-domains'
-      sha: 1d530dbd2194aa80d026291c67197a34d8f77e6f
+      commitTitle: 'Merge pull request #2457 from cloudfoundry/dependabot/bundler/nokogiri-1.12.2...'
+      sha: a698d407d9f11263152cfdc4317f4786567bb16f
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
