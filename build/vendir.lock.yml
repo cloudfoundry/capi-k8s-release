@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2338 from sap-contributions/log-db-row-counts...'
-      sha: b241622b890138c6e746f1407cc2cd7aec47cbbf
+      commitTitle: 'Merge pull request #2451 from cloudfoundry/dependabot/bundler/sequel-5.47.0...'
+      sha: 702ae3c6b9da2f14d2dc7e38f1bea121d5914173
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
