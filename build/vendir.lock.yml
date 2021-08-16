@@ -2,9 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Allow space application supporter to access specific service binding
-        … (#2374)...
-      sha: 13a7a9ff83f4a7d459e40f5e691c3746ccf75426
+      commitTitle: 'Merge pull request #2413 from sap-contributions/service-instance-retry...'
+      sha: 144d46b8127d73a6aeef8a278357856addbc097f
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
