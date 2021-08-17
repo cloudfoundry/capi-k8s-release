@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2413 from sap-contributions/service-instance-retry...'
-      sha: 144d46b8127d73a6aeef8a278357856addbc097f
+      commitTitle: 'Merge pull request #2449 from sap-contributions/improve-isolation-segments-performance...'
+      sha: 3ab48cc4303052e7d6840dcf8187f2551633e65e
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
