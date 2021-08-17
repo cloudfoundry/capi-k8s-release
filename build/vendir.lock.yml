@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2449 from sap-contributions/improve-isolation-segments-performance...'
-      sha: 3ab48cc4303052e7d6840dcf8187f2551633e65e
+      commitTitle: 'Merge pull request #2441 from cloudfoundry/dependabot/bundler/honeycomb-beeline-2.6.0...'
+      sha: f9302a8711b811c2a4320fdf34caa9d96c351e4a
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
