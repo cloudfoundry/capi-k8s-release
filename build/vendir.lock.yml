@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2467 from cloudfoundry/space_supporter_blocked_in_v2...'
-      sha: 339055b32f20d3b2a14a31b2b8e2b031def00fc8
+      commitTitle: 'Merge pull request #2471 from cloudfoundry/dependabot/bundler/rubocop-1.19.1...'
+      sha: eda36ffd5314b5855b27dba87a9487dc60e5dd74
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
