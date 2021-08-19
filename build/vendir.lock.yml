@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: bump to 3.104.0
-      sha: 0c89588917c14115c071a6e3ba764e84935f35b0
+      commitTitle: 'Merge pull request #2443 from sap-contributions/issue-2147...'
+      sha: ffe537e2d2c7443522fee055836cfd39430c4776
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
