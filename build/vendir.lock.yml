@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2443 from sap-contributions/issue-2147...'
-      sha: ffe537e2d2c7443522fee055836cfd39430c4776
+      commitTitle: 'Merge pull request #2467 from cloudfoundry/space_supporter_blocked_in_v2...'
+      sha: 339055b32f20d3b2a14a31b2b8e2b031def00fc8
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
