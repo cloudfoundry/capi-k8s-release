@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2471 from cloudfoundry/dependabot/bundler/rubocop-1.19.1...'
-      sha: eda36ffd5314b5855b27dba87a9487dc60e5dd74
+      commitTitle: Refactor permissions functions  (#2477)...
+      sha: 14ce39e06ed7eb48b1b6539ebcdf70461b7cae7c
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
