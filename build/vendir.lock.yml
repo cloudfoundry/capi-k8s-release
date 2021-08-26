@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2480 from cloudfoundry/dependabot/bundler/rubocop-1.20.0...'
-      sha: 4e84072fcad6f4e202d13f9cc6ba81fdf9d855cd
+      commitTitle: 'Merge pull request #2476 from sap-contributions/remove-ignored-eager-calls...'
+      sha: 59c958f40fb24fe40c59cd251f1df6a98236f981
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
