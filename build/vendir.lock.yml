@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2479 from cloudfoundry/add-manifest-http2-support...'
-      sha: 41bf95ff88f9fd1f9427233fc4a3690de4678c06
+      commitTitle: add test case to ensure manifest protocol updates do not replace
+        all...
+      sha: 83b681ede62406ade305139821ad0ba96070bd6d
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
