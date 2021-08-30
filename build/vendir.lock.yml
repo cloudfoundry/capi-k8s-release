@@ -2,9 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: add test case to ensure manifest protocol updates do not replace
-        all...
-      sha: 83b681ede62406ade305139821ad0ba96070bd6d
+      commitTitle: 'Merge pull request #2482 from cloudfoundry/dependabot/bundler/docs/v3/nokogiri-1.12.4...'
+      sha: d54bfeb2441147c6bb810fdb4c0a46affaca5742
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
