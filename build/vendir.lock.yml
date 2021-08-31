@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Correct query parameters to use `guids` instead of `ids`...
-      sha: bb945f6a17747b16825acc55f229eec998efc90c
+      commitTitle: bump to 3.105.0
+      sha: 473af65b856701cbdef2b681c64c3d2bfa488b8f
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
