@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: add route configuration section to manifest schema
-      sha: 242d732d4600b00d2b332159901ea16c59c86e25
+      commitTitle: Correct query parameters to use `guids` instead of `ids`...
+      sha: bb945f6a17747b16825acc55f229eec998efc90c
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
