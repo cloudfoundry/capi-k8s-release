@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: bump to 3.105.0
-      sha: 473af65b856701cbdef2b681c64c3d2bfa488b8f
+      commitTitle: Bump v2 API docs version 2.170.0
+      sha: 1d45b07403e325cdea34d65f85c0810c5a3b7673
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
