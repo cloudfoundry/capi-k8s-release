@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2482 from cloudfoundry/dependabot/bundler/docs/v3/nokogiri-1.12.4...'
-      sha: d54bfeb2441147c6bb810fdb4c0a46affaca5742
+      commitTitle: add route configuration section to manifest schema
+      sha: 242d732d4600b00d2b332159901ea16c59c86e25
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
