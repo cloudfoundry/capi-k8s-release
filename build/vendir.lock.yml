@@ -2,8 +2,9 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Bump v2 API docs version 2.170.0
-      sha: 1d45b07403e325cdea34d65f85c0810c5a3b7673
+      commitTitle: Prevent Space Supporter from creating service credential key binding
+        (#2486)...
+      sha: 7b5b6a938f945e9db5b3605613bfdca9107228fd
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
