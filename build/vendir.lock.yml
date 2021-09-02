@@ -2,9 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Prevent Space Supporter from creating service credential key binding
-        (#2486)...
-      sha: 7b5b6a938f945e9db5b3605613bfdca9107228fd
+      commitTitle: 'Merge pull request #2487 from cloudfoundry/dependabot/bundler/sequel-5.48.0...'
+      sha: 1d62a532050e53b181e042a4f27eaf4cf5401eab
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
