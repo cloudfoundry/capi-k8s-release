@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2487 from cloudfoundry/dependabot/bundler/sequel-5.48.0...'
-      sha: 1d62a532050e53b181e042a4f27eaf4cf5401eab
+      commitTitle: Remove `temporary_enable_space_supporter_role` flag (#2490)...
+      sha: d40dbbe0c666c5cc53e32b626b166316504118e8
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
