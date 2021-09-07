@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Remove `temporary_enable_space_supporter_role` flag (#2490)...
-      sha: d40dbbe0c666c5cc53e32b626b166316504118e8
+      commitTitle: 'Merge pull request #1655 from cloudfoundry/dependabot/bundler/eventmachine-1.2.7...'
+      sha: 8e77f6b762349a21828ae47991dd581b00a824fb
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
