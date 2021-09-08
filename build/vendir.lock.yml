@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: 'Merge pull request #2494 from cloudfoundry/dependabot/bundler/honeycomb-beeline-2.7.0...'
-      sha: 4457d586dbffa805878a3b0b6eb89678ba33eaf1
+      commitTitle: Bump v2 API docs version 2.171.0
+      sha: c9b0ad888d87eeb31e6d8f1bc86c5e0e14ac51e3
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
