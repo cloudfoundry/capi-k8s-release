@@ -2,8 +2,8 @@ apiVersion: vendir.k14s.io/v1alpha1
 directories:
 - contents:
   - git:
-      commitTitle: Provide pageable users of space endpoint (#2491)...
-      sha: 29272a074d89ded3f44c500ae63eba6186e229f4
+      commitTitle: 'Merge pull request #2475 from sap-contributions/speed-up-security-groups...'
+      sha: 65893b1f26d58dc344598c343a7f35733a7ac718
     path: .
   path: sources/cloud_controller_ng
 kind: LockConfig
