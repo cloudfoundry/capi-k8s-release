@@ -675,7 +675,8 @@ jobs:
           params:
             text: '[capi-bara-tests] #capi @interrupt OH NO! Failed when running on cf-for-k8s, pls send help'
             icon_emoji: ":sick-kubo:"
-  on_success:
+  # Changed to unclaim cluster. We are unlikely to be debugging failed run clusters at this point.
+  ensure:
     do:
     - task: delete-cf
       file: cf-for-k8s-ci/ci/tasks/delete-cf/task.yml
