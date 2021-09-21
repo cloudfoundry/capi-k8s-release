@@ -46,6 +46,7 @@ vet:
 
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) paths="./..." output:crd:artifacts:config=config/crd/bases
+	cp config/crd/bases/apps.cloudfoundry.org_periodicsyncs.yaml ../../config/periodic-sync-crd.yml
 
 # Generate code
 generate: controller-gen
