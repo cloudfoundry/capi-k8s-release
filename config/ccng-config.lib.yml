@@ -218,7 +218,8 @@ disable_custom_buildpacks: true
 broker_client_timeout_seconds: 60
 broker_client_default_async_poll_interval_seconds: 60
 broker_client_max_async_poll_duration_minutes: 10080
-broker_client_async_poll_exponential_backoff_rate: 1.0
+broker_client_async_poll_exponential_backoff_rate: 1.1 #! 1.0 is converted to an Int by go-yaml with the current implemtation in ytt. Either the implementation needs to change or CC needs to accept Ints as well.
+
 renderer:
   max_results_per_page: 100
   default_results_per_page: 50
@@ -260,6 +261,8 @@ rate_limiter:
   per_process_unauthenticated_limit: 100
   global_unauthenticated_limit: 1000
   reset_interval_in_minutes: 60
+
+max_concurrent_service_broker_requests: 0
 
 opi:
   url: #@ "http://eirini.{}.svc.cluster.local:8080".format(data.values.system_namespace)
