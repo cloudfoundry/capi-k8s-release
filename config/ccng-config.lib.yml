@@ -139,10 +139,6 @@ staging:
 default_health_check_timeout: 60
 maximum_health_check_timeout: 180
 
-broker_client_default_async_poll_interval_seconds: 60
-broker_client_max_async_poll_duration_minutes: 10080
-broker_client_async_poll_exponential_backoff_rate: 1.0
-
 stacks_file: config/stacks.yml
 
 shared_isolation_segment_name: shared
@@ -222,6 +218,7 @@ disable_custom_buildpacks: true
 broker_client_timeout_seconds: 60
 broker_client_default_async_poll_interval_seconds: 60
 broker_client_max_async_poll_duration_minutes: 10080
+broker_client_async_poll_exponential_backoff_rate: 1.0
 renderer:
   max_results_per_page: 100
   default_results_per_page: 50
