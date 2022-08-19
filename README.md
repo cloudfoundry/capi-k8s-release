@@ -1,3 +1,8 @@
+# :warning: DEPRECATION NOTICE :warning:
+Thank you to everyone who has used and contributed to capi-k8s-release!
+
+As a follow-on to the [8/23/21 cf-dev CF on K8s Update](https://lists.cloudfoundry.org/g/cf-dev/message/9371), this project has been deprecated to focus efforts on [Korifi](https://github.com/cloudfoundry/korifi/). Korifi provides a Kubernetes-native app platform by reimplementing the core Cloud Foundry APIs and backing them by a set of Kubernetes custom resources and controllers. We invite you to try out Korifi and provide feedback!
+
 # capi-k8s-release
 
 This collection of yaml, ytt, and go code packages together the bits that make [the CF API](http://v3-apidocs.cloudfoundry.org/) run in [cf-for-k8s](https://github.com/cloudfoundry/cf-for-k8s/). 
